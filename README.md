@@ -1,2 +1,5 @@
 # open-compot
-C# library for working with the Relic .sga archives.
+C# library for working with Relics .sga archives.
+
+# Disclaimer
+Not affiliated with Relic Entertainment or Sega. All rights belong to their respective parties.
