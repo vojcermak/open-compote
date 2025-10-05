@@ -1,4 +1,4 @@
-# open-compot
+# open-compote
 C# library for working with Relics .sga archives.
 
 # Disclaimer
