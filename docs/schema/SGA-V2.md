@@ -123,4 +123,19 @@ For more info about compression, see [Data block](../index.md#data-block).
 Name list is an Array of ASCII null-terminated strings representing the names of all files and folders in the archive.
 
 ## Data Block
-Data block is always the same between all versions, for more info see [Data block](../index.md#data-block).
+The data block contains the actual content of archived files. 
+
+### File Metadata
+File metadata is a block of information about a file directly **before** the compressed data of a file. It is 264 bytes long and contains the file name, last change date and file data hash.
+
+| Start | Stop | Size  | Type              | Name              |
+| ----- | ---- | ----- | ----------------- | ----------------- |
+| 0     | 255  | 256   | String            | File name         |
+| 0     | 3    | 4     | UInt-32           | Modified          |
+| 0     | 3    | 4     | UInt-32           | CRC               |
+
+1. File name - Name of the file. Same as the name from the Name list for this file 
+2. Last modified - 32-bit Linux timestamp when the file was last changed.
+3. CRC - CRC-32 hash, calculated from the compressed file data in the archive.
+
+According to this [source](https://mak-relic-tool.github.io/Schema-Documentation/sga/v2/data.html#file-metadata). The file metadata are not required by the game engine.
