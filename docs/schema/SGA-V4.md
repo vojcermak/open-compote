@@ -1,3 +1,5 @@
+# SGA V4
+
 ## Archive Header
 
 | Start | Stop | Size  | Type              | Name         |
@@ -15,9 +17,9 @@
 1. Magic word - Used to identify a file as an SGA archive. Always contains an ASCII string with the value "ARCHIVE_".
 2. Version Major - Used to identify the exact version of sga archive. For SGA V4, it should always be 4. 
 3. Version Minor - Sometimes called platform. Indemnify path version os sga archive.
-3. File hash - Used for [error correction](./Error-Correction).
+3. File hash - Used for [error correction](./Error-Correction.md).
 4. Archive name - UTF-16-LE string with the name of the archive. This name does not need to be the same as the name of the file itself.
-5. TOC hash - Used for [error correction](./Error-Correction).
+5. TOC hash - Used for [error correction](./Error-Correction.md).
 6. TOC size - Table of contents size in bytes. 
 7. Data offset - The starting position of the data block.
 8. Unknown - Unknown value, but is always 1.
@@ -121,4 +123,4 @@ The storage type flag determines whether the file is compressed and, if so, whic
 Name list is an Array of ASCII null-terminated strings representing the names of all files and folders in the archive.
 
 ## Data Block
-The Data block remains the same between all SGA versions. For more info, see [Data block](./Home#data-block).
+The Data block remains the same between all SGA versions. For more info, see [Data block](../index.md#data-block).

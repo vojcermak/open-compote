@@ -1,3 +1,5 @@
+# SGA V2
+
 ## Archive Header
 
 | Start | Stop | Size  | Type              | Name         |
@@ -15,9 +17,9 @@
 
 > Other SGA versions can divide this field into major and minor(platform) values, but I couldn`t verify this for SGA v2 archives. 
 
-3. File hash - Used for [error correction](./Error-Correction).
+3. File hash - Used for [error correction](./Error-Correction.md).
 4. Archive name - UTF-16-LE string with the name of the archive. This name does not need to be the same as the name of the file itself.
-5. TOC hash - Used for [error correction](./Error-Correction).
+5. TOC hash - Used for [error correction](./Error-Correction.md).
 6. TOC size - Table of contents size in bytes. 
 7. Data offset - The starting position of the data block.
 
@@ -100,7 +102,7 @@ Offsets represent the count of bytes from the start of the TOC header. (Toc star
 | 0     | 3    | 4     | UInt-32           | Decompressed Size |
 
 1. Name offset - Byte offset to the beginning of the name of this folder in the name list. 
-2. Storage Flag - Type [file compression](./SGA-V2#storage-flag).
+2. Storage Flag - Type [file compression](./SGA-V2.md#storage-flag).
 
 > The difference between the Impossible Creatures archives and DOW archives is the size of the storage flag; Dawn of War uses 4 bytes, whereas Impossible Creatures uses only 1 byte.
 
@@ -115,10 +117,10 @@ Storage flag determines if the file is compressed and, if so, what compression t
 - 16 - Buffer Compressed
 - 32 - Stream Compressed
 
-For more info about compression, see [Data block](./Home#data-block).
+For more info about compression, see [Data block](../index.md#data-block).
 
 ### Name list
 Name list is an Array of ASCII null-terminated strings representing the names of all files and folders in the archive.
 
 ## Data Block
-Data block is always the same between all versions, for more info see [Data block](./Home#data-block).
+Data block is always the same between all versions, for more info see [Data block](../index.md#data-block).

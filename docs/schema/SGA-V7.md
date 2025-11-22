@@ -47,7 +47,7 @@ The table of contents is located directly after the archive header. TOC is divid
 7. Name offset - Relative offset to the start of the name array.
 8. Name count - Count of names in the archive.
 9. Hash offset - Relative offset to the start of the hash array.
-10. Block size - Size of hash block. Used in [Error correction](./Error-Correction#newer-error-correction-v7---).
+10. Block size - Size of hash block. Used in [Error correction](./Error-Correction.md#newer-error-correction-v7---).
 
 Offsets represent the count of bytes from the start of the TOC header. (Toc starts after the data offset field, at position 152.) 
 
@@ -115,10 +115,10 @@ Offsets represent the count of bytes from the start of the TOC header. (Toc star
 3. Compressed Size - Size of the compressed data in the data block. (bytes)
 4. Decompressed Size - Size of the decompressed file. (bytes)
 5. Modified - Linux timestamp when the file was changed.
-6. Verification type - Determines what verification type should be used. For more info, see [Error correction](./Error-Correction#newer-error-correction-v7---). 
+6. Verification type - Determines what verification type should be used. For more info, see [Error correction](./Error-Correction.md#newer-error-correction-v7---). 
 7. Storage type - type of compression used. 
 9. CRC - 32-bit CRC of the compressed file. CRC is always populated even when the Verification type is not set to `crc`. 
-10. Hash offset - Byte offset to the beginning of the first hash in the hash list. For more info, see [Error correction](./Error-Correction#newer-error-correction-v7---).
+10. Hash offset - Byte offset to the beginning of the first hash in the hash list. For more info, see [Error correction](./Error-Correction.md#newer-error-correction-v7---).
 
 #### Storage type:
 The storage type flag determines whether the file is compressed and, if so, which compression type was used. It can be one of three values:
@@ -131,7 +131,7 @@ The storage type flag determines whether the file is compressed and, if so, whic
 Name list is an Array of UTF-8 null-terminated strings representing the names of all files and folders in the archive.
 
 ### Hash list
-A Hash list is a combined array of block CRC, MD5 or SHA-1 hashes. For more info, see [Error correction](./Error-Correction#newer-error-correction-v7---).
+A Hash list is a combined array of block CRC, MD5 or SHA-1 hashes. For more info, see [Error correction](./Error-Correction.md#newer-error-correction-v7---).
 
 ## Data Block
-The Data block remains the same between all SGA versions. For more info, see [Data block](./Home#data-block).
+The Data block remains the same between all SGA versions. For more info, see [Data block](../index.md#data-block).

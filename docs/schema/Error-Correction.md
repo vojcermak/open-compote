@@ -1,3 +1,5 @@
+# Error Correction
+
 Error correction in .sga files is different between older versions of SGA files (v2 - v4), where the entire archive is verified by checksum and newer versions, where each file is verified separately. 
 
 # Older error correction (V2 - V5)
