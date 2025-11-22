@@ -1,0 +1,13 @@
+items:
+  - name: SGA archive
+  - name: SGA V2
+    href: SGA-V2.md
+  - name: SGA V4
+    href: SGA-V4.md
+  - name: SGA V5
+    href: SGA-V5.md
+  - name: SGA V7
+    href: SGA-V7.md
+  - name: Error correction
+    href: Error-Correction.md
+memberLayout: SamePage

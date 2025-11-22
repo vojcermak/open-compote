@@ -1,2 +1,4 @@
+- name: Format Schema
+  href: schema/
 - name: Api Reference
-  href: api/OpenCompote.html
+  href: api/
