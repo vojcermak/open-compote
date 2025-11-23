@@ -1,7 +1,14 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using OpenCompote;
+using System.IO.Compression;
+using System.Text;
+using OpenCompote.SGA;
 
-Console.WriteLine("Hello, World!");
-
-
-Class1.Print("This is my library");
+/*
+- Pack archive
+- Unpack archive
+- List
+- Get specific file/folder/drive
+- Add specific file/folder/drive
+- remove specific file/folder/drive
+*/
+SgaArchive sgaArchive = SgaArchiveFile.Open(@"/home/Vojta/Dokumenty/coh2_modding/sgas/DOW2_Ext_D.sga", 0);
