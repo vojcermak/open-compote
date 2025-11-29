@@ -11,4 +11,4 @@ using OpenCompote.SGA;
 - Add specific file/folder/drive
 - remove specific file/folder/drive
 */
-SgaArchive sgaArchive = SgaArchiveFile.Open(@"/home/Vojta/Dokumenty/coh2_modding/sgas/DOW2_Ext_D.sga", 0);
+SgaArchive sgaArchive = SgaArchiveFile.Open(@"../sgas/W40kDataKeys(dow1).sga", 0);

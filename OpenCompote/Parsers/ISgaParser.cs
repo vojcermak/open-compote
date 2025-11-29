@@ -3,6 +3,6 @@ namespace OpenCompote.SGA.Parsers;
 
 interface ISgaParser
 {
-    SgaArchive Parse(BinaryReader reader);
+    static abstract void Parse(SgaArchive archive, Stream sgaStream);
     void Write(SgaArchive archive, BinaryWriter writer);
 }

@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using OpenCompote.SGA.Parsers;
 
 namespace OpenCompote.SGA;
 
@@ -34,9 +35,11 @@ public class SgaArchiveFile
         throw new NotImplementedException();
     }
 
-    public static SgaArchive Open(string sourceFileName, int mode)
+    public static SgaArchive Open(string sourceFileName, SgaMode mode)
     {
-        throw new NotImplementedException();
+        FileStream fs = File.Open(sourceFileName, FileMode.Open);
+        return new SgaArchive(fs, mode);
+        
     }
 
     public static SgaArchive Open(string sourceFileName, int mode, int version)
