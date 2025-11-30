@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "OpenCompote.Cli": {
+      "commandName": "Project",
+      "workingDirectory": "..",
+      "commandLineArgs": ""
+    }
+  }
+}

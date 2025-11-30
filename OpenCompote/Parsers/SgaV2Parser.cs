@@ -36,6 +36,7 @@ public class SgaV2Parser : ISgaParser
         
         Console.WriteLine(sgaStream.Position);
 
+        // Read drive definitions
         for (int i = 0; i < driveCount; i++)
         {
             string driveName = ParserUtils.ReadStaticString(sgaStream, 64);
@@ -45,6 +46,8 @@ public class SgaV2Parser : ISgaParser
             ushort firstFile = ParserUtils.ReadUInt16(sgaStream);
             ushort lastFile = ParserUtils.ReadUInt16(sgaStream);
             ushort rootFolder = ParserUtils.ReadUInt16(sgaStream);
+            
+            archive.AddDrive(new SgaDrive(driveAlias, driveName, archive));
 
             Console.WriteLine("Drive name: {0}\nDrive alias: {1}\nFirst folder: {2}\nLast folder: {3}\nFirst file: {4}\nLast file: {5}\nRoot folder {6}",
             driveName, driveAlias, firstFolder, lastFolder, firstFile, lastFile, rootFolder);

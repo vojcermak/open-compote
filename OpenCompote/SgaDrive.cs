@@ -9,8 +9,10 @@ public class SgaDrive
     public SgaArchive Archive {get;}
     public SgaFolder RootFolder {get;}
 
-    private SgaDrive(string alias, string name, SgaArchive archive)
+    public SgaDrive(string alias, string name, SgaArchive archive)
     {
-        throw new NotImplementedException();
+        Alias = alias;
+        Name = name;
+        Archive = archive;
     }
 }

@@ -6,31 +6,42 @@ namespace OpenCompote.SGA;
 
 public class SgaArchive
 {
+    private readonly List<SgaDrive> _drives;
+    private readonly ReadOnlyCollection<SgaDrive> _driveCollection;
+
     public SgaVersion Version {get;}
     public SgaMode Mode {get;}
     public string ArchiveName {get; set;}
-    public ReadOnlyCollection<SgaDrive> Drives;
+    
+    public ReadOnlyCollection<SgaDrive> Drives
+    {
+        get {return _driveCollection;}
+    }
+    
     public int BlockSize {get; set;}
 
-    private Stream ArchiveStream;
+    private readonly Stream _archiveStream;
 
     public SgaArchive(Stream stream, int mode, int version){
         throw new NotImplementedException();
     }
 
     public SgaArchive(Stream stream, SgaMode mode){
-        ArchiveStream = stream;
+        _archiveStream = stream;
         Mode = mode;
         ArchiveName = "";
 
-        if(!ArchiveStream.CanRead || !ArchiveStream.CanSeek)
+        if(!_archiveStream.CanRead || !_archiveStream.CanSeek)
             throw new Exception("stream is not supported");
 
-        if((mode == SgaMode.Write || mode == SgaMode.Create) && !ArchiveStream.CanWrite)
+        if((mode == SgaMode.Write || mode == SgaMode.Create) && !_archiveStream.CanWrite)
             throw new Exception("Cannot write to the stream");
 
+        _drives = new List<SgaDrive>();
+        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
+
         byte[] magicBuffer = new byte[8];
-        ArchiveStream.ReadExactly(magicBuffer);
+        _archiveStream.ReadExactly(magicBuffer);
 
         string text = System.Text.Encoding.ASCII.GetString(magicBuffer);
         
@@ -62,8 +73,13 @@ public class SgaArchive
     private int ParseVersion()
     {
         byte[] versionBuffer = new byte[4];
-        ArchiveStream.ReadExactly(versionBuffer);
+        _archiveStream.ReadExactly(versionBuffer);
         int version = BinaryPrimitives.ReadInt32LittleEndian(versionBuffer);
         return version;
+    }
+
+    internal void AddDrive(SgaDrive newDrive)
+    {
+        
     }
 }
