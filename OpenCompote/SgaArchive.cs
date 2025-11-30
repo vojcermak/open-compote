@@ -1,6 +1,6 @@
 ﻿using System.Buffers.Binary;
 using System.Collections.ObjectModel;
-using OpenCompote.SGA.parsers;
+using OpenCompote.SGA.Parsers;
 
 namespace OpenCompote.SGA;
 
@@ -21,6 +21,7 @@ public class SgaArchive
     public SgaArchive(Stream stream, SgaMode mode){
         ArchiveStream = stream;
         Mode = mode;
+        ArchiveName = "";
 
         if(!ArchiveStream.CanRead || !ArchiveStream.CanSeek)
             throw new Exception("stream is not supported");
