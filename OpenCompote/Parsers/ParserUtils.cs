@@ -16,14 +16,14 @@ internal static class ParserUtils
     {
         byte[] strBuffer = new byte[length];
         sgaFile.ReadExactly(strBuffer);
-        return System.Text.Encoding.Unicode.GetString(strBuffer);
+        return System.Text.Encoding.Unicode.GetString(strBuffer).TrimEnd('\0');
     }
 
     public static string ReadStaticString(Stream sgaFile, int length)
     {
         byte[] strBuffer = new byte[length];
         sgaFile.ReadExactly(strBuffer);
-        return System.Text.Encoding.UTF8.GetString(strBuffer);
+        return System.Text.Encoding.UTF8.GetString(strBuffer).TrimEnd('\0');
     }
 
     public static uint ReadUInt32(Stream sgaFile)

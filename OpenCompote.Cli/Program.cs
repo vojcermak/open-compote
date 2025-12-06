@@ -13,4 +13,11 @@ using OpenCompote.SGA;
 */
 SgaArchive sgaArchive = SgaArchiveFile.Open(@"../sgas/W40kDataKeys(dow1).sga", 0);
 
-Console.WriteLine(sgaArchive.ArchiveName);
+Console.WriteLine("Archive name: {0}",sgaArchive.ArchiveName);
+Console.WriteLine("Drives:");
+
+foreach (var drive in sgaArchive.Drives)
+{
+    Console.WriteLine("    Drive name: {0}", drive.Name);
+    Console.WriteLine("    Drive alias: {0}", drive.Alias);
+} 

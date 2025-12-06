@@ -80,6 +80,6 @@ public class SgaArchive
 
     internal void AddDrive(SgaDrive newDrive)
     {
-        
+        _drives.Add(newDrive);
     }
 }
