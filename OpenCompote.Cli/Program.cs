@@ -12,3 +12,5 @@ using OpenCompote.SGA;
 - remove specific file/folder/drive
 */
 SgaArchive sgaArchive = SgaArchiveFile.Open(@"../sgas/W40kDataKeys(dow1).sga", 0);
+
+Console.WriteLine(sgaArchive.ArchiveName);

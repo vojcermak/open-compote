@@ -1,4 +1,3 @@
-using System.Collections;
 
 namespace OpenCompote.SGA.Parsers;
 
@@ -7,17 +6,23 @@ public class SgaV2Parser : ISgaParser
     public static void Parse(SgaArchive archive, Stream sgaStream)
     {
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
-        Console.WriteLine(Convert.ToHexString(fileHash));
 
-        Console.WriteLine(ParserUtils.ReadWideStaticString(sgaStream, 128));
+        archive.ArchiveName = ParserUtils.ReadWideStaticString(sgaStream, 128);
 
         byte[] tocHash = ParserUtils.ReadHash(sgaStream);
-        Console.WriteLine(Convert.ToHexString(tocHash));
 
         uint tocSize = ParserUtils.ReadUInt32(sgaStream);
         uint dataOffset = ParserUtils.ReadUInt32(sgaStream);
 
         Console.WriteLine("TOC size: {0}, Data offset: {1}",tocSize, dataOffset);
+
+        byte[]? generatedFileHash = ParserUtils.HashMD5(sgaStream, sgaStream.Length-sgaStream.Position, "E01519D6-2DB7-4640-AF54-0A23319C56C3");
+        if(generatedFileHash == null || !fileHash.SequenceEqual(generatedFileHash))
+            Console.WriteLine("Hash is not valid");
+
+        byte[]? generatedTocHash = ParserUtils.HashMD5(sgaStream, tocSize, "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF");
+        if(generatedTocHash == null || !tocHash.SequenceEqual(generatedTocHash))
+            Console.WriteLine("Hash is  not valid");
 
         // Read TOC header
         uint driveOffset = ParserUtils.ReadUInt32(sgaStream);

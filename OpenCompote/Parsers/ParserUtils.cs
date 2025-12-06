@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Security.Cryptography;
 
 namespace OpenCompote.SGA.Parsers;
 
@@ -37,5 +38,22 @@ internal static class ParserUtils
         byte[] numBuffer = new byte[2];
         sgaFile.ReadExactly(numBuffer);
         return BinaryPrimitives.ReadUInt16LittleEndian(numBuffer);
+    }
+
+    public static byte[]? HashMD5(Stream fileStream, long dataLength, string initialValue )
+    {
+        var currentPosition = fileStream.Position;
+        byte[] seed = System.Text.Encoding.UTF8.GetBytes(initialValue);
+
+        using var md5 = MD5.Create();
+
+        md5.TransformBlock(seed, 0, seed.Length, null, 0);
+        byte[] buffer = new byte[dataLength];
+        int bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+        md5.TransformFinalBlock(buffer, 0, bytesRead);
+
+        fileStream.Position = currentPosition;
+
+        return md5.Hash;
     }
 }
