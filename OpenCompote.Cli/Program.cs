@@ -20,4 +20,27 @@ foreach (var drive in sgaArchive.Drives)
 {
     Console.WriteLine("    Drive name: {0}", drive.Name);
     Console.WriteLine("    Drive alias: {0}", drive.Alias);
+
+    Stack<SgaEntry> stack = new Stack<SgaEntry>();
+    stack.Push(drive.RootFolder);
+
+    while(stack.Count > 0)
+    {
+        SgaEntry entry = stack.Pop();
+
+        if (entry is SgaFile file)
+        {
+            Console.WriteLine($"File: {file.Name}");
+        }
+        else if (entry is SgaFolder folder)
+        {
+            Console.WriteLine($"Folder: {folder.Name}");
+            // Push subentries onto the stack
+            for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
+            {
+                stack.Push(folder.Contents[i]);
+            }
+        }
+    }
+
 } 

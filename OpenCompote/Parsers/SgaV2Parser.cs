@@ -55,7 +55,7 @@ public class SgaV2Parser : ISgaParser
             ushort lastFile = ParserUtils.ReadUInt16(sgaStream);
             ushort rootFolder = ParserUtils.ReadUInt16(sgaStream);
             
-            archive.AddDrive(new SgaDrive(driveAlias, driveName, archive, rootFolder));
+            archive.AddDrive(new SgaDrive(driveAlias, driveName, archive, rootFolder, firstFolder, lastFolder, firstFile, lastFile));
 
             Console.WriteLine("Drive name: {0}\nDrive alias: {1}\nFirst folder: {2}\nLast folder: {3}\nFirst file: {4}\nLast file: {5}\nRoot folder {6}",
             driveName, driveAlias, firstFolder, lastFolder, firstFile, lastFile, rootFolder);
@@ -77,7 +77,7 @@ public class SgaV2Parser : ISgaParser
             uint nameStart = nameOffset + 180 + nameListOffset;
             string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
             
-            var folder = new SgaFolder(folderName);
+            var folder = new SgaFolder(folderName, firstFolder, lastFolder, firstFile, lastFile);
             folderList.Add(folder);
             
         }
@@ -103,6 +103,31 @@ public class SgaV2Parser : ISgaParser
         }
 
         Console.WriteLine(sgaStream.Position);
+
+        foreach (SgaDrive drive in archive.Drives)
+        {
+            for (int i = 0; i < (drive.EndFolder - drive.StartFolder); i++)
+                folderList[i].Drive = drive;
+
+            for (int i = 0; i < (drive.EndFile - drive.StartFile); i++)
+                fileList[i].Drive = drive;
+            
+            drive.RootFolder = folderList[drive.RootFolderIndex];
+        }
+
+        foreach (SgaFolder folder in folderList)
+        {
+            for (int i = (int)folder.StartFolder; i < folder.EndFolder; i++)
+            {
+                folder.Contents.Add(folderList[i]);
+                folderList[i].Parent = folder;
+            }
+            for (int i = (int)folder.StartFile; i < folder.EndFile; i++)
+            {
+                folder.Contents.Add(fileList[i]);
+                fileList[i].Parent = folder;
+            }
+        }
     }
 
     private static StorageType ReadStorageType(Stream sgaStream, bool isIC)
