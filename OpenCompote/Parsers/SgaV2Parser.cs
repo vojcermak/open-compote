@@ -5,6 +5,9 @@ public class SgaV2Parser : ISgaParser
 {
     public static void Parse(SgaArchive archive, Stream sgaStream)
     {
+        List<SgaFolder> folderList = new List<SgaFolder>();
+        List<SgaFile> fileList = new List<SgaFile>();
+
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 
         archive.ArchiveName = ParserUtils.ReadWideStaticString(sgaStream, 128);
@@ -52,7 +55,7 @@ public class SgaV2Parser : ISgaParser
             ushort lastFile = ParserUtils.ReadUInt16(sgaStream);
             ushort rootFolder = ParserUtils.ReadUInt16(sgaStream);
             
-            archive.AddDrive(new SgaDrive(driveAlias, driveName, archive));
+            archive.AddDrive(new SgaDrive(driveAlias, driveName, archive, rootFolder));
 
             Console.WriteLine("Drive name: {0}\nDrive alias: {1}\nFirst folder: {2}\nLast folder: {3}\nFirst file: {4}\nLast file: {5}\nRoot folder {6}",
             driveName, driveAlias, firstFolder, lastFolder, firstFile, lastFile, rootFolder);
@@ -70,6 +73,13 @@ public class SgaV2Parser : ISgaParser
 
             Console.WriteLine("Name offset: {0}\nFirst folder: {1}\nLast folder: {2}\nFirst file: {3}\nLast file: {4}",
             nameOffset, firstFolder, lastFolder, firstFile, lastFile);
+
+            uint nameStart = nameOffset + 180 + nameListOffset;
+            string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
+            
+            var folder = new SgaFolder(folderName);
+            folderList.Add(folder);
+            
         }
 
         Console.WriteLine(sgaStream.Position);
@@ -84,6 +94,12 @@ public class SgaV2Parser : ISgaParser
 
             Console.WriteLine("Name offset: {0}\nStorage flag: {1}\nData offset: {2}\nCompressed size: {3}\nDecompressed size: {4}",
             nameOffset, storageFlag, rawDataOffset, compressSize, decompressSize);
+
+            uint nameStart = nameOffset + 180 + nameListOffset;
+            string fileName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
+
+            var file = new SgaFile(fileName, storageFlag, rawDataOffset, compressSize, decompressSize);
+            fileList.Add(file);
         }
 
         Console.WriteLine(sgaStream.Position);

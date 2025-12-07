@@ -26,6 +26,25 @@ internal static class ParserUtils
         return System.Text.Encoding.UTF8.GetString(strBuffer).TrimEnd('\0');
     }
 
+    public static string ReadDynamicString(Stream sgaFile, long startPosition)
+    {
+        List<byte> buffer = new List<byte>();
+        long currentPosition = sgaFile.Position;
+        sgaFile.Position = startPosition;
+        
+        int b;
+        while ((b = sgaFile.ReadByte()) != -1)
+        {
+            if(b==0)
+                break;
+            buffer.Add((byte)b);
+        }
+
+
+        sgaFile.Position = currentPosition;
+        return System.Text.Encoding.ASCII.GetString(buffer.ToArray());
+    }
+
     public static uint ReadUInt32(Stream sgaFile)
     {
         byte[] numBuffer = new byte[4];
