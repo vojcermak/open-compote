@@ -20,7 +20,7 @@ public class SgaArchive
     
     public int BlockSize {get; set;}
 
-    private readonly Stream _archiveStream;
+    internal readonly Stream _archiveStream;
 
     public SgaArchive(Stream stream, int mode, int version){
         throw new NotImplementedException();

@@ -11,7 +11,7 @@ using OpenCompote.SGA;
 - Add specific file/folder/drive
 - remove specific file/folder/drive
 */
-SgaArchive sgaArchive = SgaArchiveFile.Open(@"../sgas/W40kDataKeys(dow1).sga", 0);
+SgaArchive sgaArchive = SgaArchiveFile.Open(@"../sgas/W40kData-SharedTextures-Full(dow1).sga", 0);
 
 Console.WriteLine("Archive name: {0}",sgaArchive.ArchiveName);
 Console.WriteLine("Drives:");
@@ -30,7 +30,8 @@ foreach (var drive in sgaArchive.Drives)
 
         if (entry is SgaFile file)
         {
-            Console.WriteLine($"File: {file.Name}");
+            Console.WriteLine($"File: {file.Name} Type: {file.StorageType}");
+            file.GetFile();
         }
         else if (entry is SgaFolder folder)
         {

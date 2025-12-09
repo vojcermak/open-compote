@@ -98,7 +98,7 @@ public class SgaV2Parser : ISgaParser
             uint nameStart = nameOffset + 180 + nameListOffset;
             string fileName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
 
-            var file = new SgaFile(fileName, storageFlag, rawDataOffset, compressSize, decompressSize);
+            var file = new SgaFile(fileName, storageFlag, rawDataOffset + dataOffset, compressSize, decompressSize);
             fileList.Add(file);
         }
 
