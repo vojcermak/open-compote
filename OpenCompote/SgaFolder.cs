@@ -9,8 +9,10 @@ public class SgaFolder: SgaEntry
     internal uint StartFile {get;}
     internal uint EndFile {get;}
 
-    public SgaFolder(string name)
-    {
+    internal SgaFolder(string name, SgaDrive drive)
+    {   
+        Contents = new List<SgaEntry>();
+        Drive = drive;
         Name = name;
     }
 

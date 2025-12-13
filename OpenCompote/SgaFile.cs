@@ -11,6 +11,13 @@ public class SgaFile: SgaEntry
     public uint CompressedSize {get; private set;}
     public uint Size {get; private set;}
 
+    internal SgaFile(string name, SgaDrive drive, StorageType type)
+    {   
+        Drive = drive;
+        Name = name;
+        StorageType = type;
+    }
+
     internal SgaFile (string name, StorageType type, uint dataOffset, uint compressedSize, uint size)
     {
         _DataOffset = dataOffset;
@@ -21,7 +28,9 @@ public class SgaFile: SgaEntry
     }
 
     public Stream Open()
-    {
+    {   
+        Drive.Archive.ThrowIfDisposed();
+
         long currentPosition = Drive.Archive._archiveStream.Position;
         Drive.Archive._archiveStream.Position = _DataOffset;
         

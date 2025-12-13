@@ -20,7 +20,7 @@ public class SgaDrive
         Alias = alias;
         Name = name;
         Archive = archive;
-        RootFolder = new SgaFolder(name);
+        RootFolder = new SgaFolder(name, this);
     }
 
     public SgaDrive(string alias, string name, SgaArchive archive, SgaFolder rootFolder)

@@ -20,7 +20,10 @@ public class SgaArchive: IDisposable
     
     public ReadOnlyCollection<SgaDrive> Drives
     {
-        get {return _driveCollection;}
+        get {
+            ThrowIfDisposed();
+            return _driveCollection;
+        }
     }
     
     public int BlockSize {get; set;}
@@ -80,11 +83,15 @@ public class SgaArchive: IDisposable
 
     internal void AddDrive(SgaDrive newDrive)
     {
+        ThrowIfDisposed();
+
         _drives.Add(newDrive);
     }
 
     public SgaDrive AddDrive(string alias, string name)
     {
+        ThrowIfDisposed();
+
         SgaDrive newDrive = new SgaDrive(alias, name, this);
         _drives.Add(newDrive);
         return newDrive;
@@ -129,6 +136,11 @@ public class SgaArchive: IDisposable
         _archiveStream.ReadExactly(versionBuffer);
         int version = BinaryPrimitives.ReadInt32LittleEndian(versionBuffer);
         return version;
+    }
+
+    internal void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
     }
 
 }
