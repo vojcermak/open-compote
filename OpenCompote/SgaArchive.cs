@@ -4,10 +4,13 @@ using OpenCompote.SGA.Parsers;
 
 namespace OpenCompote.SGA;
 
-public class SgaArchive
+public class SgaArchive: IDisposable
 {
     private readonly List<SgaDrive> _drives;
     private readonly ReadOnlyCollection<SgaDrive> _driveCollection;
+    private bool _isDisposed;
+    private bool _leaveOpen;
+    internal readonly Stream _archiveStream;
 
     public SgaVersion Version {get;}
     public SgaMode Mode {get;}
@@ -20,16 +23,17 @@ public class SgaArchive
     
     public int BlockSize {get; set;}
 
-    internal readonly Stream _archiveStream;
 
-    public SgaArchive(Stream stream, int mode, int version){
+    public SgaArchive(Stream stream, SgaMode mode, SgaVersion version, bool leaveOpen = false){
         throw new NotImplementedException();
     }
 
-    public SgaArchive(Stream stream, SgaMode mode){
+    public SgaArchive(Stream stream, SgaMode mode, bool leaveOpen = false){
         _archiveStream = stream;
         Mode = mode;
         ArchiveName = "";
+        _isDisposed = false;
+        _leaveOpen = leaveOpen;
 
         if(!_archiveStream.CanRead || !_archiveStream.CanSeek)
             throw new Exception("stream is not supported");
@@ -81,5 +85,40 @@ public class SgaArchive
     internal void AddDrive(SgaDrive newDrive)
     {
         _drives.Add(newDrive);
+    }
+
+    public SgaDrive AddDrive(string alias, string name)
+    {
+        SgaDrive newDrive = new SgaDrive(alias, name, this);
+        _drives.Add(newDrive);
+        return newDrive;
+    }
+
+    public void Dispose()
+    {
+        if(!_isDisposed)
+        {
+            try
+            {
+                switch (Mode)
+                {
+                    case SgaMode.Read:
+                        break;
+                    case SgaMode.Create:
+                    case SgaMode.Write:
+                        throw new NotImplementedException();
+                        //SgaV2Parser.Write();
+                        //break;
+                }
+            }
+            finally
+            {
+                _isDisposed = true;
+                if (!_leaveOpen)
+                {
+                    _archiveStream.Dispose();
+                }
+            }
+        }
     }
 }

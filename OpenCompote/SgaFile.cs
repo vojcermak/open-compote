@@ -20,7 +20,7 @@ public class SgaFile: SgaEntry
         Size = size;
     }
 
-    public void GetFile()
+    public void Open()
     {
         long currentPosition = Drive.Archive._archiveStream.Position;
         Drive.Archive._archiveStream.Position = _DataOffset;
@@ -40,5 +40,15 @@ public class SgaFile: SgaEntry
         }
         
         Drive.Archive._archiveStream.Position = currentPosition;
+    }
+
+    public void ExtractToFile(string destination, bool overwrite = false)
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void Delete()
+    {
+        throw new NotImplementedException();
     }
 }

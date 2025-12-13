@@ -8,7 +8,7 @@ public class SgaDrive
     public string Alias {get; private set;}
     public string Name  {get; private set;}
     public SgaArchive Archive {get;}
-    public SgaFolder RootFolder {get; internal set;}
+    public SgaFolder? RootFolder {get; internal set;}
 
     internal uint StartFolder {get;}
     internal uint EndFolder {get;}
@@ -20,6 +20,15 @@ public class SgaDrive
         Alias = alias;
         Name = name;
         Archive = archive;
+        RootFolder = new SgaFolder(name);
+    }
+
+    public SgaDrive(string alias, string name, SgaArchive archive, SgaFolder rootFolder)
+    {
+        Alias = alias;
+        Name = name;
+        Archive = archive;
+        RootFolder = rootFolder;
     }
 
     internal SgaDrive(string alias, string name, SgaArchive archive, int rootFolderIndex, uint startFolder, uint endFolder,  uint startFile, uint endFile)
@@ -33,5 +42,10 @@ public class SgaDrive
         EndFolder = endFolder;
         StartFile = startFile;
         EndFile = endFile;
+    }
+
+    public void Delete()
+    {
+        throw new NotImplementedException();
     }
 }

@@ -9,4 +9,6 @@ public abstract class SgaEntry
     public SgaFolder? Parent {get; internal set;}
     public SgaDrive? Drive {get; internal set;}
 
+    public abstract void Delete();
+
 }
