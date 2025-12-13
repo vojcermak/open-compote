@@ -10,6 +10,8 @@ public class SgaArchive: IDisposable
     private readonly ReadOnlyCollection<SgaDrive> _driveCollection;
     private bool _isDisposed;
     private bool _leaveOpen;
+    private readonly ISgaParser _parser;
+
     internal readonly Stream _archiveStream;
 
     public SgaVersion Version {get;}
@@ -58,7 +60,7 @@ public class SgaArchive: IDisposable
         {
             case 2:
                 Version = SgaVersion.V2;
-                SgaV2Parser.Parse(this, stream);
+                _parser = new SgaV2Parser();
                 break;
             case 4: 
                 Version = SgaVersion.V4;
@@ -70,17 +72,11 @@ public class SgaArchive: IDisposable
                 Version = SgaVersion.V7;
                 throw new NotImplementedException();
             default: throw new Exception("version is not supported");
-
         }
+        
+        _parser.Parse(this, stream);
     }
 
-    private int ParseVersion()
-    {
-        byte[] versionBuffer = new byte[4];
-        _archiveStream.ReadExactly(versionBuffer);
-        int version = BinaryPrimitives.ReadInt32LittleEndian(versionBuffer);
-        return version;
-    }
 
     internal void AddDrive(SgaDrive newDrive)
     {
@@ -92,6 +88,11 @@ public class SgaArchive: IDisposable
         SgaDrive newDrive = new SgaDrive(alias, name, this);
         _drives.Add(newDrive);
         return newDrive;
+    }
+
+    public SgaEntry GetEntry(string entryName)
+    {
+        throw new NotImplementedException();
     }
 
     public void Dispose()
@@ -106,9 +107,8 @@ public class SgaArchive: IDisposable
                         break;
                     case SgaMode.Create:
                     case SgaMode.Write:
-                        throw new NotImplementedException();
-                        //SgaV2Parser.Write();
-                        //break;
+                        _parser.Write(this, _archiveStream);
+                        break;
                 }
             }
             finally
@@ -121,4 +121,14 @@ public class SgaArchive: IDisposable
             }
         }
     }
+
+
+    private int ParseVersion()
+    {
+        byte[] versionBuffer = new byte[4];
+        _archiveStream.ReadExactly(versionBuffer);
+        int version = BinaryPrimitives.ReadInt32LittleEndian(versionBuffer);
+        return version;
+    }
+
 }

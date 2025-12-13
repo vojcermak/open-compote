@@ -12,7 +12,15 @@ using OpenCompote.SGA;
 - remove specific file/folder/drive
 */
 
-using (SgaArchive archive = SgaArchiveFile.Open(@"../sgas/W40kDataKeys(dow1).sga", SgaMode.Read))
+if (args.Length == 0)
+{
+    Console.WriteLine("Usage: dotnet run -- <path-to-sga-file>");
+    return;
+}
+
+string sgaPath = args[0];
+
+using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
 {
     Console.WriteLine("Archive name: {0}",archive.ArchiveName);
     Console.WriteLine("Drives:");

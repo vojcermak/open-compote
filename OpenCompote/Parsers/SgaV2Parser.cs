@@ -1,9 +1,9 @@
 
 namespace OpenCompote.SGA.Parsers;
 
-public class SgaV2Parser : ISgaParser
+internal class SgaV2Parser : ISgaParser
 {
-    public static void Parse(SgaArchive archive, Stream sgaStream)
+    public void Parse(SgaArchive archive, Stream sgaStream)
     {
         List<SgaFolder> folderList = new List<SgaFolder>();
         List<SgaFile> fileList = new List<SgaFile>();
@@ -154,7 +154,7 @@ public class SgaV2Parser : ISgaParser
         };
     }
 
-    public void Write(SgaArchive archive, BinaryWriter writer)
+    public void Write(SgaArchive archive, Stream sgaStream)
     {
         throw new NotImplementedException();
     }

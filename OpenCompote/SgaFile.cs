@@ -20,26 +20,21 @@ public class SgaFile: SgaEntry
         Size = size;
     }
 
-    public void Open()
+    public Stream Open()
     {
         long currentPosition = Drive.Archive._archiveStream.Position;
         Drive.Archive._archiveStream.Position = _DataOffset;
+        
         byte[] buffer = new byte[CompressedSize];
-        Drive.Archive._archiveStream.Read(buffer, 0, (int)CompressedSize);
+        Drive.Archive._archiveStream.ReadExactly(buffer);
         using var compressed = new MemoryStream(buffer);
-        using var outputFile = File.Create("./dump/" + Name);
-
-        if(StorageType == StorageType.Uncompress)
-        {
-            compressed.CopyTo(outputFile);
-        }
-        else
-        {
-            using var deflate = new ZLibStream(compressed, CompressionMode.Decompress);
-            deflate.CopyTo(outputFile);
-        }
         
         Drive.Archive._archiveStream.Position = currentPosition;
+
+        if(StorageType == StorageType.Uncompress)
+            return compressed;
+        else
+            return new ZLibStream(compressed, CompressionMode.Decompress);
     }
 
     public void ExtractToFile(string destination, bool overwrite = false)
