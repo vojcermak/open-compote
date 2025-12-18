@@ -1,6 +1,4 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using System.IO.Compression;
-using System.Text;
 using OpenCompote.SGA;
 
 /*
@@ -30,27 +28,34 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
         Console.WriteLine("    Drive name: {0}", drive.Name);
         Console.WriteLine("    Drive alias: {0}", drive.Alias);
 
-        Stack<SgaEntry> stack = new Stack<SgaEntry>();
-        stack.Push(drive.RootFolder);
+        Stack<Tuple<SgaEntry, int>> stack = new Stack<Tuple<SgaEntry, int>>();
+        stack.Push(new Tuple<SgaEntry, int>(drive.RootFolder,0));
 
         while(stack.Count > 0)
         {
-            SgaEntry entry = stack.Pop();
+            var item = stack.Pop();
+            SgaEntry entry = item.Item1;
 
             if (entry is SgaFile file)
             {
-                Console.WriteLine($"File: {file.Name} Type: {file.StorageType}");
+                Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name}");
                 //file.Open();
             }
             else if (entry is SgaFolder folder)
             {
-                Console.WriteLine($"Folder: {folder.Name}");
+                Console.WriteLine(new string(' ', item.Item2 *2) + $"    Folder: {folder.Name}");
                 // Push subentries onto the stack
                 for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
                 {
-                    stack.Push(folder.Contents[i]);
+                    stack.Push(new Tuple<SgaEntry, int>(folder.Contents[i], item.Item2 + 1));
                 }
             }
         }
     }     
 }
+
+using(var newSga = new SgaArchive(new FileStream(@"./test.sga", FileMode.CreateNew), SgaMode.Create))
+{
+    Console.WriteLine(newSga.ArchiveName);
+}
+

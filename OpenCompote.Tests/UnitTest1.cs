@@ -1,19 +1,18 @@
-﻿namespace OpenCompote.Tests;
+﻿using OpenCompote.SGA;
+using Xunit.Sdk;
 
-public class UnitTest1
+
+namespace OpenCompote.SGA.Tests;
+
+public class SgaArchiveTest
 {
     [Fact]
-    public void Test1()
+    public void Constructor_WithNullStream_ThrowsArgumentException()
     {
-        var result = 5 + 5;
-        Assert.Equal(10, result);
-    }
+        MemoryStream stream = new MemoryStream();
 
-    [Fact]
-    public void Test2()
-    {
-        var result = 5 + 5;
-        Assert.Equal(10, result);
+        Assert.Throws<Exception>(()=>new SgaArchive(null, SgaMode.Read));
+        Assert.Throws<Exception>(()=>new SgaArchive(stream, SgaMode.Create));
     }
 
 }

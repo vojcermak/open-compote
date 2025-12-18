@@ -18,7 +18,7 @@ public class SgaFile: SgaEntry
         StorageType = type;
     }
 
-    internal SgaFile (string name, StorageType type, uint dataOffset, uint compressedSize, uint size)
+    internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size)
     {
         _DataOffset = dataOffset;
         Name = name;

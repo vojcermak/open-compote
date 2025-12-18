@@ -17,8 +17,6 @@ internal class SgaV2Parser : ISgaParser
         uint tocSize = ParserUtils.ReadUInt32(sgaStream);
         uint dataOffset = ParserUtils.ReadUInt32(sgaStream);
 
-        Console.WriteLine("TOC size: {0}, Data offset: {1}",tocSize, dataOffset);
-
         byte[]? generatedFileHash = ParserUtils.HashMD5(sgaStream, sgaStream.Length-sgaStream.Position, "E01519D6-2DB7-4640-AF54-0A23319C56C3");
         if(generatedFileHash == null || !fileHash.SequenceEqual(generatedFileHash))
             Console.WriteLine("Hash is not valid");
@@ -39,11 +37,6 @@ internal class SgaV2Parser : ISgaParser
 
         bool isIc =  (nameListOffset - fileOffset)/fileCount == 17;
 
-        Console.WriteLine("Drive offset: {0}\nDrive count: {1}\nFolder offset: {2}\nFolder count: {3}\nFile offset: {4}\nFile count: {5}\nName offset: {6}\nName count: {7}",
-        driveOffset,driveCount,folderOffset,folderCount, fileOffset, fileCount, nameListOffset, nameCount);
-        
-        Console.WriteLine(sgaStream.Position);
-
         // Read drive definitions
         for (int i = 0; i < driveCount; i++)
         {
@@ -56,13 +49,9 @@ internal class SgaV2Parser : ISgaParser
             ushort rootFolder = ParserUtils.ReadUInt16(sgaStream);
             
             archive.AddDrive(new SgaDrive(driveAlias, driveName, archive, rootFolder, firstFolder, lastFolder, firstFile, lastFile));
-
-            Console.WriteLine("Drive name: {0}\nDrive alias: {1}\nFirst folder: {2}\nLast folder: {3}\nFirst file: {4}\nLast file: {5}\nRoot folder {6}",
-            driveName, driveAlias, firstFolder, lastFolder, firstFile, lastFile, rootFolder);
         }
 
-        Console.WriteLine(sgaStream.Position);
-
+        // Read folder definitions
         for (int i = 0; i < folderCount; i++)
         {
             uint nameOffset = ParserUtils.ReadUInt32(sgaStream);
@@ -70,9 +59,6 @@ internal class SgaV2Parser : ISgaParser
             uint lastFolder = ParserUtils.ReadUInt16(sgaStream);
             uint firstFile = ParserUtils.ReadUInt16(sgaStream);
             uint lastFile = ParserUtils.ReadUInt16(sgaStream);
-
-            Console.WriteLine("Name offset: {0}\nFirst folder: {1}\nLast folder: {2}\nFirst file: {3}\nLast file: {4}",
-            nameOffset, firstFolder, lastFolder, firstFile, lastFile);
 
             uint nameStart = nameOffset + 180 + nameListOffset;
             string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
@@ -82,8 +68,7 @@ internal class SgaV2Parser : ISgaParser
             
         }
 
-        Console.WriteLine(sgaStream.Position);
-
+        // Read file definitions
         for (int i = 0; i < fileCount; i++)
         {
             uint nameOffset = ParserUtils.ReadUInt32(sgaStream);
@@ -92,9 +77,6 @@ internal class SgaV2Parser : ISgaParser
             uint compressSize = ParserUtils.ReadUInt32(sgaStream);
             uint decompressSize = ParserUtils.ReadUInt32(sgaStream);
 
-            Console.WriteLine("Name offset: {0}\nStorage flag: {1}\nData offset: {2}\nCompressed size: {3}\nDecompressed size: {4}",
-            nameOffset, storageFlag, rawDataOffset, compressSize, decompressSize);
-
             uint nameStart = nameOffset + 180 + nameListOffset;
             string fileName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
 
@@ -102,8 +84,8 @@ internal class SgaV2Parser : ISgaParser
             fileList.Add(file);
         }
 
-        Console.WriteLine(sgaStream.Position);
 
+        // assign all entries to drives 
         foreach (SgaDrive drive in archive.Drives)
         {
             for (int i = 0; i < (drive.EndFolder - drive.StartFolder); i++)
@@ -115,6 +97,7 @@ internal class SgaV2Parser : ISgaParser
             drive.RootFolder = folderList[drive.RootFolderIndex];
         }
 
+        // create folder structure
         foreach (SgaFolder folder in folderList)
         {
             for (int i = (int)folder.StartFolder; i < folder.EndFolder; i++)
