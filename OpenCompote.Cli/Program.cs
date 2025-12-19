@@ -54,7 +54,7 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
     }     
 }
 
-using(var newSga = new SgaArchive(new FileStream(@"./test.sga", FileMode.CreateNew), SgaMode.Create))
+using(var newSga = new SgaArchive(new FileStream(@"./test.sga", FileMode.CreateNew), SgaMode.Create, SgaVersion.V2))
 {
     Console.WriteLine(newSga.ArchiveName);
 }

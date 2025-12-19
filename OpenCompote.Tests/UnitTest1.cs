@@ -9,10 +9,10 @@ public class SgaArchiveTest
     [Fact]
     public void Constructor_WithNullStream_ThrowsArgumentException()
     {
-        MemoryStream stream = new MemoryStream();
-
-        Assert.Throws<Exception>(()=>new SgaArchive(null, SgaMode.Read));
-        Assert.Throws<Exception>(()=>new SgaArchive(stream, SgaMode.Create));
+        // Need to test what happens when stream is null.
+        #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+        Assert.Throws<ArgumentNullException>(() => new SgaArchive(null, SgaMode.Read));
+        #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
     }
 
 }

@@ -1,6 +1,5 @@
 ﻿using System.Buffers.Binary;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using OpenCompote.SGA.Parsers;
 
 namespace OpenCompote.SGA;
@@ -10,15 +9,14 @@ public class SgaArchive: IDisposable
     private readonly List<SgaDrive> _drives;
     private readonly ReadOnlyCollection<SgaDrive> _driveCollection;
     private bool _isDisposed;
-    private bool _leaveOpen;
+    private readonly bool _leaveOpen;
     private readonly ISgaParser _parser;
 
     internal readonly Stream _archiveStream;
 
     public SgaVersion Version {get;}
     public SgaMode Mode {get;}
-    public string ArchiveName {get; set;}
-    
+    public string ArchiveName {get; set;}    
     public ReadOnlyCollection<SgaDrive> Drives
     {
         get {
@@ -26,7 +24,6 @@ public class SgaArchive: IDisposable
             return _driveCollection;
         }
     }
-    
     public int BlockSize {get; set;}
 
     /// <summary>
@@ -36,8 +33,54 @@ public class SgaArchive: IDisposable
     /// <param name="mode">Mode in which the archive should operate with.</param>
     /// <param name="version">SGA version of the new archive.</param>
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
-    public SgaArchive(Stream stream, SgaMode mode, SgaVersion version, bool leaveOpen = false){
-        throw new NotImplementedException();
+    public SgaArchive(Stream stream, SgaMode mode, SgaVersion? version, bool leaveOpen = false){
+        
+        ArgumentNullException.ThrowIfNull(stream);
+        
+        if(!stream.CanRead || !stream.CanSeek)
+            throw new Exception("stream is not supported");
+
+        if((mode == SgaMode.Write || mode == SgaMode.Create) && !stream.CanWrite)
+            throw new Exception("Cannot write to the stream");
+        
+        _archiveStream = stream;
+        Mode = mode;
+        ArchiveName = "";
+        _isDisposed = false;
+        _leaveOpen = leaveOpen;
+        _drives = new List<SgaDrive>();
+        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
+
+        if(Mode == SgaMode.Create)
+        {
+            if(version == null)
+                throw new ArgumentException("Creating new archives without version is not allowed");
+            Version = (SgaVersion)version;
+        }
+        else
+        {
+            byte[] magicBuffer = new byte[8];
+            _archiveStream.ReadExactly(magicBuffer);
+
+            string text = System.Text.Encoding.ASCII.GetString(magicBuffer);
+            
+            if(text != "_ARCHIVE")
+                throw new Exception("File is not SGA Archive");
+            
+            Version = (SgaVersion)ParseVersion();
+        }
+
+        _parser = Version switch
+        {
+            SgaVersion.V2 => new SgaV2Parser(),
+            SgaVersion.V4 => throw new NotImplementedException(),
+            SgaVersion.V5 => throw new NotImplementedException(),
+            SgaVersion.V7 => throw new NotImplementedException(),
+            _ => throw new Exception("version is not supported"),
+        };
+
+        if(Mode != SgaMode.Create)
+            _parser.Parse(this, _archiveStream);
     }
 
     /// <summary>
@@ -47,61 +90,7 @@ public class SgaArchive: IDisposable
     /// <param name="mode">Mode in which the archive should operate with.</param>
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
     /// <remarks>This constructor cannot be used with SgaMode.Create. For Creating new empty archives please use the other constructor.</remarks>
-    public SgaArchive(Stream stream, SgaMode mode, bool leaveOpen = false){
-
-        switch (mode)
-        {
-            case SgaMode.Write:
-                break;
-            case SgaMode.Read:
-                break;
-            default:
-                throw new ArgumentException("Constructor used does not support creating new archives.");
-        }
-
-        _archiveStream = stream;
-        Mode = mode;
-        ArchiveName = "";
-        _isDisposed = false;
-        _leaveOpen = leaveOpen;
-        _drives = new List<SgaDrive>();
-        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
-
-        if(!_archiveStream.CanRead || !_archiveStream.CanSeek)
-            throw new Exception("stream is not supported");
-
-        if((mode == SgaMode.Write || mode == SgaMode.Create) && !_archiveStream.CanWrite)
-            throw new Exception("Cannot write to the stream");
-
-        byte[] magicBuffer = new byte[8];
-        _archiveStream.ReadExactly(magicBuffer);
-
-        string text = System.Text.Encoding.ASCII.GetString(magicBuffer);
-        
-        if(text != "_ARCHIVE")
-            throw new Exception("File is not SGA Archive");
-
-        switch (ParseVersion())
-        {
-            case 2:
-                Version = SgaVersion.V2;
-                _parser = new SgaV2Parser();
-                break;
-            case 4: 
-                Version = SgaVersion.V4;
-                throw new NotImplementedException();
-            case 5: 
-                Version = SgaVersion.V5;
-                throw new NotImplementedException();
-            case 7: 
-                Version = SgaVersion.V7;
-                throw new NotImplementedException();
-            default: throw new Exception("version is not supported");
-        }
-        
-        _parser.Parse(this, stream);
-    }
-
+    public SgaArchive(Stream stream, SgaMode mode, bool leaveOpen = false): this(stream, mode, null, leaveOpen) {}
 
     internal void AddDrive(SgaDrive newDrive)
     {
@@ -117,6 +106,11 @@ public class SgaArchive: IDisposable
         SgaDrive newDrive = new SgaDrive(alias, name, this);
         _drives.Add(newDrive);
         return newDrive;
+    }
+
+    public SgaDrive GetDrive(string driveName)
+    {
+        throw new NotImplementedException();
     }
 
     public SgaEntry GetEntry(string entryName)
@@ -144,14 +138,11 @@ public class SgaArchive: IDisposable
             {
                 _isDisposed = true;
                 if (!_leaveOpen)
-                {
                     _archiveStream.Dispose();
-                }
             }
         }
     }
-
-
+    
     private int ParseVersion()
     {
         byte[] versionBuffer = new byte[4];

@@ -35,14 +35,13 @@ public class SgaArchiveFile
         throw new NotImplementedException();
     }
 
-    public static SgaArchive Open(string sourceFileName, SgaMode mode)
+    public static SgaArchive Open(string sourceFileName, SgaMode mode, bool leaveOpen = false)
     {
         FileStream fs = File.Open(sourceFileName, FileMode.Open);
-        return new SgaArchive(fs, mode);
-        
+        return new SgaArchive(fs, mode, leaveOpen);
     }
 
-    public static SgaArchive Open(string sourceFileName, int mode, int version)
+    public static SgaArchive Create(string sourceFileName, SgaVersion version, bool leaveOpen = false)
     {
         throw new NotImplementedException();
     }
