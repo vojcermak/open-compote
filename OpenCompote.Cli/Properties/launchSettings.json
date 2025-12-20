@@ -3,7 +3,7 @@
     "OpenCompote.Cli": {
       "commandName": "Project",
       "workingDirectory": "..",
-      "commandLineArgs": ""
+      "commandLineArgs": "\"./result.sga\""
     }
   }
 }
