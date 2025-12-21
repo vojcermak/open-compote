@@ -1,24 +1,37 @@
+using System.Collections.ObjectModel;
+
 namespace OpenCompote.SGA;
 
 public class SgaFolder: SgaEntry
 {
-    public readonly List<SgaEntry> Contents;
-
+    internal readonly List<SgaEntry> _contents;
+    private readonly ReadOnlyCollection<SgaEntry> _contentCollection;
     internal uint StartFolder {get;}
     internal uint EndFolder {get;}
     internal uint StartFile {get;}
     internal uint EndFile {get;}
 
-    internal SgaFolder(string name, SgaDrive drive)
+    public ReadOnlyCollection<SgaEntry> Contents
+    {
+        get {
+            ThrowIfDeleted();
+            return _contentCollection;
+        }
+    }
+
+    internal SgaFolder(string name, SgaDrive drive, SgaFolder? parent)
     {   
-        Contents = new List<SgaEntry>();
+        _contents = new List<SgaEntry>();
+        _contentCollection = new ReadOnlyCollection<SgaEntry>(_contents);
         Drive = drive;
+        Parent = parent;
         Name = name;
     }
 
     internal SgaFolder(string name, uint startFolder, uint endFolder,  uint startFile, uint endFile)
     {
-        Contents = new List<SgaEntry>();
+        _contents = new List<SgaEntry>();
+        _contentCollection = new ReadOnlyCollection<SgaEntry>(_contents);
         Name = name;
         StartFolder = startFolder;
         EndFolder = endFolder;
@@ -26,7 +39,15 @@ public class SgaFolder: SgaEntry
         EndFile = endFile;
     }
 
-    public void ExtractToDirectory(string destination, bool overwrite = false)
+    public SgaFolder AddFolder(string name)
+    {
+        ThrowIfDeleted();
+        SgaFolder newFolder = new SgaFolder(name, Drive!, this);// Drive is not null here
+        _contents.Add(newFolder);
+        return newFolder;
+    }
+
+    public SgaFile AddFile(string name, StorageType type)
     {
         throw new NotImplementedException();
     }
@@ -36,13 +57,14 @@ public class SgaFolder: SgaEntry
         throw new NotImplementedException();
     }
 
-    public SgaFolder AddFolder(string name)
+    public void ExtractToDirectory(string destination, bool overwrite = false)
     {
         throw new NotImplementedException();
     }
 
-    public SgaFile AddFile(string name, StorageType type)
+    private void ThrowIfDeleted()
     {
-        throw new NotImplementedException();
+        ObjectDisposedException.ThrowIf(Drive == null || Drive.Archive == null,this);
+        Drive.Archive.ThrowIfDisposed();
     }
 }

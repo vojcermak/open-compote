@@ -20,7 +20,7 @@ public class SgaDrive
         Alias = alias;
         Name = name;
         Archive = archive;
-        RootFolder = new SgaFolder(name, this);
+        RootFolder = new SgaFolder(name, this, null);
     }
 
     internal SgaDrive(string alias, string name, SgaArchive archive, int rootFolderIndex, uint startFolder, uint endFolder,  uint startFile, uint endFile)
@@ -34,7 +34,7 @@ public class SgaDrive
         EndFolder = endFolder;
         StartFile = startFile;
         EndFile = endFile;
-        RootFolder = new SgaFolder(name, this);
+        RootFolder = new SgaFolder(name, this, null);
     }
 
     public void Delete()

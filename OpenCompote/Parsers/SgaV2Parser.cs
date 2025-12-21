@@ -102,13 +102,50 @@ internal class SgaV2Parser : ISgaParser
         {
             for (int i = (int)folder.StartFolder; i < folder.EndFolder; i++)
             {
-                folder.Contents.Add(folderList[i]);
+                folder._contents.Add(folderList[i]);
                 folderList[i].Parent = folder;
             }
             for (int i = (int)folder.StartFile; i < folder.EndFile; i++)
             {
-                folder.Contents.Add(fileList[i]);
+                folder._contents.Add(fileList[i]);
                 fileList[i].Parent = folder;
+            }
+        }
+    }
+
+    public void Write(SgaArchive archive, Stream sgaStream)
+    {
+        // Mock implementation. For testing only. Will be replaces by actual implementation when i will be satisfied by the public interface.
+        Console.WriteLine("Archive name: {0}",archive.ArchiveName);
+        Console.WriteLine("Drives:");
+
+        foreach (var drive in archive.Drives)
+        {
+            Console.WriteLine("    Drive name: {0}", drive.Name);
+            Console.WriteLine("    Drive alias: {0}", drive.Alias);
+
+            Stack<Tuple<SgaEntry, int>> stack = new Stack<Tuple<SgaEntry, int>>();
+            stack.Push(new Tuple<SgaEntry, int>(drive.RootFolder,0));
+
+            while(stack.Count > 0)
+            {
+                var item = stack.Pop();
+                SgaEntry entry = item.Item1;
+
+                if (entry is SgaFile file)
+                {
+                    Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name}");
+                    //file.Open();
+                }
+                else if (entry is SgaFolder folder)
+                {
+                    Console.WriteLine(new string(' ', item.Item2 *2) + $"    Folder: {folder.Name}");
+                    // Push subentries onto the stack
+                    for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
+                    {
+                        stack.Push(new Tuple<SgaEntry, int>(folder.Contents[i], item.Item2 + 1));
+                    }
+                }
             }
         }
     }
@@ -135,10 +172,5 @@ internal class SgaV2Parser : ISgaParser
             32 => StorageType.StreamCompress,
             _ => throw new Exception("Invalid storage flag value."),
         };
-    }
-
-    public void Write(SgaArchive archive, Stream sgaStream)
-    {
-        throw new NotImplementedException();
     }
 }

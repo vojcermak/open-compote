@@ -14,9 +14,24 @@ public class SgaArchive: IDisposable
     internal readonly Stream _archiveStream;
     internal readonly List<SgaDrive> _drives;
 
+    /// <summary>
+    /// Mode in which the archive was opened.
+    /// </summary>
     public SgaMode Mode {get;}
-    public string ArchiveName {get; set;}    
+    
+    /// <summary>
+    /// Version of the SGA archive.
+    /// </summary>
     public SgaVersion Version {get;}
+
+    /// <summary>
+    /// Name of the SGA archive.
+    /// </summary>
+    public string ArchiveName {get; set;}
+
+    /// <summary>
+    /// List of SGA Drives currently in the archive.
+    /// </summary>
     public ReadOnlyCollection<SgaDrive> Drives
     {
         get {
@@ -24,6 +39,7 @@ public class SgaArchive: IDisposable
             return _driveCollection;
         }
     }
+
     public int BlockSize {get; set;}
 
     /// <summary>

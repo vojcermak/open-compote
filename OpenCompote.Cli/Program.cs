@@ -18,9 +18,16 @@ if (args.Length == 0)
 
 string sgaPath = args[0];
 
-using(var newSga = new SgaArchive(new FileStream(sgaPath, FileMode.CreateNew), SgaMode.Create, SgaVersion.V2))
+using(var newSga = new SgaArchive(new MemoryStream(), SgaMode.Create, SgaVersion.V2))
 {
-    Console.WriteLine(newSga.ArchiveName);
+    newSga.ArchiveName = "MyNewArchive";
+    var dataDrive = newSga.AddDrive("data", "gameData");
+    var attrDrive = newSga.AddDrive("attribs", "gameAttributes");
+
+    dataDrive.RootFolder.Name = ""; 
+    var subfolder =  dataDrive.RootFolder.AddFolder("subfolder");   
+    subfolder.AddFolder("subsubFolder");
+    subfolder.AddFolder("folder2");
 }
 
 // using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
