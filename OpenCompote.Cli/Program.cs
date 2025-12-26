@@ -1,4 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using System.IO.Compression;
 using OpenCompote.SGA;
 
 /*
@@ -28,6 +29,16 @@ using(var newSga = new SgaArchive(new MemoryStream(), SgaMode.Create, SgaVersion
     var subfolder =  dataDrive.RootFolder.AddFolder("subfolder");   
     subfolder.AddFolder("subsubFolder");
     subfolder.AddFolder("folder2");
+    var file1 =  subfolder.AddFile("file1", StorageType.Uncompress);
+    var fileStream = file1.Open();
+
+    var fileWriter = new StreamWriter(fileStream, leaveOpen: true);
+    fileWriter.WriteLine("Hello world!");
+    fileWriter.Dispose();
+
+    Console.WriteLine(fileStream.Position);
+    fileStream.Position = 0;
+    Console.WriteLine(fileStream.ReadByte());
 }
 
 // using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
@@ -72,6 +83,6 @@ using(var newSga = new SgaArchive(new MemoryStream(), SgaMode.Create, SgaVersion
 //         Console.WriteLine("Drive Not found");
 //     archive.AddDrive("MyDrive", "MyDrive");
 //     archive.GetDrive("");
-    
+
 //     resDrive?.Delete();
 // }

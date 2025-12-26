@@ -41,15 +41,26 @@ public class SgaFolder: SgaEntry
 
     public SgaFolder AddFolder(string name)
     {
-        ThrowIfDeleted();
-        SgaFolder newFolder = new SgaFolder(name, Drive!, this);// Drive is not null here
+        ThrowIfDeleted(); // Test if this folder was deleted.
+
+        if(Drive!.Archive!.Mode == SgaMode.Read)
+            throw new NotSupportedException("Writing is not supported in this mode.");
+
+        SgaFolder newFolder = new SgaFolder(name, Drive!, this);
         _contents.Add(newFolder);
         return newFolder;
     }
 
     public SgaFile AddFile(string name, StorageType type)
     {
-        throw new NotImplementedException();
+        ThrowIfDeleted(); // Test if this folder was deleted.
+
+        if(Drive!.Archive!.Mode == SgaMode.Read)
+            throw new NotSupportedException("Writing is not supported in this mode.");
+
+        SgaFile newFile = new SgaFile(name, type, Drive, this);
+        _contents.Add(newFile);
+        return newFile;
     }
 
     public override void Delete()
