@@ -3,7 +3,7 @@
     "OpenCompote.Cli": {
       "commandName": "Project",
       "workingDirectory": "..",
-      "commandLineArgs": "\"./result.sga\""
+      "commandLineArgs": "\"../sgas/W40kDataLoc(dow1).sga\""
     }
   }
 }

@@ -19,70 +19,47 @@ if (args.Length == 0)
 
 string sgaPath = args[0];
 
-using(var newSga = new SgaArchive(new MemoryStream(), SgaMode.Create, SgaVersion.V2))
-{
-    newSga.ArchiveName = "MyNewArchive";
-    var dataDrive = newSga.AddDrive("data", "gameData");
-    var attrDrive = newSga.AddDrive("attribs", "gameAttributes");
-
-    dataDrive.RootFolder.Name = ""; 
-    var subfolder =  dataDrive.RootFolder.AddFolder("subfolder");   
-    subfolder.AddFolder("subsubFolder");
-    subfolder.AddFolder("folder2");
-    var file1 =  subfolder.AddFile("file1", StorageType.Uncompress);
-    var fileStream = file1.Open();
-
-    var fileWriter = new StreamWriter(fileStream, leaveOpen: true);
-    fileWriter.WriteLine("Hello world!");
-    fileWriter.Dispose();
-
-    Console.WriteLine(fileStream.Position);
-    fileStream.Position = 0;
-    Console.WriteLine(fileStream.ReadByte());
-}
-
-// using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
+// using(var newSga = new SgaArchive(new MemoryStream(), SgaMode.Create, SgaVersion.V2))
 // {
-//     Console.WriteLine("Archive name: {0}",archive.ArchiveName);
-//     Console.WriteLine("Drives:");
+//     newSga.ArchiveName = "MyNewArchive";
+//     var dataDrive = newSga.AddDrive("data", "gameData");
+//     var attrDrive = newSga.AddDrive("attribs", "gameAttributes");
 
-//     foreach (var drive in archive.Drives)
+//     dataDrive.RootFolder.Name = ""; 
+//     var subfolder = dataDrive.RootFolder.AddFolder("subfolder");   
+//     subfolder.AddFolder("subsubFolder");
+//     subfolder.AddFolder("folder2");
+//     var file1 = subfolder.AddFile("file1", StorageType.Uncompress);
+//     var fileStream = file1.Open();
+
+//     using(var fileWriter = new StreamWriter(fileStream, leaveOpen: true))
 //     {
-//         Console.WriteLine("    Drive name: {0}", drive.Name);
-//         Console.WriteLine("    Drive alias: {0}", drive.Alias);
-
-//         Stack<Tuple<SgaEntry, int>> stack = new Stack<Tuple<SgaEntry, int>>();
-//         stack.Push(new Tuple<SgaEntry, int>(drive.RootFolder,0));
-
-//         while(stack.Count > 0)
-//         {
-//             var item = stack.Pop();
-//             SgaEntry entry = item.Item1;
-
-//             if (entry is SgaFile file)
-//             {
-//                 Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name}");
-//                 //file.Open();
-//             }
-//             else if (entry is SgaFolder folder)
-//             {
-//                 Console.WriteLine(new string(' ', item.Item2 *2) + $"    Folder: {folder.Name}");
-//                 // Push subentries onto the stack
-//                 for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
-//                 {
-//                     stack.Push(new Tuple<SgaEntry, int>(folder.Contents[i], item.Item2 + 1));
-//                 }
-//             }
-//         }
+//         fileWriter.WriteLine("Hello world!");        
 //     }
 
-//     var resDrive = archive.GetDrive("w40kdatakeys");
-//     if(resDrive != null)
-//         Console.WriteLine(resDrive.Name);
-//     else
-//         Console.WriteLine("Drive Not found");
-//     archive.AddDrive("MyDrive", "MyDrive");
-//     archive.GetDrive("");
-
-//     resDrive?.Delete();
+//     Console.WriteLine(fileStream.Position);
+//     fileStream.Position = 0;
+//     Console.WriteLine(fileStream.ReadByte());
 // }
+
+using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
+{
+    var dataDrive = archive.GetDrive("data");
+    var artFolder = (SgaFolder)dataDrive.RootFolder.Contents.First((item) => { return item.Name == "art";});
+    var decalsFolder = (SgaFolder)artFolder.Contents.First((item) => { return item.Name == "art\\decals";});
+    var deathFolder = (SgaFolder)decalsFolder.Contents.First((item) => { return item.Name == "art\\decals\\death";});
+    var grassImage = (SgaFile)deathFolder.Contents.First((item) => {return item.Name == "splat_1_grass.dds";});
+
+    using(var openImage = grassImage.Open())
+    {
+        Console.WriteLine(openImage.ReadByte());
+    }
+
+    Console.WriteLine(grassImage.Name);
+
+    using(var openImage = grassImage.Open())
+    {
+        Console.WriteLine(openImage.ReadByte());
+    }
+
+}

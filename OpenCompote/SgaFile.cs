@@ -1,6 +1,5 @@
-using System.Data;
-using System.Dynamic;
 using System.IO.Compression;
+using OpenCompote.SGA.CustomStreams;
 
 namespace OpenCompote.SGA;
 
@@ -35,25 +34,21 @@ public class SgaFile: SgaEntry
     {   
         ThrowIfDeleted();
 
-        if (_isInStream)
+        switch (Drive!.Archive!.Mode)
         {
-            long currentPosition = Drive!.Archive!._archiveStream.Position;
-            Drive.Archive._archiveStream.Position = _DataOffset;
-            
-            byte[] buffer = new byte[CompressedSize];
-            Drive.Archive._archiveStream.ReadExactly(buffer);
-            using var compressed = new MemoryStream(buffer);
-            
-            Drive.Archive._archiveStream.Position = currentPosition;
-
-            if(StorageType == StorageType.Uncompress)
-                return compressed;
-            else
-                return new ZLibStream(compressed, CompressionMode.Decompress);   
+            case SgaMode.Read:
+                return OpenReadOnly();
+            case SgaMode.Create:
+            case SgaMode.Write:
+                return OpenReadWrite();
+            default:
+                throw new InvalidOperationException($"Invalid Mode value: {Drive.Archive.Mode}");
         }
+    }
 
-        _fileContents ??= new MemoryStream();
-        return _fileContents;
+    public override void Delete()
+    {
+        throw new NotImplementedException();
     }
 
     public void ExtractToFile(string destination, bool overwrite = false)
@@ -61,9 +56,25 @@ public class SgaFile: SgaEntry
         throw new NotImplementedException();
     }
 
-    public override void Delete()
+    private Stream OpenReadOnly()
     {
-        throw new NotImplementedException();
+        ReadSubStream compressed = new ReadSubStream(Drive!.Archive!._archiveStream, _DataOffset, CompressedSize);
+
+        if(StorageType == StorageType.Uncompress)
+            return compressed;
+        else
+            return new ZLibStream(compressed, CompressionMode.Decompress);
+    }
+
+    private Stream OpenReadWrite()
+    {
+        if (_isInStream && _fileContents == null)
+        {
+            throw new NotImplementedException();
+        }
+
+        _fileContents ??= new MemoryStream();
+        return _fileContents;
     }
 
     private void ThrowIfDeleted()
