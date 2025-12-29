@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCompote", "OpenCompote\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCompote.Cli", "OpenCompote.Cli\OpenCompote.Cli.csproj", "{5990AD1B-C9ED-4D2E-9057-3A47724A3DF3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCompote.Tests", "OpenCompote.Tests\OpenCompote.Tests.csproj", "{27B769E2-CB3D-4870-A1BB-5AD482A7A939}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCompote.Tests", "tests\OpenCompote.SGA.Tests.csproj", "{27B769E2-CB3D-4870-A1BB-5AD482A7A939}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
