@@ -5,9 +5,9 @@ namespace OpenCompote.SGA;
 
 public class SgaFile: SgaEntry
 {
-    private uint _DataOffset;
+    private readonly uint _DataOffset;
     private Stream? _fileContents;
-    private bool _isInStream = false;
+    private readonly bool _isInStream = false;
     public StorageType StorageType {get; set;}
     public uint CompressedSize {get; private set;}
     public uint Size {get; private set;}
@@ -48,7 +48,16 @@ public class SgaFile: SgaEntry
 
     public override void Delete()
     {
-        throw new NotImplementedException();
+        ThrowIfDeleted();
+        
+        if(Drive!.Archive!.Mode == SgaMode.Read)
+            throw new NotSupportedException("Deleting is not supported in this mode.");
+
+        Parent!._contents.Remove(this);
+        Parent = null;
+        Drive = null;
+        
+        _fileContents?.Dispose();
     }
 
     public void ExtractToFile(string destination, bool overwrite = false)
@@ -70,7 +79,10 @@ public class SgaFile: SgaEntry
     {
         if (_isInStream && _fileContents == null)
         {
-            throw new NotImplementedException();
+            _fileContents = new MemoryStream();
+            var tempStream = OpenReadOnly();
+            tempStream.CopyTo(_fileContents);
+            _fileContents.Position = 0;
         }
 
         _fileContents ??= new MemoryStream();

@@ -42,7 +42,7 @@ string sgaPath = args[0];
 //     Console.WriteLine(fileStream.ReadByte());
 // }
 
-using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
+using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
 {
     var dataDrive = archive.GetDrive("data");
     var artFolder = (SgaFolder)dataDrive.RootFolder.Contents.First((item) => { return item.Name == "art";});
@@ -52,6 +52,7 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
 
     using(var openImage = grassImage.Open())
     {
+        openImage.WriteByte(00);
         Console.WriteLine(openImage.ReadByte());
     }
 
