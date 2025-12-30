@@ -62,5 +62,4 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
     {
         Console.WriteLine(openImage.ReadByte());
     }
-
 }

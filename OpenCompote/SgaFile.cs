@@ -5,9 +5,10 @@ namespace OpenCompote.SGA;
 
 public class SgaFile: SgaEntry
 {
+    private readonly bool _isInStream = false;
     private readonly uint _DataOffset;
     private Stream? _fileContents;
-    private readonly bool _isInStream = false;
+    private bool _isOpen;
     public StorageType StorageType {get; set;}
     public uint CompressedSize {get; private set;}
     public uint Size {get; private set;}
@@ -77,16 +78,23 @@ public class SgaFile: SgaEntry
 
     private Stream OpenReadWrite()
     {
+        if (_isOpen)
+            throw new IOException("Files cannot be opened multiple times in Update/Create mode.");
+
         if (_isInStream && _fileContents == null)
         {
             _fileContents = new MemoryStream();
             var tempStream = OpenReadOnly();
             tempStream.CopyTo(_fileContents);
-            _fileContents.Position = 0;
         }
 
         _fileContents ??= new MemoryStream();
-        return _fileContents;
+        _fileContents.Position = 0;
+        _isOpen = true;
+        return new WrapperStream(_fileContents, () =>
+        {
+            _isOpen = false;
+        });
     }
 
     private void ThrowIfDeleted()
