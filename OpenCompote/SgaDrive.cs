@@ -48,6 +48,7 @@ public class SgaDrive
         Archive.ThrowIfDisposed();
 
         Archive._drives.Remove(this);
+        RootFolder.Delete();
         Archive = null;
     }
 

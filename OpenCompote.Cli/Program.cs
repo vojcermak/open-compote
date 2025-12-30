@@ -50,16 +50,11 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
     var deathFolder = (SgaFolder)decalsFolder.Contents.First((item) => { return item.Name == "art\\decals\\death";});
     var grassImage = (SgaFile)deathFolder.Contents.First((item) => {return item.Name == "splat_1_grass.dds";});
 
-    using(var openImage = grassImage.Open())
-    {
-        openImage.WriteByte(00);
-        Console.WriteLine(openImage.ReadByte());
-    }
+    var openImage = grassImage.Open();
+    openImage.WriteByte(00);
+    Console.WriteLine(openImage.ReadByte());
+    
+    grassImage.Delete();
 
-    Console.WriteLine(grassImage.Name);
-
-    using(var openImage = grassImage.Open())
-    {
-        Console.WriteLine(openImage.ReadByte());
-    }
+    dataDrive.Delete();
 }

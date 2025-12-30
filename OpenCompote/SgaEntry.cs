@@ -11,4 +11,6 @@ public abstract class SgaEntry
 
     public abstract void Delete();
 
+    internal abstract void Delete(bool subDelete);
+
 }

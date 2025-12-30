@@ -49,12 +49,19 @@ public class SgaFile: SgaEntry
 
     public override void Delete()
     {
+        Delete(false);
+    }
+
+    internal override void Delete(bool subDelete)
+    {
         ThrowIfDeleted();
         
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new NotSupportedException("Deleting is not supported in this mode.");
+        
+        if(!subDelete)
+            Parent!._contents.Remove(this);
 
-        Parent!._contents.Remove(this);
         Parent = null;
         Drive = null;
         

@@ -65,7 +65,26 @@ public class SgaFolder: SgaEntry
 
     public override void Delete()
     {
-        throw new NotImplementedException();
+        Delete(false);
+    }
+
+    internal override void Delete(bool subDelete)
+    {
+        ThrowIfDeleted();
+
+        if(Drive!.Archive!.Mode == SgaMode.Read)
+            throw new NotSupportedException("Deleting is not supported in this mode.");
+
+        foreach (var item in _contents)
+        {
+            item.Delete(true);
+        }
+
+        Parent = null;
+        Drive = null;
+        
+        if(!subDelete)
+            Parent?._contents.Remove(this);
     }
 
     public void ExtractToDirectory(string destination, bool overwrite = false)
