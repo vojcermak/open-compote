@@ -1,5 +1,4 @@
-﻿using OpenCompote.SGA;
-using Xunit.Sdk;
+﻿using Xunit.Sdk;
 
 
 namespace OpenCompote.SGA.Tests;

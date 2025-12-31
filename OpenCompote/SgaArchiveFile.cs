@@ -1,6 +1,3 @@
-using System.Runtime.CompilerServices;
-using OpenCompote.SGA.Parsers;
-
 namespace OpenCompote.SGA;
 
 public class SgaArchiveFile
