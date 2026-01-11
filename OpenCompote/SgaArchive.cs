@@ -54,10 +54,10 @@ public class SgaArchive: IDisposable
         ArgumentNullException.ThrowIfNull(stream);
         
         if(!stream.CanRead || !stream.CanSeek)
-            throw new Exception("stream is not supported");
+            throw new ArgumentException("stream is not supported");
 
         if((mode == SgaMode.Write || mode == SgaMode.Create) && !stream.CanWrite)
-            throw new Exception("Cannot write to the stream");
+            throw new ArgumentException("Cannot write to the stream");
         
         _archiveStream = stream;
         Mode = mode;
@@ -92,12 +92,30 @@ public class SgaArchive: IDisposable
             SgaVersion.V4 => throw new NotImplementedException(),
             SgaVersion.V5 => throw new NotImplementedException(),
             SgaVersion.V7 => throw new NotImplementedException(),
-            _ => throw new Exception("version is not supported"),
+            _ => throw new ArgumentException("version is not supported"),
         };
 
         if(Mode != SgaMode.Create)
             _parser.Parse(this, _archiveStream);
     }
+
+    #if DEBUG // For unit testing of the public API only, Do not include to release builds (Not very nice, but works.) 
+    internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false)
+    {
+        Mode = mode;
+        Version = version;
+        ArchiveName = "";
+        _archiveStream = stream;
+        _isDisposed = false;
+        _leaveOpen = leaveOpen;
+        _drives = new List<SgaDrive>();
+        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
+        _parser = parser;
+
+        if(Mode != SgaMode.Create)
+            _parser.Parse(this, _archiveStream);
+    }
+    #endif
 
     /// <summary>
     /// Open constructor. - Initialize new instance of SgaArchive on the given stream in the specific mode, specifying whether to leave the stream open.
