@@ -1,8 +1,7 @@
-using System.Collections.ObjectModel;
 using System.IO.Compression;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using OpenCompote.SGA.Parsers;
+using Xunit;
 
 namespace OpenCompote.SGA.Tests;
 
@@ -34,6 +33,11 @@ public class MockParser : ISgaParser
 
     public void Write(SgaArchive archive, Stream sgaStream)
     {
+        Assert.Equal(_expectedTree.Count, archive.Drives.Count);
+        
+        for (int i = 0; i < archive.Drives.Count; i++){
+            Assert_Drive(_expectedTree[i], archive.Drives[i], archive);
+        }
     }
 
     private SgaFolder ParseTree(TestFolder folderTemplate, SgaDrive drive, SgaFolder? parent )
@@ -49,26 +53,21 @@ public class MockParser : ISgaParser
         foreach( var testFile in folderTemplate.Files)
         {
             uint dataOffset = (uint)_testStream!.Position;
-            uint size = 0;
+            byte[] inputBytes = Encoding.UTF8.GetBytes(testFile.FileContent);
+            uint size = (uint)inputBytes.Length;
             uint compressedSize = 0;
-            
 
             if(testFile.StorageType == StorageType.Uncompress)
             {
-                BinaryWriter writer = new (_testStream!, Encoding.Default, true);
-                writer.Write(testFile.FileContent);
-                writer.Close();
-                size = (uint)_testStream.Length - dataOffset;
+                _testStream.Write(inputBytes);
                 compressedSize = size;
             }
             else
             {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(testFile.FileContent);
                 using (var zlib = new ZLibStream(_testStream, CompressionLevel.Optimal, leaveOpen: true))
                 {
                     zlib.Write(inputBytes, 0, inputBytes.Length);
                 }
-                size = (uint)inputBytes.Length;
                 compressedSize = (uint)_testStream.Length - dataOffset;
             }
 
@@ -79,6 +78,72 @@ public class MockParser : ISgaParser
         }
 
         return folder;
+    }
+
+    public static void Assert_Drive(TestDrive expectedDrive, SgaDrive actualDrive, SgaArchive parentArchive)
+    {
+        Assert.Equal(expectedDrive.Alias, actualDrive.Alias);
+        Assert.Equal(expectedDrive.Name, actualDrive.Name);
+
+        Assert.NotNull(actualDrive.RootFolder);
+        Assert.Same(parentArchive, actualDrive.Archive);
+
+        Assert_Folder(expectedDrive.RootFolder, actualDrive.RootFolder, null, actualDrive);
+    }
+
+    public static void Assert_Folder(TestFolder expectedFolder, SgaFolder actualFolder, SgaFolder? expectedParent, SgaDrive expectedDrive )
+    {
+        Assert.Equal(expectedFolder.Name, actualFolder.Name);
+
+        Assert.Same(expectedParent, actualFolder.Parent);
+        Assert.Same(expectedDrive, actualFolder.Drive);
+
+        // Folders
+        var actualFolders = actualFolder.Contents.OfType<SgaFolder>().OrderBy(f => f.Name).ToList();
+        var expectedFolders = expectedFolder.Folders.OrderBy(f => f.Name).ToList();
+
+        Assert.Equal(expectedFolders.Count, actualFolders.Count);
+
+        for (int i = 0; i < actualFolders.Count; i++)
+        {
+            Assert_Folder(expectedFolders[i], actualFolders[i], actualFolder, expectedDrive);
+        }
+
+        // Files
+        var actualFiles = actualFolder.Contents.OfType<SgaFile>().OrderBy(f => f.Name).ToList();
+        var expectedFiles = expectedFolder.Files.OrderBy(f => f.Name).ToList();
+
+        Assert.Equal(expectedFiles.Count, actualFiles.Count);
+
+        for (int i = 0; i < actualFiles.Count; i++)
+        {
+            Assert_File(expectedFiles[i], actualFiles[i], actualFolder, expectedDrive);
+        }
+    }
+
+    public static void Assert_File(TestFile expectedFile, SgaFile actualFile, SgaFolder expectedParent, SgaDrive expectedDrive)
+    {
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedFile.FileContent);
+        uint expectedSize = (uint)expectedBytes.Length;
+        uint expectedCompressedSize = expectedSize;
+
+        if(expectedFile.StorageType != StorageType.Uncompress)
+        {
+            var tempStream = new MemoryStream();
+            using (var zlib = new ZLibStream(tempStream, CompressionLevel.Optimal, leaveOpen: true))
+            {
+                zlib.Write(expectedBytes, 0, expectedBytes.Length);
+            }
+            expectedCompressedSize = (uint)tempStream.Length;
+        }
+
+        Assert.Equal(expectedFile.Name, actualFile.Name);
+        Assert.Equal(expectedFile.StorageType, actualFile.StorageType);
+        Assert.Equal(expectedSize, actualFile.Size);
+        Assert.Equal(expectedCompressedSize, actualFile.CompressedSize);
+
+        Assert.Same(expectedParent, actualFile.Parent);
+        Assert.Same(expectedDrive, actualFile.Drive);
     }
 }
 

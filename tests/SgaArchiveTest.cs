@@ -50,16 +50,18 @@ public class SgaArchiveTest
                 }]
             } 
         };
-        var parser = new MockParser([item],[]);
+        var parser = new MockParser([item],[item]);
 
         var stream = new MemoryStream();
-        using (var Archive =  new SgaArchive(stream, SgaMode.Read, SgaVersion.V2, parser))
+        using (var Archive =  new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
         {
             SgaFile file1 = (SgaFile)Archive.Drives[0].RootFolder.Contents[0];
             SgaFile file2 = (SgaFile)Archive.Drives[0].RootFolder.Contents[1];
 
-            var reader = new BinaryReader(file1.Open());
-            Console.WriteLine(reader.ReadString());
+            using var openFile1 = file1.Open();
+            var buffer1 = new byte [file1.Size];
+            openFile1.ReadExactly(buffer1);
+            Console.WriteLine(Encoding.Default.GetString(buffer1));
 
             using var openFile = file2.Open();
             var buffer = new byte [file2.Size];
