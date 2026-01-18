@@ -79,12 +79,13 @@ public class SgaFolder: SgaEntry
         {
             item.Delete(true);
         }
+        
+        if(!subDelete)
+            Parent?._contents.Remove(this);
 
         Parent = null;
         Drive = null;
         
-        if(!subDelete)
-            Parent?._contents.Remove(this);
     }
 
     public void ExtractToDirectory(string destination, bool overwrite = false)
