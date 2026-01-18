@@ -8,7 +8,7 @@
 | 8     | 9    | 2     | UInt-16           | Version major|
 | 10    | 11   | 2     | UInt-16           | Version minor|
 | 12    | 27   | 16    | MD5 Hash          | File hash    |
-| 28    | 155  | 112   | String (utf-16-le)| Archive name |
+| 28    | 155  | 128   | String (utf-16-le)| Archive name |
 | 156   | 171  | 16    | MD5 Hash          | TOC hash     |
 | 172   | 175  | 4     | UInt-32           | TOC size     |
 | 176   | 179  | 4     | UInt-32           | Data offset  |
