@@ -73,7 +73,7 @@ public class MockParser : ISgaParser
 
             SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size);
             file.Drive = drive;
-            file.Parent = parent;
+            file.Parent = folder;
             folder._contents.Add(file);
         }
 
@@ -144,6 +144,13 @@ public class MockParser : ISgaParser
 
         Assert.Same(expectedParent, actualFile.Parent);
         Assert.Same(expectedDrive, actualFile.Drive);
+
+        Stream stream = actualFile.Open();
+        var buffer = new byte [actualFile.Size];
+        stream.ReadExactly(buffer);
+        string actualContents = Encoding.Default.GetString(buffer);
+
+        Assert.Equal(expectedFile.FileContent, actualContents);
     }
 }
 
