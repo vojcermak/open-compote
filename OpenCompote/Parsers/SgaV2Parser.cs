@@ -1,3 +1,4 @@
+using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
 
@@ -5,7 +6,8 @@ internal class SgaV2Parser : ISgaParser
 {
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
-        List<SgaFolder> folderList = new List<SgaFolder>();
+        List<DriveRecord> driveList = new List<DriveRecord>();
+        List<FolderRecord> folderList = new List<FolderRecord>();
         List<SgaFile> fileList = new List<SgaFile>();
 
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
@@ -40,31 +42,34 @@ internal class SgaV2Parser : ISgaParser
         // Read drive definitions
         for (int i = 0; i < driveCount; i++)
         {
-            string driveName = ParserUtils.ReadStaticString(sgaStream, 64);
-            string driveAlias = ParserUtils.ReadStaticString(sgaStream, 64);
-            ushort firstFolder = ParserUtils.ReadUInt16(sgaStream);
-            ushort lastFolder = ParserUtils.ReadUInt16(sgaStream);
-            ushort firstFile = ParserUtils.ReadUInt16(sgaStream);
-            ushort lastFile = ParserUtils.ReadUInt16(sgaStream);
-            ushort rootFolder = ParserUtils.ReadUInt16(sgaStream);
-            
-            archive.AddDrive(new SgaDrive(driveAlias, driveName, archive, rootFolder, firstFolder, lastFolder, firstFile, lastFile));
+            DriveRecord internalDrive = new DriveRecord(
+                ParserUtils.ReadStaticString(sgaStream, 64),
+                ParserUtils.ReadStaticString(sgaStream, 64),
+                ParserUtils.ReadUInt16(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream)
+            );
+
+            driveList.Add(internalDrive);
         }
 
         // Read folder definitions
         for (int i = 0; i < folderCount; i++)
         {
-            uint nameOffset = ParserUtils.ReadUInt32(sgaStream);
-            uint firstFolder = ParserUtils.ReadUInt16(sgaStream);
-            uint lastFolder = ParserUtils.ReadUInt16(sgaStream);
-            uint firstFile = ParserUtils.ReadUInt16(sgaStream);
-            uint lastFile = ParserUtils.ReadUInt16(sgaStream);
+            FolderRecord folder = new FolderRecord(
+                ParserUtils.ReadUInt32(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream),
+                ParserUtils.ReadUInt16(sgaStream)
+            );
 
-            uint nameStart = nameOffset + 180 + nameListOffset;
-            string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
-            
-            var folder = new SgaFolder(folderName, firstFolder, lastFolder, firstFile, lastFile);
             folderList.Add(folder);
+
+            /*uint nameStart = nameOffset + 180 + nameListOffset;
+            string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);*/
             
         }
 
@@ -86,29 +91,42 @@ internal class SgaV2Parser : ISgaParser
 
 
         // assign all entries to drives 
-        foreach (SgaDrive drive in archive.Drives)
+        foreach (DriveRecord drive in driveList)
         {
-            for (int i = 0; i < (drive.EndFolder - drive.StartFolder); i++)
-                folderList[i].Drive = drive;
+            SgaDrive newDrive = new SgaDrive(drive.DriveAlias, drive.DriveName, archive);
+            archive._drives.Add(newDrive);
 
-            for (int i = 0; i < (drive.EndFile - drive.StartFile); i++)
-                fileList[i].Drive = drive;
-            
-            drive.RootFolder = folderList[drive.RootFolderIndex];
-        }
+            Stack<Tuple<FolderRecord, SgaFolder?>> stack = new ();
+            stack.Push(new (folderList[drive.RootFolder], null));
 
-        // create folder structure
-        foreach (SgaFolder folder in folderList)
-        {
-            for (int i = (int)folder.StartFolder; i < folder.EndFolder; i++)
+            while(stack.Count > 0)
             {
-                folder._contents.Add(folderList[i]);
-                folderList[i].Parent = folder;
-            }
-            for (int i = (int)folder.StartFile; i < folder.EndFile; i++)
-            {
-                folder._contents.Add(fileList[i]);
-                fileList[i].Parent = folder;
+                var item = stack.Pop();
+                FolderRecord currentRecord = item.Item1;
+                SgaFolder? parent = item.Item2;
+                
+                uint nameStart = currentRecord.NameOffset + 180 + nameListOffset;
+                string fileName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
+
+                SgaFolder currentFolder = new SgaFolder(fileName, newDrive, parent);
+                
+                if(parent == null)
+                    newDrive.RootFolder = currentFolder;
+
+                parent?._contents.Add(currentFolder);
+                
+                for (ushort i = currentRecord.FirstFolder; i < currentRecord.LastFolder; i++)
+                {
+                    stack.Push(new(folderList[i], currentFolder));
+                }
+
+                for (ushort i = currentRecord.FirstFile; i < currentRecord.LastFile; i++)
+                {
+                    SgaFile currentFile = fileList[i];
+                    currentFile.Drive = newDrive;
+                    currentFile.Parent = currentFolder;
+                    currentFolder._contents.Add(currentFile);
+                }
             }
         }
     }

@@ -139,13 +139,6 @@ public class SgaArchive: IDisposable
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
     /// <remarks>This constructor cannot be used with SgaMode.Create. For creating new empty archives please use the open constructor.</remarks>
     public SgaArchive(Stream stream, SgaMode mode, bool leaveOpen = false): this(stream, mode, null, leaveOpen) {}
-
-    internal void AddDrive(SgaDrive newDrive)
-    {
-        ThrowIfDisposed();
-
-        _drives.Add(newDrive);
-    }
     
     /// <summary>
     /// Creates new SgaDrive in the archive with the specific name and alias. New drive also contains a new empty RootFolder with the same name as the drive.

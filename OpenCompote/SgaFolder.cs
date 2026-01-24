@@ -6,10 +6,6 @@ public class SgaFolder: SgaEntry
 {
     internal readonly List<SgaEntry> _contents;
     private readonly ReadOnlyCollection<SgaEntry> _contentCollection;
-    internal uint StartFolder {get;}
-    internal uint EndFolder {get;}
-    internal uint StartFile {get;}
-    internal uint EndFile {get;}
 
     public ReadOnlyCollection<SgaEntry> Contents
     {
@@ -26,17 +22,6 @@ public class SgaFolder: SgaEntry
         Drive = drive;
         Parent = parent;
         Name = name;
-    }
-
-    internal SgaFolder(string name, uint startFolder, uint endFolder,  uint startFile, uint endFile)
-    {
-        _contents = new List<SgaEntry>();
-        _contentCollection = new ReadOnlyCollection<SgaEntry>(_contents);
-        Name = name;
-        StartFolder = startFolder;
-        EndFolder = endFolder;
-        StartFile = startFile;
-        EndFile = endFile;
     }
 
     public SgaFolder AddFolder(string name)
