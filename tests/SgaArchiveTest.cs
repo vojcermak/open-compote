@@ -102,8 +102,9 @@ public class SgaArchiveTest
             // Not implemented
             //Assert.Throws<NotSupportedException>(() => Archive.Version = SgaVersion.V4);
             
-            //Assert.Throws<NotSupportedException>(() => Archive.ArchiveName = "TEST");
+            Assert.Throws<NotSupportedException>(() => Archive.ArchiveName = "TEST");
             
+            // Not implemented, Not used by archives with version < 7.
             //Assert.Throws<NotSupportedException>(() => Archive.BlockSize = 42);
             
             Assert.Single(Archive.Drives);

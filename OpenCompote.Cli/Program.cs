@@ -44,17 +44,6 @@ string sgaPath = args[0];
 
 using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
 {
-    var dataDrive = archive.GetDrive("data");
-    var artFolder = (SgaFolder)dataDrive.RootFolder.Contents.First((item) => { return item.Name == "art";});
-    var decalsFolder = (SgaFolder)artFolder.Contents.First((item) => { return item.Name == "art\\decals";});
-    var deathFolder = (SgaFolder)decalsFolder.Contents.First((item) => { return item.Name == "art\\decals\\death";});
-    var grassImage = (SgaFile)deathFolder.Contents.First((item) => {return item.Name == "splat_1_grass.dds";});
-
-    var openImage = grassImage.Open();
-    openImage.WriteByte(00);
-    Console.WriteLine(openImage.ReadByte());
-    
-    grassImage.Delete();
-
-    dataDrive.Delete();
+    Console.WriteLine(archive.ArchiveName);
+    archive.ArchiveName = "";
 }

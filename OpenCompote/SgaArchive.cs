@@ -11,6 +11,7 @@ public class SgaArchive: IDisposable
     private readonly bool _leaveOpen;
     private readonly ISgaParser _parser;
 
+    internal string _archiveName;
     internal readonly Stream _archiveStream;
     internal readonly List<SgaDrive> _drives;
 
@@ -27,7 +28,21 @@ public class SgaArchive: IDisposable
     /// <summary>
     /// Name of the SGA archive.
     /// </summary>
-    public string ArchiveName {get; set;}
+    public string ArchiveName
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _archiveName;
+        }
+        set
+        {
+            ThrowIfDisposed();
+            if(Mode == SgaMode.Read)
+                throw new NotSupportedException("Writing is not supported.");
+            _archiveName = value;
+        }
+    }
 
     /// <summary>
     /// List of SGA Drives currently in the archive.
@@ -39,7 +54,6 @@ public class SgaArchive: IDisposable
             return _driveCollection;
         }
     }
-
     public int BlockSize {get; set;}
 
     /// <summary>
@@ -61,7 +75,7 @@ public class SgaArchive: IDisposable
         
         _archiveStream = stream;
         Mode = mode;
-        ArchiveName = "";
+        _archiveName = "";
         _isDisposed = false;
         _leaveOpen = leaveOpen;
         _drives = new List<SgaDrive>();
@@ -104,7 +118,7 @@ public class SgaArchive: IDisposable
     {
         Mode = mode;
         Version = version;
-        ArchiveName = "";
+        _archiveName = "";
         _archiveStream = stream;
         _isDisposed = false;
         _leaveOpen = leaveOpen;

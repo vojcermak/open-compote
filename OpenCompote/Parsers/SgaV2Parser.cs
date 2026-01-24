@@ -10,7 +10,7 @@ internal class SgaV2Parser : ISgaParser
 
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 
-        archive.ArchiveName = ParserUtils.ReadWideStaticString(sgaStream, 128);
+        archive._archiveName = ParserUtils.ReadWideStaticString(sgaStream, 128);
 
         byte[] tocHash = ParserUtils.ReadHash(sgaStream);
 
