@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "OpenCompote.Cli": {
+      "commandName": "Project",
+      "workingDirectory": "..",
+      "commandLineArgs": "\"../sgas/W40kDataLoc(dow1).sga\""
+    }
+  }
+}
