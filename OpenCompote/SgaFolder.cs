@@ -21,7 +21,7 @@ public class SgaFolder: SgaEntry
         _contentCollection = new ReadOnlyCollection<SgaEntry>(_contents);
         Drive = drive;
         Parent = parent;
-        Name = name;
+        _Name = name;
     }
 
     public SgaFolder AddFolder(string name)
@@ -48,11 +48,6 @@ public class SgaFolder: SgaEntry
         return newFile;
     }
 
-    public override void Delete()
-    {
-        Delete(false);
-    }
-
     internal override void Delete(bool subDelete)
     {
         ThrowIfDeleted();
@@ -73,14 +68,10 @@ public class SgaFolder: SgaEntry
         
     }
 
+    // ------------------------ Extending functions ------------------------
+    // List of future ideas. 
     public void ExtractToDirectory(string destination, bool overwrite = false)
     {
         throw new NotImplementedException();
-    }
-
-    private void ThrowIfDeleted()
-    {
-        ObjectDisposedException.ThrowIf(Drive == null || Drive.Archive == null,this);
-        Drive.Archive.ThrowIfDisposed();
     }
 }

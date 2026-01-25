@@ -67,10 +67,6 @@ internal class SgaV2Parser : ISgaParser
             );
 
             folderList.Add(folder);
-
-            /*uint nameStart = nameOffset + 180 + nameListOffset;
-            string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);*/
-            
         }
 
         // Read file definitions
@@ -90,14 +86,14 @@ internal class SgaV2Parser : ISgaParser
         }
 
 
-        // assign all entries to drives 
-        foreach (DriveRecord drive in driveList)
+        // build the archive tree 
+        foreach (DriveRecord driveRecord in driveList)
         {
-            SgaDrive newDrive = new SgaDrive(drive.DriveAlias, drive.DriveName, archive);
+            SgaDrive newDrive = new SgaDrive(driveRecord.DriveAlias, driveRecord.DriveName, archive);
             archive._drives.Add(newDrive);
 
             Stack<Tuple<FolderRecord, SgaFolder?>> stack = new ();
-            stack.Push(new (folderList[drive.RootFolder], null));
+            stack.Push(new (folderList[driveRecord.RootFolder], null));
 
             while(stack.Count > 0)
             {
@@ -106,15 +102,15 @@ internal class SgaV2Parser : ISgaParser
                 SgaFolder? parent = item.Item2;
                 
                 uint nameStart = currentRecord.NameOffset + 180 + nameListOffset;
-                string fileName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
+                string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
 
-                SgaFolder currentFolder = new SgaFolder(fileName, newDrive, parent);
+                SgaFolder currentFolder = new SgaFolder(folderName, newDrive, parent);
                 
                 if(parent == null)
                     newDrive.RootFolder = currentFolder;
+                else
+                    parent._contents.Add(currentFolder);
 
-                parent?._contents.Add(currentFolder);
-                
                 for (ushort i = currentRecord.FirstFolder; i < currentRecord.LastFolder; i++)
                 {
                     stack.Push(new(folderList[i], currentFolder));

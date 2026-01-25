@@ -99,7 +99,8 @@ public class SgaArchiveTest
             Assert.Equal(SgaMode.Read, Archive.Mode);
             
             Assert.Equal(SgaVersion.V2, Archive.Version);
-            // Not implemented
+            
+            // Not implemented, currently no other version then V2 is supported
             //Assert.Throws<NotSupportedException>(() => Archive.Version = SgaVersion.V4);
             
             Assert.Throws<NotSupportedException>(() => Archive.ArchiveName = "TEST");
@@ -110,6 +111,36 @@ public class SgaArchiveTest
             Assert.Single(Archive.Drives);
             Assert.Throws<NotSupportedException>(() => Archive.AddDrive("", ""));
         }
+    }
+
+    [Fact]
+    public void SgaArchive_ThrowsWhenDisposed()
+    {
+        TestDrive drive = new TestDrive
+        {
+            Name = "Drive1",
+            Alias = "Drive1 Alias",
+            RootFolder = new TestFolder
+            {
+                Name = "Drive1 RootFolder",
+                Folders = [],
+                Files = [new TestFile{
+                    Name = "file1",
+                    StorageType = StorageType.Uncompress,
+                    FileContent = "Hello world file"
+                }]
+            } 
+        };
+        var parser = new MockParser([drive],[drive]);
+        var stream = new MemoryStream();
+        var Archive = new SgaArchive(stream, SgaMode.Read, SgaVersion.V2, parser);
+        Archive.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => Archive.ArchiveName);
+        Assert.Throws<ObjectDisposedException>(() => Archive.ArchiveName = "TEST");
+        Assert.Throws<ObjectDisposedException>(() => Archive.Drives);
+        Assert.Throws<ObjectDisposedException>(() => Archive.AddDrive("test", "test"));
+        Assert.Throws<ObjectDisposedException>(() => Archive.GetDrive("Test"));
     }
 
     #region Add Tests

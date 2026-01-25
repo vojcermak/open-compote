@@ -4,15 +4,46 @@ namespace OpenCompote.SGA;
 
 public class SgaDrive
 {
-    public string Alias {get; set;}
-    public string Name  {get; set;}
+    private string _Alias;
+    private string _Name;
+    
+    public string Alias
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _Alias;
+        }
+        set
+        {
+            ThrowIfDeleted();
+            if(Archive!.Mode == SgaMode.Read)
+                throw new NotSupportedException("Writing is not supported.");
+            _Alias = value;
+        }
+    }
+    public string Name
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _Name;
+        }
+        set
+        {
+            ThrowIfDeleted();
+            if(Archive!.Mode == SgaMode.Read)
+                throw new NotSupportedException("Writing is not supported.");
+            _Name = value;
+        }
+    }
     public SgaArchive? Archive {get; private set;}
     public SgaFolder RootFolder {get; internal set;}
 
-    public SgaDrive(string alias, string name, SgaArchive archive)
+    internal SgaDrive(string alias, string name, SgaArchive archive)
     {
-        Alias = alias;
-        Name = name;
+        _Alias = alias;
+        _Name = name;
         Archive = archive;
         RootFolder = new SgaFolder(name, this, null);
     }
@@ -23,7 +54,7 @@ public class SgaDrive
             return;
 
         if(Archive.Mode == SgaMode.Read)
-            throw new NotSupportedException("Writing is not supported in this mode.");
+            throw new NotSupportedException("Writing is not supported.");
 
         Archive.ThrowIfDisposed();
 
@@ -32,6 +63,14 @@ public class SgaDrive
         Archive = null;
     }
 
+    private void ThrowIfDeleted()
+    {
+        ObjectDisposedException.ThrowIf(Archive == null, this);
+        Archive.ThrowIfDisposed();
+    }
+
+    // ------------------------ Extending functions ------------------------
+    // List of future ideas.  
     public SgaEntry GetEntry(string entryName)
     {
         throw new NotImplementedException();

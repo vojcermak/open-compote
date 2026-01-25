@@ -113,6 +113,15 @@ public class SgaArchive: IDisposable
             _parser.Parse(this, _archiveStream);
     }
 
+    /// <summary>
+    /// Open constructor. - Initialize new instance of SgaArchive on the given stream in the specific mode, specifying whether to leave the stream open.
+    /// </summary>
+    /// <param name="stream">The stream containing the SGA archive.</param>
+    /// <param name="mode">Mode in which the archive should operate with.</param>
+    /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
+    /// <remarks>This constructor cannot be used with SgaMode.Create. For creating new empty archives please use the open constructor.</remarks>
+    public SgaArchive(Stream stream, SgaMode mode, bool leaveOpen = false): this(stream, mode, null, leaveOpen) {}
+
     #if DEBUG // For unit testing of the public API only, Do not include to release builds (Not very nice, but works.) 
     internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false)
     {
@@ -130,15 +139,6 @@ public class SgaArchive: IDisposable
             _parser.Parse(this, _archiveStream);
     }
     #endif
-
-    /// <summary>
-    /// Open constructor. - Initialize new instance of SgaArchive on the given stream in the specific mode, specifying whether to leave the stream open.
-    /// </summary>
-    /// <param name="stream">The stream containing the SGA archive.</param>
-    /// <param name="mode">Mode in which the archive should operate with.</param>
-    /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
-    /// <remarks>This constructor cannot be used with SgaMode.Create. For creating new empty archives please use the open constructor.</remarks>
-    public SgaArchive(Stream stream, SgaMode mode, bool leaveOpen = false): this(stream, mode, null, leaveOpen) {}
     
     /// <summary>
     /// Creates new SgaDrive in the archive with the specific name and alias. New drive also contains a new empty RootFolder with the same name as the drive.

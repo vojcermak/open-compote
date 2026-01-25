@@ -16,7 +16,7 @@ public class SgaFile: SgaEntry
     internal SgaFile(string name, StorageType type, SgaDrive drive, SgaFolder parent)
     {   
         Drive = drive;
-        Name = name;
+        _Name = name;
         StorageType = type;
         Parent = parent;
     }
@@ -24,7 +24,7 @@ public class SgaFile: SgaEntry
     internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size)
     {
         _DataOffset = dataOffset;
-        Name = name;
+        _Name = name;
         StorageType = type;
         CompressedSize = compressedSize;
         Size = size;
@@ -47,11 +47,6 @@ public class SgaFile: SgaEntry
         }
     }
 
-    public override void Delete()
-    {
-        Delete(false);
-    }
-
     internal override void Delete(bool subDelete)
     {
         ThrowIfDeleted();
@@ -66,11 +61,6 @@ public class SgaFile: SgaEntry
         Drive = null;
         
         _fileContents?.Dispose();
-    }
-
-    public void ExtractToFile(string destination, bool overwrite = false)
-    {
-        throw new NotImplementedException();
     }
 
     private Stream OpenReadOnly()
@@ -104,9 +94,10 @@ public class SgaFile: SgaEntry
         });
     }
 
-    private void ThrowIfDeleted()
+    // ------------------------ Extending functions ------------------------
+    // List of future ideas.  
+        public void ExtractToFile(string destination, bool overwrite = false)
     {
-        ObjectDisposedException.ThrowIf(Drive == null || Drive.Archive == null,this);
-        Drive.Archive.ThrowIfDisposed();
+        throw new NotImplementedException();
     }
 }

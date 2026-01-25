@@ -25,7 +25,7 @@ public class MockParser : ISgaParser
         foreach(var testDrive in _drives)
         {
             var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, archive);
-            archive.AddDrive(newDrive);
+            archive._drives.Add(newDrive);
 
             newDrive.RootFolder = ParseTree(testDrive.RootFolder, newDrive, null);
         }
