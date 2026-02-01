@@ -64,12 +64,12 @@ public class SgaArchiveTest
             using var openFile1 = file1.Open();
             var buffer1 = new byte [file1.Size];
             openFile1.ReadExactly(buffer1);
-            Console.WriteLine(Encoding.Default.GetString(buffer1));
+            Assert.Equal("Hello world file", Encoding.Default.GetString(buffer1));
 
             using var openFile = file2.Open();
             var buffer = new byte [file2.Size];
             openFile.ReadExactly(buffer);
-            Console.WriteLine(Encoding.Default.GetString(buffer));
+            Assert.Equal("File 2 contents", Encoding.Default.GetString(buffer));
         }
     }
 
