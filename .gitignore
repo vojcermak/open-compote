@@ -3,3 +3,6 @@ obj/
 bin/
 _site/
 /docs/api
+
+# Ignore temporary testing files
+output.bin

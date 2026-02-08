@@ -129,7 +129,26 @@ internal class SgaV2Parser : ISgaParser
 
     public void Write(SgaArchive archive, Stream sgaStream)
     {
-        // Mock implementation. For testing only. Will be replaces by actual implementation when i will be satisfied by the public interface.
+        // Currently writing directly into specific file. Only for testing. The final implementation will not use hardcoded paths.
+        using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write);
+        //LogArchive(archive);   
+
+        ParserUtils.WriteStaticString(tempStream,"_ARCHIVE", 8);
+        ParserUtils.WriteUInt32(tempStream, 2);
+
+        byte[] MockHash = new byte[16];
+        tempStream.Write(MockHash);
+        ParserUtils.WriteWideStaticString(tempStream, "W40kDataKeys", 128);
+        tempStream.Write(MockHash);
+        ParserUtils.WriteUInt32(tempStream, 0);
+        ParserUtils.WriteUInt32(tempStream, 0);
+        ParserUtils.WriteDynamicString(tempStream, "Hello world this is 0 terminated string!");
+        ParserUtils.WriteDynamicString(tempStream, "This is the second 0 terminated string!");
+    }
+
+    // Mock implementation. For testing only. Will be replaces by actual implementation when i will be satisfied by the public interface.
+    private static void LogArchive(SgaArchive archive)
+    {
         Console.WriteLine("Archive name: {0}",archive.ArchiveName);
         Console.WriteLine("Drives:");
 
