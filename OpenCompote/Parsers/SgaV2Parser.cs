@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
@@ -85,19 +87,18 @@ internal class SgaV2Parser : ISgaParser
             fileList.Add(file);
         }
 
-
         // build the archive tree 
         foreach (DriveRecord driveRecord in driveList)
         {
             SgaDrive newDrive = new SgaDrive(driveRecord.DriveAlias, driveRecord.DriveName, archive);
             archive._drives.Add(newDrive);
 
-            Stack<Tuple<FolderRecord, SgaFolder?>> stack = new ();
-            stack.Push(new (folderList[driveRecord.RootFolder], null));
+            Queue<Tuple<FolderRecord, SgaFolder?>> stack = new ();
+            stack.Enqueue(new (folderList[driveRecord.RootFolder], null));
 
             while(stack.Count > 0)
             {
-                var item = stack.Pop();
+                var item = stack.Dequeue();
                 FolderRecord currentRecord = item.Item1;
                 SgaFolder? parent = item.Item2;
                 
@@ -113,7 +114,7 @@ internal class SgaV2Parser : ISgaParser
 
                 for (ushort i = currentRecord.FirstFolder; i < currentRecord.LastFolder; i++)
                 {
-                    stack.Push(new(folderList[i], currentFolder));
+                    stack.Enqueue(new(folderList[i], currentFolder));
                 }
 
                 for (ushort i = currentRecord.FirstFile; i < currentRecord.LastFile; i++)
@@ -130,20 +131,51 @@ internal class SgaV2Parser : ISgaParser
     public void Write(SgaArchive archive, Stream sgaStream)
     {
         // Currently writing directly into specific file. Only for testing. The final implementation will not use hardcoded paths.
-        using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write);
-        //LogArchive(archive);   
+        //using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write);
+        //LogArchive(archive);  
 
-        ParserUtils.WriteStaticString(tempStream,"_ARCHIVE", 8);
-        ParserUtils.WriteUInt32(tempStream, 2);
+        // Build TOC and Data block in-memory, then write header + TOC + Data to `sgaStream`.
+        List<SgaDrive> drives = archive._drives;
 
-        byte[] MockHash = new byte[16];
-        tempStream.Write(MockHash);
-        ParserUtils.WriteWideStaticString(tempStream, "W40kDataKeys", 128);
-        tempStream.Write(MockHash);
-        ParserUtils.WriteUInt32(tempStream, 0);
-        ParserUtils.WriteUInt32(tempStream, 0);
-        ParserUtils.WriteDynamicString(tempStream, "Hello world this is 0 terminated string!");
-        ParserUtils.WriteDynamicString(tempStream, "This is the second 0 terminated string!");
+        // Flatten folders and files per-drive so that folder/file indices are contiguous per-drive
+        List<SgaFolder> folderList = new List<SgaFolder>();
+        List<SgaFile> fileList = new List<SgaFile>();
+
+        // We'll traverse drives in order and append their folder trees
+        foreach (var drive in drives)
+        {
+            // iterative preorder traversal to produce folderList
+            var stack = new Stack<SgaFolder>();
+            if (drive.RootFolder != null)
+            {
+                stack.Push(drive.RootFolder);
+                folderList.Add(drive.RootFolder);
+            }
+
+            while (stack.Count > 0)
+            {
+                var f = stack.Pop();
+
+                // Add files of this folder (collect now but add their names later)
+                foreach (var e in f.Contents)
+                {
+                    if (e is SgaFile sf)
+                    {
+                        // record file will be appended to fileList, but we also need to keep mapping for names
+                        fileList.Add(sf);
+                    }
+
+                    if (e is SgaFolder child)
+                        folderList.Add(child);
+                }
+
+                for(int i = f.Contents.Count-1; i >= 0; i--)
+                {
+                    if (f.Contents[i] is SgaFolder child)
+                        stack.Push(child);
+                }
+            }
+        }
     }
 
     // Mock implementation. For testing only. Will be replaces by actual implementation when i will be satisfied by the public interface.
