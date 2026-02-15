@@ -14,20 +14,11 @@ internal struct DriveTest(SgaDrive drive)
     public ushort LastFile {get; set;}
 }
 
-internal struct FolderTest(SgaFolder folder)
-{
-    public SgaFolder folder { get; set; } = folder;
-    public ushort FirstFolder {get; set;}
-    public ushort LastFolder {get; set;}
-    public ushort FirstFile {get; set;}
-    public ushort LastFile {get; set;}
-}
-
 internal class SgaV2Parser : ISgaParser
 {
-    private const int DRIVE_SIZE = 0;
-    private const int FOLDER_SIZE = 0;
-    private const int FILE_SIZE = 0;
+    private const int DRIVE_SIZE = 138;
+    private const int FOLDER_SIZE = 12;
+    private const int FILE_SIZE = 20;
 
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
@@ -162,7 +153,7 @@ internal class SgaV2Parser : ISgaParser
     {
         // Currently writing directly into specific file. Only for testing. The final implementation will not use hardcoded paths.
         using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write);
-        //LogArchive(archive);  
+        LogArchive(archive);  
 
         // Build TOC and Data block in-memory, then write header + TOC + Data to `sgaStream`.
         List<DriveTest> driveList = new List<DriveTest>();
@@ -228,7 +219,8 @@ internal class SgaV2Parser : ISgaParser
 
         
         using var toc = new MemoryStream();
-
+        using var nameBuffer = new MemoryStream();
+        
         uint folderOffset = (uint)(24 + driveList.Count * DRIVE_SIZE);
         uint fileOffset = folderOffset + (uint)folderList.Count * FOLDER_SIZE;
         uint nameOffset = fileOffset + (uint)fileList.Count * FILE_SIZE;
@@ -245,8 +237,8 @@ internal class SgaV2Parser : ISgaParser
         // Write drives
         foreach (var drive in driveList)
         {
-            ParserUtils.WriteStaticString(toc, drive.Drive.Alias, 64);
             ParserUtils.WriteStaticString(toc, drive.Drive.Name, 64);
+            ParserUtils.WriteStaticString(toc, drive.Drive.Alias, 64);
             ParserUtils.WriteUInt16(toc, drive.FirstFolder);
             ParserUtils.WriteUInt16(toc, drive.LastFolder);
             ParserUtils.WriteUInt16(toc, drive.FirstFile);
@@ -263,8 +255,10 @@ internal class SgaV2Parser : ISgaParser
             ushort folderCount = (ushort)f.Contents.Count((item)=>{return item is SgaFolder;});
             fileCount += fileIndex;
             folderCount += folderIndex;
+            uint folderNameOffset = (uint)nameBuffer.Position;
+            ParserUtils.WriteDynamicString(nameBuffer, f.Name);
 
-            ParserUtils.WriteUInt32(toc, 0);
+            ParserUtils.WriteUInt32(toc, folderNameOffset);
             ParserUtils.WriteUInt16(toc, folderIndex);
             ParserUtils.WriteUInt16(toc, folderCount);
             ParserUtils.WriteUInt16(toc, fileIndex);
@@ -274,227 +268,25 @@ internal class SgaV2Parser : ISgaParser
             fileIndex = fileCount;
         }
 
+        uint dataOffset = 0;
         // Write file records placeholders (nameOffset, storageFlag, dataOffset, compressedSize, decompressedSize)
         foreach (var f in fileList)
         {
-            using var contents = f.Open();
-            uint size = (uint)contents.Length;
+            uint folderNameOffset = (uint)nameBuffer.Position;
+            ParserUtils.WriteDynamicString(nameBuffer, f.Name);
 
-            ParserUtils.WriteUInt32(toc, 0);
-            ParserUtils.WriteUInt32(toc, (uint)StorageType.Uncompress);
-            ParserUtils.WriteUInt32(toc, 0);
-            ParserUtils.WriteUInt32(toc, size);
-            ParserUtils.WriteUInt32(toc, size);
+            ParserUtils.WriteUInt32(toc, folderNameOffset);
+            ParserUtils.WriteUInt32(toc, WriteStorageType(f.StorageType));
+            ParserUtils.WriteUInt32(toc, dataOffset);
+            ParserUtils.WriteUInt32(toc, f.Size);
+            ParserUtils.WriteUInt32(toc, f.CompressedSize);
+
+            dataOffset += f.CompressedSize;
         }
-
-        /*long nameListStart = toc.Position;
-        // Write name list
-        foreach (var nb in nameBytesList)
-            toc.Write(nb, 0, nb.Length);
-
-        long tocSize = toc.Length;
-
-        // Now compute data block offsets: dataBlock starts at 180 + tocSize
-        uint dataOffset = (uint)(180 + tocSize);
-
-        // Build data block into another MemoryStream and compute per-file data offsets and sizes
-        using var dataBlock = new MemoryStream();
-        using var dbw = new BinaryWriter(dataBlock, System.Text.Encoding.ASCII, true);
-
-        // We'll collect file metadata: for each file write 256-byte name (padded), 4-byte modified, 4-byte CRC, then file bytes
-        var fileRawOffsets = new List<uint>();
-        var fileCompressedSizes = new List<uint>();
-        var fileDecompressedSizes = new List<uint>();
-
-        foreach (var f in fileList)
-        {
-            // record offset to start of compressed data (i.e., after metadata)
-            uint rawOffset = (uint)dataBlock.Position + 264; // metadata length is 264 bytes
-            fileRawOffsets.Add(rawOffset);
-
-            // write metadata: 256-byte filename (ASCII, zero padded)
-            var nameBytes = System.Text.Encoding.ASCII.GetBytes(f.Name ?? string.Empty);
-            var nameBuf = new byte[256];
-            Array.Clear(nameBuf, 0, nameBuf.Length);
-            Array.Copy(nameBytes, nameBuf, Math.Min(nameBytes.Length, 256));
-            dbw.Write(nameBuf);
-            // write modified (placeholder 0)
-            dbw.Write((uint)0);
-            // write CRC placeholder (0)
-            dbw.Write((uint)0);
-
-            // Write file data (uncompressed)
-            long dataStart = dataBlock.Position;
-            // If SgaFile has a method to open stream, use it; otherwise assume we can access underlying bytes via Open() or Data property
-            try
-            {
-                using var fs = f.Open();
-                fs.Seek(0, SeekOrigin.Begin);
-                fs.CopyTo(dataBlock);
-            }
-            catch
-            {
-                // If opening fails, write zero-length
-            }
-
-            uint compressedSize = (uint)(dataBlock.Position - dataStart);
-            fileCompressedSizes.Add(compressedSize);
-            fileDecompressedSizes.Add(compressedSize);
-        }
-
-        // Now go back and fill header and record placeholders
-        // Fill header fields in toc stream
-        bw.Seek(0, SeekOrigin.Begin);
-        bw.Write((uint)24);
-        bw.Write((ushort)drives.Count);
-        bw.Write((uint)(foldersStart));
-        bw.Write((ushort)folderCount);
-        bw.Write((uint)(filesStart));
-        bw.Write((ushort)fileCount);
-        bw.Write((uint)(nameListStart));
-        bw.Write((ushort)nameBytesList.Count);
-
-        // Fill drive records: compute per-drive folder/file ranges
-        long curFolderIndex = 0;
-        long curFileIndex = 0;
-        bw.Seek((int)drivesStart, SeekOrigin.Begin);
-        foreach (var drive in drives)
-        {
-            // drive alias and name have already been written; skip them to write the indices
-            bw.Seek(64, SeekOrigin.Current);
-            bw.Seek(64, SeekOrigin.Current);
-
-            ushort firstFolder = (ushort)curFolderIndex;
-            // count folders belonging to this drive: walk its subtree
-            int foldersForDrive = 0;
-            if (drive.RootFolder != null)
-            {
-                // count nodes in subtree
-                var stack2 = new Stack<SgaFolder>();
-                stack2.Push(drive.RootFolder);
-                while (stack2.Count > 0)
-                {
-                    var n = stack2.Pop();
-                    foldersForDrive++;
-                    foreach (var c in n.Contents)
-                        if (c is SgaFolder cf)
-                            stack2.Push(cf);
-                }
-            }
-
-            ushort lastFolder = (ushort)(curFolderIndex + foldersForDrive);
-            ushort firstFile = (ushort)curFileIndex;
-
-            // count files in drive
-            int filesForDrive = 0;
-            if (drive.RootFolder != null)
-            {
-                var stack3 = new Stack<SgaFolder>();
-                stack3.Push(drive.RootFolder);
-                while (stack3.Count > 0)
-                {
-                    var n = stack3.Pop();
-                    foreach (var c in n.Contents)
-                        if (c is SgaFile ff)
-                            filesForDrive++;
-                        else if (c is SgaFolder cf)
-                            stack3.Push(cf);
-                }
-            }
-
-            ushort lastFile = (ushort)(curFileIndex + filesForDrive);
-            ushort rootFolderIndex = (ushort)curFolderIndex;
-
-            bw.Write(firstFolder);
-            bw.Write(lastFolder);
-            bw.Write(firstFile);
-            bw.Write(lastFile);
-            bw.Write(rootFolderIndex);
-
-            curFolderIndex += foldersForDrive;
-            curFileIndex += filesForDrive;
-        }
-
-        // Fill folder records
-        bw.Seek((int)foldersStart, SeekOrigin.Begin);
-        // Build a dictionary folder -> index
-        var folderIndexMap = new Dictionary<SgaFolder, int>();
-        for (int i = 0; i < folderList.Count; i++)
-            folderIndexMap[folderList[i]] = i;
-
-        // Build file index map
-        var fileIndexMap = new Dictionary<SgaFile, int>();
-        for (int i = 0; i < fileList.Count; i++)
-            fileIndexMap[fileList[i]] = i;
-
-        for (int i = 0; i < folderList.Count; i++)
-        {
-            var f = folderList[i];
-            uint nameOffset = folderNameOffsets[i];
-
-            // find child folder indices
-            int firstChild = -1;
-            int lastChild = -1;
-            foreach (var c in f.Contents)
-            {
-                if (c is SgaFolder cf)
-                {
-                    int idx = folderIndexMap[cf];
-                    if (firstChild == -1) firstChild = idx;
-                    lastChild = idx;
-                }
-            }
-            ushort firstFolder = firstChild == -1 ? (ushort)0 : (ushort)firstChild;
-            ushort lastFolder = firstChild == -1 ? (ushort)0 : (ushort)(lastChild + 1);
-
-            // files
-            int firstF = -1;
-            int lastF = -1;
-            foreach (var c in f.Contents)
-            {
-                if (c is SgaFile cf)
-                {
-                    int idx = fileIndexMap[cf];
-                    if (firstF == -1) firstF = idx;
-                    lastF = idx;
-                }
-            }
-            ushort firstFileIdx = firstF == -1 ? (ushort)0 : (ushort)firstF;
-            ushort lastFileIdx = firstF == -1 ? (ushort)0 : (ushort)(lastF + 1);
-
-            ParserUtils.WriteUInt32(toc, nameOffset);
-            ParserUtils.WriteUInt16(toc, firstFolder);
-            ParserUtils.WriteUInt16(toc, lastFolder);
-            ParserUtils.WriteUInt16(toc, firstFileIdx);
-            ParserUtils.WriteUInt16(toc, lastFileIdx);
-        }
-
-        // Fill file records
-        bw.Seek((int)filesStart, SeekOrigin.Begin);
-        for (int i = 0; i < fileList.Count; i++)
-        {
-            var f = fileList[i];
-            ParserUtils.WriteUInt32(toc, fileNameOffsets[i]);
-            ParserUtils.WriteUInt32(toc, (uint)StorageType.Uncompress);
-            // raw data offset relative to data block start
-            ParserUtils.WriteUInt32(toc, fileRawOffsets[i]);
-            ParserUtils.WriteUInt32(toc, fileCompressedSizes[i]);
-            ParserUtils.WriteUInt32(toc, fileDecompressedSizes[i]);
-        }
-
-        // Finally write header + toc + dataBlock into provided stream
-        // Header (180 bytes total): magic(8), version(4), fileHash(16), archiveName(128), tocHash(16), tocSize(4), dataOffset(4)
-        // We'll leave hashes zeroed for now
-        ParserUtils.WriteStaticString(sgaStream, "ARCHIVE_", 8);
-        ParserUtils.WriteUInt32(sgaStream, 2);
-        byte[] zeroHash = new byte[16];
-        sgaStream.Write(zeroHash);
-        ParserUtils.WriteWideStaticString(sgaStream, archive.ArchiveName ?? string.Empty, 128);
-        sgaStream.Write(zeroHash);
-        ParserUtils.WriteUInt32(sgaStream, (uint)tocSize);
-        ParserUtils.WriteUInt32(sgaStream, dataOffset);*/
 
         // write TOC
+        nameBuffer.Seek(0, SeekOrigin.Begin);
+        nameBuffer.CopyTo(toc);
         toc.Seek(0, SeekOrigin.Begin);
         toc.CopyTo(tempStream);
 
@@ -560,6 +352,16 @@ internal class SgaV2Parser : ISgaParser
             0 => StorageType.Uncompress,
             16 => StorageType.BufferCompress,
             32 => StorageType.StreamCompress,
+            _ => throw new Exception("Invalid storage flag value."),
+        };
+    }
+
+    private static uint WriteStorageType(StorageType type){
+        return type switch
+        {
+            StorageType.Uncompress => 0,
+            StorageType.BufferCompress => 16,
+            StorageType.StreamCompress => 32,
             _ => throw new Exception("Invalid storage flag value."),
         };
     }
