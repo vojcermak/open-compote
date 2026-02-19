@@ -1,3 +1,6 @@
+using System.ComponentModel.Design;
+using System.IO.Compression;
+using System.Runtime.InteropServices;
 using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
@@ -278,8 +281,41 @@ internal class SgaV2Parser : ISgaParser
         // write TOC
         nameBuffer.Seek(0, SeekOrigin.Begin);
         nameBuffer.CopyTo(toc);
+
+        ParserUtils.WriteStaticString(tempStream, "_ARCHIVE", 8);
+        ParserUtils.WriteUInt32(tempStream, (uint)archive.Version);
+        
+        byte[] emptyHash = new byte[16];
+        tempStream.Write(emptyHash);
+        
+        ParserUtils.WriteWideStaticString(tempStream, archive.ArchiveName, 128);
+        
+        tempStream.Write(emptyHash);
+        
+        ParserUtils.WriteUInt32(tempStream, (uint)toc.Position);
+        ParserUtils.WriteUInt32(tempStream, (uint)(toc.Position + 180 ));
+        
         toc.Seek(0, SeekOrigin.Begin);
         toc.CopyTo(tempStream);
+
+        byte[] emptyMetaData = new byte[264];
+
+        foreach(var file in fileList)
+        {
+            using var contents = file.Open();
+
+            tempStream.Write(emptyMetaData);
+
+            if(file.StorageType == StorageType.Uncompress)
+            {
+                contents.CopyTo(tempStream);
+            }
+            else
+            {
+                using var compressed = new ZLibStream(tempStream, CompressionMode.Compress, true);
+                contents.CopyTo(compressed);
+            }
+        }
 
         // write data block
         //dataBlock.Seek(0, SeekOrigin.Begin);
