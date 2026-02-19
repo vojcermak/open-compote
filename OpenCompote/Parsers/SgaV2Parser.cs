@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Mime;
 using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
@@ -8,6 +5,15 @@ namespace OpenCompote.SGA.Parsers;
 internal struct DriveTest(SgaDrive drive)
 {
     public SgaDrive Drive { get; set; } = drive;
+    public ushort FirstFolder {get; set;}
+    public ushort LastFolder {get; set;}
+    public ushort FirstFile {get; set;}
+    public ushort LastFile {get; set;}
+}
+
+internal class FolderTest(SgaFolder folder)
+{
+    public SgaFolder Folder { get; set; } = folder;
     public ushort FirstFolder {get; set;}
     public ushort LastFolder {get; set;}
     public ushort FirstFile {get; set;}
@@ -155,61 +161,56 @@ internal class SgaV2Parser : ISgaParser
         using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write);
         LogArchive(archive);  
 
-        // Build TOC and Data block in-memory, then write header + TOC + Data to `sgaStream`.
+        // Flatten drives folders and files so that folder/file indices are contiguous per-drive
         List<DriveTest> driveList = new List<DriveTest>();
-
-        // Flatten folders and files per-drive so that folder/file indices are contiguous per-drive
-        List<SgaFolder> folderList = new List<SgaFolder>();
+        List<FolderTest> folderList = new List<FolderTest>();
         List<SgaFile> fileList = new List<SgaFile>();
-        List<string> nameList = new List<string>();
-
-        // For mapping names to offsets later
-        List<uint> folderNameOffsets = new List<uint>();
-        List<uint> fileNameOffsets = new List<uint>();
 
         // We'll traverse drives in order and append their folder trees
         foreach (var drive in archive._drives)
         {
             // iterative preorder traversal to produce folderList
-            var stack = new Stack<SgaFolder>();
+            var stack = new Stack<FolderTest>();
             var driveTest = new DriveTest(drive);
             driveTest.FirstFolder = (ushort)folderList.Count;
             driveTest.FirstFile = (ushort)fileList.Count;
 
             if (drive.RootFolder != null)
             {
-                stack.Push(drive.RootFolder);
-                folderList.Add(drive.RootFolder);
+                FolderTest folderTest = new FolderTest(drive.RootFolder);
+                stack.Push(folderTest);
+                folderList.Add(folderTest);
             }
 
             while (stack.Count > 0)
             {
                 var f = stack.Pop();
-
-                // Add folder name to name list (we'll fill offsets later)
-                nameList.Add(f.Name ?? string.Empty);
-                folderNameOffsets.Add(0);
+                f.FirstFolder = (ushort)folderList.Count;
+                f.FirstFile = (ushort)fileList.Count;
+                var Contents = f.Folder.Contents;
 
                 // Add files of this folder (collect now but add their names later)
-                foreach (var e in f.Contents)
+                foreach (var e in Contents)
                 {
                     if (e is SgaFile sf)
                     {
                         // record file will be appended to fileList, but we also need to keep mapping for names
                         fileList.Add(sf);
-                        nameList.Add(sf.Name ?? string.Empty);
-                        fileNameOffsets.Add(0);
                     }
 
-                    if (e is SgaFolder child)
+                    if (e is SgaFolder childFolder)
+                    {
+                        FolderTest child = new FolderTest(childFolder);
                         folderList.Add(child);
+                    }
                 }
 
-                for(int i = f.Contents.Count-1; i >= 0; i--)
-                {
-                    if (f.Contents[i] is SgaFolder child)
-                        stack.Push(child);
-                }
+                for(int i = folderList.Count-1; i >= f.FirstFolder; i--)
+                    stack.Push(folderList[i]);
+
+                f.LastFolder = (ushort)folderList.Count;
+                f.LastFile = (ushort)fileList.Count;
+                
             }
 
             driveTest.LastFolder = (ushort)folderList.Count;
@@ -246,29 +247,19 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt16(toc, 0);
         }
 
-        ushort folderIndex = 1;
-        ushort fileIndex = 0;
-
         foreach (var f in folderList)
         {
-            ushort fileCount = (ushort)f.Contents.Count((item)=>{return item is SgaFile;});
-            ushort folderCount = (ushort)f.Contents.Count((item)=>{return item is SgaFolder;});
-            fileCount += fileIndex;
-            folderCount += folderIndex;
             uint folderNameOffset = (uint)nameBuffer.Position;
-            ParserUtils.WriteDynamicString(nameBuffer, f.Name);
+            ParserUtils.WriteDynamicString(nameBuffer, f.Folder.Name);
 
             ParserUtils.WriteUInt32(toc, folderNameOffset);
-            ParserUtils.WriteUInt16(toc, folderIndex);
-            ParserUtils.WriteUInt16(toc, folderCount);
-            ParserUtils.WriteUInt16(toc, fileIndex);
-            ParserUtils.WriteUInt16(toc, fileCount);
-
-            folderIndex = folderCount;
-            fileIndex = fileCount;
+            ParserUtils.WriteUInt16(toc, f.FirstFolder);
+            ParserUtils.WriteUInt16(toc, f.LastFolder);
+            ParserUtils.WriteUInt16(toc, f.FirstFile);
+            ParserUtils.WriteUInt16(toc, f.LastFile);
         }
 
-        uint dataOffset = 0;
+        uint dataOffset = 264;
         // Write file records placeholders (nameOffset, storageFlag, dataOffset, compressedSize, decompressedSize)
         foreach (var f in fileList)
         {
@@ -278,10 +269,10 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt32(toc, folderNameOffset);
             ParserUtils.WriteUInt32(toc, WriteStorageType(f.StorageType));
             ParserUtils.WriteUInt32(toc, dataOffset);
-            ParserUtils.WriteUInt32(toc, f.Size);
             ParserUtils.WriteUInt32(toc, f.CompressedSize);
+            ParserUtils.WriteUInt32(toc, f.Size);
 
-            dataOffset += f.CompressedSize;
+            dataOffset += f.CompressedSize + 264;
         }
 
         // write TOC
