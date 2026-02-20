@@ -161,8 +161,8 @@ internal class SgaV2Parser : ISgaParser
     public void Write(SgaArchive archive, Stream sgaStream)
     {
         // Currently writing directly into specific file. Only for testing. The final implementation will not use hardcoded paths.
-        using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write);
-        LogArchive(archive);  
+        //using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write); 
+        using var tempStream = new MemoryStream();
 
         // Flatten drives folders and files so that folder/file indices are contiguous per-drive
         List<DriveTest> driveList = new List<DriveTest>();
@@ -281,6 +281,8 @@ internal class SgaV2Parser : ISgaParser
         // write TOC
         nameBuffer.Seek(0, SeekOrigin.Begin);
         nameBuffer.CopyTo(toc);
+        toc.Seek(0, SeekOrigin.Begin);
+        byte[]? tocHash = ParserUtils.HashMD5(toc, toc.Length, "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF");
 
         ParserUtils.WriteStaticString(tempStream, "_ARCHIVE", 8);
         ParserUtils.WriteUInt32(tempStream, (uint)archive.Version);
@@ -290,36 +292,32 @@ internal class SgaV2Parser : ISgaParser
         
         ParserUtils.WriteWideStaticString(tempStream, archive.ArchiveName, 128);
         
-        tempStream.Write(emptyHash);
+        tempStream.Write(tocHash);
         
-        ParserUtils.WriteUInt32(tempStream, (uint)toc.Position);
-        ParserUtils.WriteUInt32(tempStream, (uint)(toc.Position + 180 ));
+        ParserUtils.WriteUInt32(tempStream, (uint)toc.Length);
+        ParserUtils.WriteUInt32(tempStream, (uint)(toc.Length + 180 ));
         
-        toc.Seek(0, SeekOrigin.Begin);
         toc.CopyTo(tempStream);
 
         byte[] emptyMetaData = new byte[264];
 
         foreach(var file in fileList)
         {
-            using var contents = file.Open();
-
             tempStream.Write(emptyMetaData);
-
-            if(file.StorageType == StorageType.Uncompress)
-            {
-                contents.CopyTo(tempStream);
-            }
-            else
-            {
-                using var compressed = new ZLibStream(tempStream, CompressionMode.Compress, true);
-                contents.CopyTo(compressed);
-            }
+            using var contents = file.GetExactStream();
+            contents.CopyTo(tempStream);
         }
 
-        // write data block
-        //dataBlock.Seek(0, SeekOrigin.Begin);
-        //dataBlock.CopyTo(sgaStream);
+        tempStream.Position = 180;
+        byte[]? fileHash = ParserUtils.HashMD5(tempStream, tempStream.Length-tempStream.Position, "E01519D6-2DB7-4640-AF54-0A23319C56C3");
+        
+        tempStream.Position = 12;
+        tempStream.Write(fileHash);
+
+        sgaStream.Position = 0;
+        tempStream.Position = 0;
+        tempStream.CopyTo(sgaStream);
+        sgaStream.SetLength(sgaStream.Position);
     }
 
     // Mock implementation. For testing only. Will be replaces by actual implementation when i will be satisfied by the public interface.

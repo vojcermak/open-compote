@@ -47,6 +47,11 @@ public class SgaFile: SgaEntry
         }
     }
 
+    internal Stream GetExactStream()
+    {
+        return new ReadSubStream(Drive!.Archive!._archiveStream, _DataOffset, CompressedSize);
+    }
+
     internal override void Delete(bool subDelete)
     {
         ThrowIfDeleted();
