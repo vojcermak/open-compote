@@ -33,7 +33,7 @@ internal class SgaV2Parser : ISgaParser
     {
         List<DriveRecord> driveList = new List<DriveRecord>();
         List<FolderRecord> folderList = new List<FolderRecord>();
-        List<SgaFile> fileList = new List<SgaFile>();
+        List<FileRecord> fileList = new List<FileRecord>();
 
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 
@@ -110,10 +110,7 @@ internal class SgaV2Parser : ISgaParser
             uint compressSize = ParserUtils.ReadUInt32(sgaStream);
             uint decompressSize = ParserUtils.ReadUInt32(sgaStream);
 
-            uint nameStart = nameOffset + 180 + nameListOffset;
-            string fileName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
-
-            var file = new SgaFile(fileName, storageFlag, rawDataOffset + dataOffset, compressSize, decompressSize);
+            var file = new FileRecord(nameOffset, storageFlag, rawDataOffset + dataOffset, compressSize, decompressSize);
             fileList.Add(file);
         }
 
@@ -149,9 +146,18 @@ internal class SgaV2Parser : ISgaParser
 
                 for (ushort i = currentRecord.FirstFile; i < currentRecord.LastFile; i++)
                 {
-                    SgaFile currentFile = fileList[i];
-                    currentFile.Drive = newDrive;
-                    currentFile.Parent = currentFolder;
+                    FileRecord fileRecord = fileList[i];
+
+                    uint fileNameOffset = fileRecord.NameOffset + 180 + nameListOffset;
+                    string fileName = ParserUtils.ReadDynamicString(sgaStream, fileNameOffset);
+
+                    SgaFile currentFile = new SgaFile(fileName,
+                                                      fileRecord.StorageType,
+                                                      fileRecord.RawDataOffset,
+                                                      fileRecord.CompressedSize,
+                                                      fileRecord.Size,
+                                                      newDrive,
+                                                      currentFolder);
                     currentFolder._contents.Add(currentFile);
                 }
             }
@@ -253,7 +259,7 @@ internal class SgaV2Parser : ISgaParser
         foreach (var f in folderList)
         {
             uint folderNameOffset = (uint)nameBuffer.Position;
-            ParserUtils.WriteDynamicString(nameBuffer, f.Folder.Name);
+            ParserUtils.WriteDynamicString(nameBuffer, f.Folder.Path);
 
             ParserUtils.WriteUInt32(toc, folderNameOffset);
             ParserUtils.WriteUInt16(toc, f.FirstFolder);

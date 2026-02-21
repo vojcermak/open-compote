@@ -19,15 +19,19 @@ public class SgaFile: SgaEntry
         _Name = name;
         StorageType = type;
         Parent = parent;
+        _Path = Parent.Path + '\\' + name;
     }
 
-    internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size)
+    internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size, SgaDrive drive, SgaFolder parent)
     {
         _DataOffset = dataOffset;
         _Name = name;
         StorageType = type;
         CompressedSize = compressedSize;
         Size = size;
+        Drive = drive;
+        Parent = parent;
+        _Path = Parent.Path + '\\' + name;
         _isInStream = true;
     }
 

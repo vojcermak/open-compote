@@ -6,6 +6,7 @@ namespace OpenCompote.SGA;
 public abstract class SgaEntry
 {
     protected string _Name = "";
+    protected string _Path = "";
 
     public string Name
     {
@@ -20,6 +21,15 @@ public abstract class SgaEntry
             if(Drive!.Archive!.Mode == SgaMode.Read)
                 throw new NotSupportedException("Writing is not supported.");
             _Name = value;
+        }
+    }
+
+    public string Path
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _Path;
         }
     }
 

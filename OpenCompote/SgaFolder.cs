@@ -15,13 +15,15 @@ public class SgaFolder: SgaEntry
         }
     }
 
-    internal SgaFolder(string name, SgaDrive drive, SgaFolder? parent)
+    internal SgaFolder(string path, SgaDrive drive, SgaFolder? parent)
     {   
         _contents = new List<SgaEntry>();
         _contentCollection = new ReadOnlyCollection<SgaEntry>(_contents);
         Drive = drive;
         Parent = parent;
-        _Name = name;
+
+        _Name = path.Split('\\').Last();
+        _Path = path;
     }
 
     public SgaFolder AddFolder(string name)
