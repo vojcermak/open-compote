@@ -220,6 +220,7 @@ public class SgaArchiveTest
             Assert.Single(drive.RootFolder.Contents);
             Assert.Same(newFolder, drive.RootFolder.Contents[0]);
             Assert.Equal("SubFolder", newFolder.Name);
+            Assert.Equal("Name\\SubFolder", newFolder.Path);
             Assert.Same(drive.RootFolder, newFolder.Parent);
             Assert.Same(drive, newFolder.Drive);
         }
@@ -276,6 +277,7 @@ public class SgaArchiveTest
             Assert.Single(drive.RootFolder.Contents);
             Assert.Same(newFile, drive.RootFolder.Contents[0]);
             Assert.Equal("TestFile.txt", newFile.Name);
+            Assert.Equal("Name\\TestFile.txt", newFile.Path);
             Assert.Equal(StorageType.Uncompress, newFile.StorageType);
             Assert.Same(drive.RootFolder, newFile.Parent);
             Assert.Same(drive, newFile.Drive);

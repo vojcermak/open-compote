@@ -33,7 +33,7 @@ public class SgaFolder: SgaEntry
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new NotSupportedException("Writing is not supported in this mode.");
 
-        SgaFolder newFolder = new SgaFolder(name, Drive!, this);
+        SgaFolder newFolder = new SgaFolder(Path + '\\' + name, Drive!, this);
         _contents.Add(newFolder);
         return newFolder;
     }

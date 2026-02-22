@@ -1,7 +1,6 @@
 using System.IO.Compression;
 using System.Text;
 using OpenCompote.SGA.Parsers;
-using Xunit;
 
 namespace OpenCompote.SGA.Tests;
 
@@ -71,9 +70,7 @@ public class MockParser : ISgaParser
                 compressedSize = (uint)_testStream.Length - dataOffset;
             }
 
-            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size);
-            file.Drive = drive;
-            file.Parent = folder;
+            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, drive, folder);
             folder._contents.Add(file);
         }
 
@@ -94,6 +91,12 @@ public class MockParser : ISgaParser
     public static void Assert_Folder(TestFolder expectedFolder, SgaFolder actualFolder, SgaFolder? expectedParent, SgaDrive expectedDrive )
     {
         Assert.Equal(expectedFolder.Name, actualFolder.Name);
+
+        string expectedPath;
+        if(expectedParent == null || expectedParent.Path == "")
+            expectedPath = expectedFolder.Name;
+        else
+            expectedPath = expectedParent.Path + '\\' + expectedFolder.Name;
 
         Assert.Same(expectedParent, actualFolder.Parent);
         Assert.Same(expectedDrive, actualFolder.Drive);
@@ -126,6 +129,7 @@ public class MockParser : ISgaParser
         byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedFile.FileContent);
         uint expectedSize = (uint)expectedBytes.Length;
         uint expectedCompressedSize = expectedSize;
+        var expectedPath = expectedParent?.Path + '\\' + expectedFile.Name;
 
         if(expectedFile.StorageType != StorageType.Uncompress)
         {
@@ -138,6 +142,7 @@ public class MockParser : ISgaParser
         }
 
         Assert.Equal(expectedFile.Name, actualFile.Name);
+        Assert.Equal(expectedPath, actualFile.Path);
         Assert.Equal(expectedFile.StorageType, actualFile.StorageType);
         Assert.Equal(expectedSize, actualFile.Size);
         Assert.Equal(expectedCompressedSize, actualFile.CompressedSize);
