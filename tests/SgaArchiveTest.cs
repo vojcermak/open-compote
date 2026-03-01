@@ -261,7 +261,7 @@ public class SgaArchiveTest
                         new TestFile{
                             Name = "TestFile.txt",
                             StorageType = StorageType.Uncompress,
-                            FileContent = ""
+                            FileContent = "File Contents"
                         }
                     ]
                 }
@@ -283,6 +283,17 @@ public class SgaArchiveTest
             Assert.Equal(StorageType.Uncompress, newFile.StorageType);
             Assert.Same(drive.RootFolder, newFile.Parent);
             Assert.Same(drive, newFile.Drive);
+            Assert.Equal(0u, newFile.CompressedSize);
+            Assert.Equal(0u, newFile.Size);
+
+            using(var fileContent = newFile.Open())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes("File Contents");
+                fileContent.Write(inputBytes);
+            }
+
+            Assert.Equal(13u, newFile.CompressedSize);
+            Assert.Equal(13u, newFile.Size);
         }
     }
 
@@ -326,6 +337,7 @@ public class SgaArchiveTest
             }
         ]);
 
+        // TODO: Add writing into the file.
         using (var archive = new SgaArchive(stream, SgaMode.Create, SgaVersion.V2, parser))
         {
             SgaDrive drive = archive.AddDrive("Alias", "Name");

@@ -101,6 +101,8 @@ public class SgaFile: SgaEntry
         return new WrapperStream(_fileContents, () =>
         {
             _isOpen = false;
+            Size = (uint)_fileContents.Length;
+            CompressedSize = (uint)_fileContents.Length;
         });
     }
 
