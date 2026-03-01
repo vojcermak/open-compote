@@ -23,7 +23,6 @@ public class SgaFolder: SgaEntry
         Parent = parent;
 
         _Name = path.Split('\\').Last();
-        _Path = path;
     }
 
     public SgaFolder AddFolder(string name)

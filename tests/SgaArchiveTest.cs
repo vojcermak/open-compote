@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Xunit.Sdk;
 
 
@@ -385,6 +387,72 @@ public class SgaArchiveTest
         }
     }
 
+    [Fact]
+    public void ChangeName_InEditMode_ChangesPathAsWell()
+    {
+        var stream = new MemoryStream();
+        var parser = new MockParser([
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "SubFolder",
+                        Folders = [new TestFolder{
+                            Name = "SubSubFolder",
+                            Folders = [],
+                            Files = []
+                        }],
+                        Files = []
+                    }],
+                    Files = []
+                }
+            }
+        ],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [new TestFolder{
+                            Name = "MyFolder",
+                            Folders = [],
+                            Files = []
+                        }],
+                        Files = []
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaDrive drive = archive.Drives[0];
+            SgaFolder data = (SgaFolder)drive.RootFolder.Contents[0];
+            SgaFolder myFolder = (SgaFolder)data.Contents[0];
+
+            Assert.Equal("SubFolder", data.Name);
+            Assert.Equal("SubFolder", data.Path);
+
+            Assert.Equal("SubSubFolder", myFolder.Name);
+            Assert.Equal("SubFolder\\SubSubFolder", myFolder.Path);
+
+            data.Name = "Data";
+            myFolder.Name = "MyFolder";
+
+            Assert.Equal("Data", data.Name);
+            Assert.Equal("Data", data.Path);
+
+            Assert.Equal("MyFolder", myFolder.Name);
+            Assert.Equal("Data\\MyFolder", myFolder.Path);
+
+        }
+    }
+
     #endregion
 
     #region Delete Tests
@@ -680,5 +748,4 @@ public class SgaArchiveTest
 
     #endregion
 }
-
 

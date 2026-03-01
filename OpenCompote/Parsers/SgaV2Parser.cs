@@ -69,7 +69,7 @@ internal class SgaV2Parser : ISgaParser
         uint nameListOffset = ParserUtils.ReadUInt32(sgaStream);
         ushort nameCount = ParserUtils.ReadUInt16(sgaStream);
 
-        bool isIc =  (nameListOffset - fileOffset)/fileCount == 17;
+        bool isIc = fileCount != 0 && (nameListOffset - fileOffset)/fileCount == 17;
 
         // Read drive definitions
         for (int i = 0; i < driveCount; i++)
@@ -168,6 +168,7 @@ internal class SgaV2Parser : ISgaParser
     {
         // Currently writing directly into specific file. Only for testing. The final implementation will not use hardcoded paths.
         //using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write); 
+        LogArchive(archive);
         using var tempStream = new MemoryStream();
 
         // Flatten drives folders and files so that folder/file indices are contiguous per-drive
@@ -253,7 +254,7 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt16(toc, drive.LastFolder);
             ParserUtils.WriteUInt16(toc, drive.FirstFile);
             ParserUtils.WriteUInt16(toc, drive.LastFile);
-            ParserUtils.WriteUInt16(toc, 0);
+            ParserUtils.WriteUInt16(toc, drive.FirstFolder);
         }
 
         foreach (var f in folderList)
@@ -310,7 +311,7 @@ internal class SgaV2Parser : ISgaParser
         foreach(var file in fileList)
         {
             tempStream.Write(emptyMetaData);
-            using var contents = file.GetExactStream();
+            using var contents = file.GetResultStream();
             contents.CopyTo(tempStream);
         }
 

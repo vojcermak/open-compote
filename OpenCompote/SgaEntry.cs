@@ -6,7 +6,6 @@ namespace OpenCompote.SGA;
 public abstract class SgaEntry
 {
     protected string _Name = "";
-    protected string _Path = "";
 
     public string Name
     {
@@ -29,7 +28,19 @@ public abstract class SgaEntry
         get
         {
             ThrowIfDeleted();
-            return _Path;
+            var pathParts = new List<string>();
+            
+            SgaEntry? current = this;
+            while (current != null)
+            {
+                if(current._Name != "")
+                    pathParts.Add(current._Name);
+
+                current = current.Parent;
+            }
+            
+            pathParts.Reverse();
+            return string.Join("\\", pathParts);
         }
     }
 

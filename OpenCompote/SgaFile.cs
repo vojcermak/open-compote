@@ -19,7 +19,6 @@ public class SgaFile: SgaEntry
         _Name = name;
         StorageType = type;
         Parent = parent;
-        _Path = Parent.Path + '\\' + name;
     }
 
     internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size, SgaDrive drive, SgaFolder parent)
@@ -31,7 +30,6 @@ public class SgaFile: SgaEntry
         Size = size;
         Drive = drive;
         Parent = parent;
-        _Path = Parent.Path + '\\' + name;
         _isInStream = true;
     }
 
@@ -51,9 +49,12 @@ public class SgaFile: SgaEntry
         }
     }
 
-    internal Stream GetExactStream()
+    internal Stream GetResultStream()
     {
-        return new ReadSubStream(Drive!.Archive!._archiveStream, _DataOffset, CompressedSize);
+        if(_isInStream && _fileContents == null)
+            return new ReadSubStream(Drive!.Archive!._archiveStream, _DataOffset, CompressedSize);
+            
+        return _fileContents!;    
     }
 
     internal override void Delete(bool subDelete)
