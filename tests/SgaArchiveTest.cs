@@ -465,6 +465,64 @@ public class SgaArchiveTest
         }
     }
 
+    [Fact]
+    public void ChangeFileContents_AndReopenTheFile()
+    {
+        var stream = new MemoryStream();
+        var parser = new MockParser([
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = []
+                    }],
+                    Files = []
+                }
+            }
+        ],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.StreamCompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaFolder dataDrive = (SgaFolder)archive.GetDrive("DriveName")!.RootFolder!.Contents[0];
+
+            SgaFile file = dataDrive.AddFile("File1", StorageType.StreamCompress);
+
+            using(var contents = file.Open()){
+                byte[] inputBytes = Encoding.UTF8.GetBytes("File Contents");
+                contents.Write(inputBytes);
+            }
+
+            using(var contents = file.Open())
+            {
+                byte[] outputBytes = new byte[file.Size];
+                contents.ReadExactly(outputBytes);
+                Assert.Equal("File Contents", Encoding.Default.GetString(outputBytes));
+            }
+        }
+    }
+
     #endregion
 
     #region Delete Tests

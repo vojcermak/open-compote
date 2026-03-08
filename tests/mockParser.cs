@@ -141,9 +141,21 @@ public class MockParser : ISgaParser
         Assert.Same(expectedParent, actualFile.Parent);
         Assert.Same(expectedDrive, actualFile.Drive);
 
-        Stream stream = actualFile.Open();
-        var buffer = new byte [actualFile.Size];
-        stream.ReadExactly(buffer);
+        Stream stream = actualFile.GetResultStream();
+        byte[] buffer = new byte [actualFile.Size];
+
+        if(stream != null)
+        {
+            if(actualFile.StorageType != StorageType.Uncompress)
+            {
+                using var zLib = new ZLibStream(stream, CompressionMode.Decompress);
+                zLib.ReadExactly(buffer);
+            }
+            else
+                stream.ReadExactly(buffer);
+
+        }
+
         string actualContents = Encoding.Default.GetString(buffer);
 
         Assert.Equal(expectedFile.FileContent, actualContents);

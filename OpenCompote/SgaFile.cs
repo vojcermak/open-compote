@@ -94,15 +94,34 @@ public class SgaFile: SgaEntry
             var tempStream = OpenReadOnly();
             tempStream.CopyTo(_fileContents);
         }
+        else if(StorageType != StorageType.Uncompress && _fileContents != null)
+        {
+            var zLibStream = new ZLibStream(_fileContents, CompressionMode.Decompress, true);
+            _fileContents = new MemoryStream();
+            zLibStream.CopyTo(_fileContents); 
+        }
 
         _fileContents ??= new MemoryStream();
         _fileContents.Position = 0;
         _isOpen = true;
+
         return new WrapperStream(_fileContents, () =>
         {
-            _isOpen = false;
             Size = (uint)_fileContents.Length;
+
+            if(StorageType != StorageType.Uncompress)
+            {   
+                _fileContents.Position = 0;
+                var compressedStream = new MemoryStream();
+                var zLibStream = new ZLibStream(compressedStream, CompressionMode.Compress, true);
+                _fileContents.CopyTo(zLibStream);
+                _fileContents = compressedStream;
+                zLibStream.Dispose();
+            }
+
             CompressedSize = (uint)_fileContents.Length;
+            _fileContents.Position = 0;
+            _isOpen = false;
         });
     }
 
