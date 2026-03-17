@@ -14,14 +14,14 @@ internal static class ParserUtils
 
     public static string ReadWideStaticString(Stream sgaFile, int length)
     {
-        byte[] strBuffer = new byte[length];
+        byte[] strBuffer = new byte[length*2];
         sgaFile.ReadExactly(strBuffer);
         return System.Text.Encoding.Unicode.GetString(strBuffer).TrimEnd('\0');
     }
 
     public static void WriteWideStaticString(Stream sgaFile, string inputString, int length)
     {
-        byte[] buffer = new byte[length];
+        byte[] buffer = new byte[length*2];
         System.Text.Encoding.Unicode.GetBytes(inputString, buffer);
         sgaFile.Write(buffer);
     }

@@ -5,15 +5,6 @@ using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
 
-internal struct DriveTest(SgaDrive drive)
-{
-    public SgaDrive Drive { get; set; } = drive;
-    public ushort FirstFolder {get; set;}
-    public ushort LastFolder {get; set;}
-    public ushort FirstFile {get; set;}
-    public ushort LastFile {get; set;}
-}
-
 internal class FolderTest(SgaFolder folder)
 {
     public SgaFolder Folder { get; set; } = folder;
@@ -28,6 +19,8 @@ internal class SgaV2Parser : ISgaParser
     private const int DRIVE_SIZE = 138;
     private const int FOLDER_SIZE = 12;
     private const int FILE_SIZE = 20;
+    private const int ARCHIVE_NAME_LENGTH = 64;
+    private const int FILE_HEADER_SIZE = 180;
 
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
@@ -37,7 +30,7 @@ internal class SgaV2Parser : ISgaParser
 
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 
-        archive._archiveName = ParserUtils.ReadWideStaticString(sgaStream, 128);
+        archive._archiveName = ParserUtils.ReadWideStaticString(sgaStream, ARCHIVE_NAME_LENGTH);
 
         byte[] tocHash = ParserUtils.ReadHash(sgaStream);
 
@@ -51,13 +44,6 @@ internal class SgaV2Parser : ISgaParser
         byte[]? generatedTocHash = ParserUtils.HashMD5(sgaStream, tocSize, "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF");
         if(generatedTocHash == null || !tocHash.SequenceEqual(generatedTocHash))
             Console.WriteLine("Hash is  not valid");
-
-        // var curPosition = sgaStream.Position;
-        // using var tempStream = new FileStream("toc.bin", FileMode.Create, FileAccess.Write);
-        // byte[] buffer = new byte[tocSize];
-        // sgaStream.ReadExactly(buffer);
-        // sgaStream.Position = curPosition;
-        // tempStream.Write(buffer);
 
         // Read TOC header
         uint driveOffset = ParserUtils.ReadUInt32(sgaStream);
@@ -166,24 +152,19 @@ internal class SgaV2Parser : ISgaParser
 
     public void Write(SgaArchive archive, Stream sgaStream)
     {
-        // Currently writing directly into specific file. Only for testing. The final implementation will not use hardcoded paths.
-        //using var tempStream = new FileStream("output.bin", FileMode.Create, FileAccess.Write); 
-        LogArchive(archive);
+        //LogArchive(archive); //Used for debugging
         using var tempStream = new MemoryStream();
 
-        // Flatten drives folders and files so that folder/file indices are contiguous per-drive
-        List<DriveTest> driveList = new List<DriveTest>();
+        List<DriveRecord> driveList = new List<DriveRecord>();
         List<FolderTest> folderList = new List<FolderTest>();
         List<SgaFile> fileList = new List<SgaFile>();
 
-        // We'll traverse drives in order and append their folder trees
+        // Traverse drives and append their folder trees
         foreach (var drive in archive._drives)
         {
-            // iterative preorder traversal to produce folderList
             var stack = new Stack<FolderTest>();
-            var driveTest = new DriveTest(drive);
-            driveTest.FirstFolder = (ushort)folderList.Count;
-            driveTest.FirstFile = (ushort)fileList.Count;
+            ushort firstFolder = (ushort)folderList.Count;
+            ushort firstFile = (ushort)fileList.Count;
 
             if (drive.RootFolder != null)
             {
@@ -222,10 +203,7 @@ internal class SgaV2Parser : ISgaParser
                 f.LastFile = (ushort)fileList.Count;
                 
             }
-
-            driveTest.LastFolder = (ushort)folderList.Count;
-            driveTest.LastFile = (ushort)fileList.Count;
-            driveList.Add(driveTest);
+            driveList.Add(new DriveRecord(drive.Name, drive.Alias, firstFolder, (ushort)folderList.Count, firstFile ,(ushort)fileList.Count, 0));
         }
 
         
@@ -236,6 +214,7 @@ internal class SgaV2Parser : ISgaParser
         uint fileOffset = folderOffset + (uint)folderList.Count * FOLDER_SIZE;
         uint nameOffset = fileOffset + (uint)fileList.Count * FILE_SIZE;
 
+        // Write TOC Header
         ParserUtils.WriteUInt32(toc, 24);                               // Drive offset
         ParserUtils.WriteUInt16(toc, (ushort)driveList.Count);          // Drive count
         ParserUtils.WriteUInt32(toc, folderOffset);                     // Folder offset
@@ -248,8 +227,8 @@ internal class SgaV2Parser : ISgaParser
         // Write drives
         foreach (var drive in driveList)
         {
-            ParserUtils.WriteStaticString(toc, drive.Drive.Name, 64);
-            ParserUtils.WriteStaticString(toc, drive.Drive.Alias, 64);
+            ParserUtils.WriteStaticString(toc, drive.DriveName, 64);
+            ParserUtils.WriteStaticString(toc, drive.DriveAlias, 64);
             ParserUtils.WriteUInt16(toc, drive.FirstFolder);
             ParserUtils.WriteUInt16(toc, drive.LastFolder);
             ParserUtils.WriteUInt16(toc, drive.FirstFile);
@@ -257,6 +236,7 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt16(toc, drive.FirstFolder);
         }
 
+        // Write folders
         foreach (var f in folderList)
         {
             uint folderNameOffset = (uint)nameBuffer.Position;
@@ -269,8 +249,8 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt16(toc, f.LastFile);
         }
 
-        uint dataOffset = 264;
-        // Write file records placeholders (nameOffset, storageFlag, dataOffset, compressedSize, decompressedSize)
+        uint dataOffset = 264; // Add temporary Data offset buffer for the optional file info. This will be replaced later.
+        // Write Files
         foreach (var f in fileList)
         {
             uint folderNameOffset = (uint)nameBuffer.Position;
@@ -289,25 +269,33 @@ internal class SgaV2Parser : ISgaParser
         nameBuffer.Seek(0, SeekOrigin.Begin);
         nameBuffer.CopyTo(toc);
         toc.Seek(0, SeekOrigin.Begin);
+
         byte[]? tocHash = ParserUtils.HashMD5(toc, toc.Length, "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF");
 
-        ParserUtils.WriteStaticString(tempStream, "_ARCHIVE", 8);
-        ParserUtils.WriteUInt32(tempStream, (uint)archive.Version);
+
+        // Start writing actual file it self.
+        ParserUtils.WriteStaticString(tempStream, "_ARCHIVE", 8); // Write magic world 
+        ParserUtils.WriteUInt32(tempStream, (uint)archive.Version); // Write archive version
         
+        // Temporarily fill the template hash with zeroes.
         byte[] emptyHash = new byte[16];
-        tempStream.Write(emptyHash);
+        tempStream.Write(emptyHash); 
         
-        ParserUtils.WriteWideStaticString(tempStream, archive.ArchiveName, 128);
+        // Write Archive name
+        ParserUtils.WriteWideStaticString(tempStream, archive.ArchiveName, ARCHIVE_NAME_LENGTH);
         
+        //Write TOC hash
         tempStream.Write(tocHash);
         
-        ParserUtils.WriteUInt32(tempStream, (uint)toc.Length);
-        ParserUtils.WriteUInt32(tempStream, (uint)(toc.Length + 180 ));
+        // Write the rest of the file header
+        ParserUtils.WriteUInt32(tempStream, (uint)toc.Length); // TOC size
+        ParserUtils.WriteUInt32(tempStream, (uint)(toc.Length + FILE_HEADER_SIZE)); // Data offset
         
-        toc.CopyTo(tempStream);
+        toc.CopyTo(tempStream); // copy the TOC to the new archive
 
         byte[] emptyMetaData = new byte[264];
 
+        // Write the actual content of the files.
         foreach(var file in fileList)
         {
             tempStream.Write(emptyMetaData);
@@ -315,19 +303,22 @@ internal class SgaV2Parser : ISgaParser
             contents.CopyTo(tempStream);
         }
 
+        // Calculate the File hash
         tempStream.Position = 180;
         byte[]? fileHash = ParserUtils.HashMD5(tempStream, tempStream.Length-tempStream.Position, "E01519D6-2DB7-4640-AF54-0A23319C56C3");
         
+        // Write the file hash
         tempStream.Position = 12;
         tempStream.Write(fileHash);
 
+        // Copy the new archive to the original position.
         sgaStream.Position = 0;
         tempStream.Position = 0;
         tempStream.CopyTo(sgaStream);
         sgaStream.SetLength(sgaStream.Position);
     }
 
-    // Mock implementation. For testing only. Will be replaces by actual implementation when i will be satisfied by the public interface.
+    // Mock logging. For testing only. this will be replaces when i will be finished with writer.
     private static void LogArchive(SgaArchive archive)
     {
         Console.WriteLine("Archive name: {0}",archive.ArchiveName);
