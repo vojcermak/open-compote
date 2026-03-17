@@ -7,6 +7,9 @@ public class SgaFolder: SgaEntry
     internal readonly List<SgaEntry> _contents;
     private readonly ReadOnlyCollection<SgaEntry> _contentCollection;
 
+    /// <summary>
+    /// Gets the collection of entries that are currently in the current folder.
+    /// </summary>
     public ReadOnlyCollection<SgaEntry> Contents
     {
         get {
@@ -25,6 +28,13 @@ public class SgaFolder: SgaEntry
         _Name = path.Split('\\').Last();
     }
 
+    /// <summary>
+    /// Creates an empty subfolder in the current folder.
+    /// </summary>
+    /// <param name="name">The name of the folder to be created</param>
+    /// <returns>New empty subfolder.</returns>
+    /// <exception cref="NotSupportedException">The SGA archive for this drive was open in readonly mode.</exception>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this entry has been disposed.</exception>
     public SgaFolder AddFolder(string name)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
@@ -37,6 +47,13 @@ public class SgaFolder: SgaEntry
         return newFolder;
     }
 
+    /// <summary>
+    /// Created an empty file in the current folder.
+    /// </summary>
+    /// <param name="name">The name of the new file.</param>
+    /// <param name="type">The storage type of the new file.</param>
+    /// <returns>New empty file.</returns>
+    /// <exception cref="NotSupportedException"></exception>
     public SgaFile AddFile(string name, StorageType type)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
@@ -70,7 +87,10 @@ public class SgaFolder: SgaEntry
     }
 
     // ------------------------ Extending functions ------------------------
-    // List of future ideas. 
+    // List of future ideas.
+    /// <summary>
+    /// NOT IMPLEMENTED! DO NOT USE
+    /// </summary> 
     public void ExtractToDirectory(string destination, bool overwrite = false)
     {
         throw new NotImplementedException();

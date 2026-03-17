@@ -4,6 +4,9 @@ using OpenCompote.SGA.Parsers;
 
 namespace OpenCompote.SGA;
 
+/// <summary>
+/// Represents the open archive file itself.
+/// </summary>
 public class SgaArchive: IDisposable
 {
     private readonly ReadOnlyCollection<SgaDrive> _driveCollection;
@@ -57,8 +60,9 @@ public class SgaArchive: IDisposable
     public int BlockSize {get; set;}
 
     /// <summary>
-    /// Create constructor. - Initializes new instance of SgaArchive on the given stream in the specific mode, using specific Sga version, specifying whether to leave the stream open.
+    /// Create constructor. - Initializes new instance of SgaArchive on the given empty stream in the specific mode, using specific SGA version, specifying whether to leave the stream open. 
     /// </summary>
+    /// <remarks>This constructor should be used only for creating a new SGA archive. If you want to just open already existing fle, please use the Open constructor</remarks>
     /// <param name="stream">The stream where the SGA archive is to be stored.</param>
     /// <param name="mode">Mode in which the archive should operate with.</param>
     /// <param name="version">Expected SGA version of the archive.</param>
@@ -119,7 +123,7 @@ public class SgaArchive: IDisposable
     /// <param name="stream">The stream containing the SGA archive.</param>
     /// <param name="mode">Mode in which the archive should operate with.</param>
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
-    /// <remarks>This constructor cannot be used with SgaMode.Create. For creating new empty archives please use the open constructor.</remarks>
+    /// <remarks>This constructor cannot be used with SgaMode.Create. For creating new empty archives please use the Create constructor.</remarks>
     public SgaArchive(Stream stream, SgaMode mode, bool leaveOpen = false): this(stream, mode, null, leaveOpen) {}
 
     #if DEBUG // For unit testing of the public API only, Do not include to release builds (Not very nice, but works.) 
@@ -178,6 +182,9 @@ public class SgaArchive: IDisposable
         return _drives.FirstOrDefault((drive)=>{return drive.Name == driveName || drive.Alias == driveName;});
     }
 
+    /// <summary>
+    /// NOT IMPLEMENTED! DO NOT USE
+    /// </summary>
     public SgaEntry GetEntry(string entryName)
     {
         throw new NotImplementedException();

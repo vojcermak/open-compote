@@ -127,7 +127,10 @@ public class SgaFile: SgaEntry
 
     // ------------------------ Extending functions ------------------------
     // List of future ideas.  
-        public void ExtractToFile(string destination, bool overwrite = false)
+    /// <summary>
+    /// NOT IMPLEMENTED! DO NOT USE
+    /// </summary>
+    public void ExtractToFile(string destination, bool overwrite = false)
     {
         throw new NotImplementedException();
     }
