@@ -25,7 +25,7 @@ public class SgaFolder: SgaEntry
         Drive = drive;
         Parent = parent;
 
-        _Name = path.Split('\\').Last();
+        _name = path.Split('\\').Last();
     }
 
     /// <summary>
@@ -53,7 +53,8 @@ public class SgaFolder: SgaEntry
     /// <param name="name">The name of the new file.</param>
     /// <param name="type">The storage type of the new file.</param>
     /// <returns>New empty file.</returns>
-    /// <exception cref="NotSupportedException"></exception>
+    /// <exception cref="NotSupportedException">The SGA archive for this drive was open in readonly mode.</exception>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed.</exception>
     public SgaFile AddFile(string name, StorageType type)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.

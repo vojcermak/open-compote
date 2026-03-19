@@ -7,8 +7,8 @@ namespace OpenCompote.SGA;
 /// </summary>
 public class SgaDrive
 {
-    private string _Alias;
-    private string _Name;
+    private string _alias;
+    private string _name;
     
     /// <summary>
     /// Gets the alias of the drive.
@@ -18,14 +18,14 @@ public class SgaDrive
         get
         {
             ThrowIfDeleted();
-            return _Alias;
+            return _alias;
         }
         set
         {
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
                 throw new NotSupportedException("Writing is not supported.");
-            _Alias = value;
+            _alias = value;
         }
     }
 
@@ -37,14 +37,14 @@ public class SgaDrive
         get
         {
             ThrowIfDeleted();
-            return _Name;
+            return _name;
         }
         set
         {
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
                 throw new NotSupportedException("Writing is not supported.");
-            _Name = value;
+            _name = value;
         }
     }
 
@@ -60,8 +60,8 @@ public class SgaDrive
 
     internal SgaDrive(string alias, string name, SgaArchive archive)
     {
-        _Alias = alias;
-        _Name = name;
+        _alias = alias;
+        _name = name;
         Archive = archive;
         RootFolder = new SgaFolder(name, this, null);
     }

@@ -6,25 +6,45 @@ namespace OpenCompote.SGA;
 public class SgaFile: SgaEntry
 {
     private readonly bool _isInStream = false;
-    private readonly uint _DataOffset;
+    private readonly uint _dataOffset;
     private Stream? _fileContents;
     private bool _isOpen;
-    public StorageType StorageType {get; set;}
+    private StorageType _storageType;
+
+    /// <summary>
+    /// Gets value that indicates whether then file is stored compressed or not.
+    /// </summary>
+    public StorageType StorageType
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _storageType;
+        }
+        set
+        {
+            ThrowIfDeleted();
+            if(Drive!.Archive!.Mode == SgaMode.Read)
+                throw new NotSupportedException("Writing is not supported.");
+
+            _storageType = value;
+        }
+    }
     public uint CompressedSize {get; private set;}
     public uint Size {get; private set;}
 
     internal SgaFile(string name, StorageType type, SgaDrive drive, SgaFolder parent)
     {   
         Drive = drive;
-        _Name = name;
+        _name = name;
         StorageType = type;
         Parent = parent;
     }
 
     internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size, SgaDrive drive, SgaFolder parent)
     {
-        _DataOffset = dataOffset;
-        _Name = name;
+        _dataOffset = dataOffset;
+        _name = name;
         StorageType = type;
         CompressedSize = compressedSize;
         Size = size;
@@ -33,6 +53,13 @@ public class SgaFile: SgaEntry
         _isInStream = true;
     }
 
+    /// <summary>
+    /// Opens the file from the SGA archive.
+    /// </summary>
+    /// <returns>The stream that represents the contents of the file.</returns>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed.</exception>
+    /// <exception cref="IOException">The entry is already currently open for writing.</exception>
+    /// <exception cref="InvalidOperationException">The archive was opened in invalid mode.</exception>
     public Stream Open()
     {   
         ThrowIfDeleted();
@@ -52,7 +79,7 @@ public class SgaFile: SgaEntry
     internal Stream GetResultStream()
     {
         if(_isInStream && _fileContents == null)
-            return new ReadSubStream(Drive!.Archive!._archiveStream, _DataOffset, CompressedSize);
+            return new ReadSubStream(Drive!.Archive!._archiveStream, _dataOffset, CompressedSize);
             
         return _fileContents!;    
     }
@@ -75,7 +102,7 @@ public class SgaFile: SgaEntry
 
     private Stream OpenReadOnly()
     {
-        ReadSubStream compressed = new ReadSubStream(Drive!.Archive!._archiveStream, _DataOffset, CompressedSize);
+        ReadSubStream compressed = new ReadSubStream(Drive!.Archive!._archiveStream, _dataOffset, CompressedSize);
 
         if(StorageType == StorageType.Uncompress)
             return compressed;

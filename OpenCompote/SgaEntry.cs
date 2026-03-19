@@ -5,7 +5,7 @@ namespace OpenCompote.SGA;
 
 public abstract class SgaEntry
 {
-    protected string _Name = "";
+    protected string _name = "";
 
     /// <summary>
     /// Gets the name of the entry in the zip archive.
@@ -15,14 +15,14 @@ public abstract class SgaEntry
         get
         {
             ThrowIfDeleted();
-            return _Name;
+            return _name;
         }
         set
         {
             ThrowIfDeleted();
             if(Drive!.Archive!.Mode == SgaMode.Read)
                 throw new NotSupportedException("Writing is not supported.");
-            _Name = value;
+            _name = value;
         }
     }
 
@@ -39,8 +39,8 @@ public abstract class SgaEntry
             SgaEntry? current = this;
             while (current != null)
             {
-                if(current._Name != "")
-                    pathParts.Add(current._Name);
+                if(current._name != "")
+                    pathParts.Add(current._name);
 
                 current = current.Parent;
             }
