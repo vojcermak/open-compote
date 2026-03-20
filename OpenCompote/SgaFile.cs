@@ -37,7 +37,7 @@ public class SgaFile: SgaEntry
     {   
         Drive = drive;
         _name = name;
-        StorageType = type;
+        _storageType = type;
         Parent = parent;
     }
 
@@ -45,7 +45,7 @@ public class SgaFile: SgaEntry
     {
         _dataOffset = dataOffset;
         _name = name;
-        StorageType = type;
+        _storageType = type;
         CompressedSize = compressedSize;
         Size = size;
         Drive = drive;
