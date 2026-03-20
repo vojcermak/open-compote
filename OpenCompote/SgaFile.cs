@@ -1,4 +1,6 @@
 using System.IO.Compression;
+using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using OpenCompote.SGA.CustomStreams;
 
 namespace OpenCompote.SGA;
@@ -12,8 +14,10 @@ public class SgaFile: SgaEntry
     private StorageType _storageType;
 
     /// <summary>
-    /// Gets value that indicates whether then file is stored compressed or not.
+    /// Gets value that indicates whether the file is compressed or not.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this file has been disposed.</exception>
+    /// <exception cref="InvalidOperationException">The archive is opened in read-only mode or file is currently open."</exception>
     public StorageType StorageType
     {
         get
@@ -25,8 +29,24 @@ public class SgaFile: SgaEntry
         {
             ThrowIfDeleted();
             if(Drive!.Archive!.Mode == SgaMode.Read)
-                throw new NotSupportedException("Writing is not supported.");
+                throw new InvalidOperationException("Writing is not supported.");
+            if(_isOpen)
+                throw new InvalidOperationException("Cannot change Storage type when file is open.");
+            if(_storageType == value)
+                return;
 
+            SetupFileContents();
+
+            if(value == StorageType.Uncompress)
+            {
+                _fileContents = DecompressFileContents();
+            }
+            else if(_storageType == StorageType.Uncompress)
+            {
+                _fileContents = CompressFileContents();
+            }
+
+            CompressedSize = (uint)_fileContents!.Length;
             _storageType = value;
         }
     }
@@ -100,6 +120,51 @@ public class SgaFile: SgaEntry
         _fileContents?.Dispose();
     }
 
+    private void SetupFileContents()
+    {
+        if(_fileContents == null)
+        {
+            _fileContents = new MemoryStream();
+
+            if (_isInStream)
+            {
+                var tempStream = new ReadSubStream(Drive!.Archive!._archiveStream, _dataOffset, CompressedSize);;
+                tempStream.CopyTo(_fileContents);
+                _fileContents.Position = 0;
+            }
+
+        }
+    }
+
+    private MemoryStream CompressFileContents()
+    {
+        if(_fileContents == null)
+            ArgumentNullException.ThrowIfNull(_fileContents);
+        
+        _fileContents.Position = 0;
+        var compressedStream = new MemoryStream();
+        var zLibStream = new ZLibStream(compressedStream, CompressionMode.Compress, true);
+        _fileContents.CopyTo(zLibStream);
+        
+        // Force ZLIB stream to write contents to the compressedStream. 
+        // If the zlibStream wouldn`t be closed, bytes would be missing from the end of the compressed stream.
+        zLibStream.Dispose();
+        compressedStream.Position = 0; // Reset position because CopyTo moves it.
+        return compressedStream;
+    }
+
+    private MemoryStream DecompressFileContents()
+    {
+        if(_fileContents == null)
+            ArgumentNullException.ThrowIfNull(_fileContents);
+
+        var zLibStream = new ZLibStream(_fileContents, CompressionMode.Decompress, true);
+        var decompressedStream = new MemoryStream();
+        zLibStream.CopyTo(decompressedStream);
+        decompressedStream.Position = 0; // Reset position because CopyTo moves it.
+        return decompressedStream;
+    }
+
     private Stream OpenReadOnly()
     {
         ReadSubStream compressed = new ReadSubStream(Drive!.Archive!._archiveStream, _dataOffset, CompressedSize);
@@ -115,21 +180,12 @@ public class SgaFile: SgaEntry
         if (_isOpen)
             throw new IOException("Files cannot be opened multiple times in Update/Create mode.");
 
-        if (_isInStream && _fileContents == null)
-        {
-            _fileContents = new MemoryStream();
-            var tempStream = OpenReadOnly();
-            tempStream.CopyTo(_fileContents);
-        }
-        else if(StorageType != StorageType.Uncompress && _fileContents != null)
-        {
-            var zLibStream = new ZLibStream(_fileContents, CompressionMode.Decompress, true);
-            _fileContents = new MemoryStream();
-            zLibStream.CopyTo(_fileContents); 
-        }
+        SetupFileContents();
+        
+        if(StorageType != StorageType.Uncompress)
+            _fileContents = DecompressFileContents();
 
         _fileContents ??= new MemoryStream();
-        _fileContents.Position = 0;
         _isOpen = true;
 
         return new WrapperStream(_fileContents, () =>
@@ -137,17 +193,9 @@ public class SgaFile: SgaEntry
             Size = (uint)_fileContents.Length;
 
             if(StorageType != StorageType.Uncompress)
-            {   
-                _fileContents.Position = 0;
-                var compressedStream = new MemoryStream();
-                var zLibStream = new ZLibStream(compressedStream, CompressionMode.Compress, true);
-                _fileContents.CopyTo(zLibStream);
-                _fileContents = compressedStream;
-                zLibStream.Dispose();
-            }
+                _fileContents = CompressFileContents();
 
             CompressedSize = (uint)_fileContents.Length;
-            _fileContents.Position = 0;
             _isOpen = false;
         });
     }
