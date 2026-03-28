@@ -19,31 +19,32 @@ if (args.Length == 0)
 
 string sgaPath = args[0];
 
-// using(var newSga = new SgaArchive(new MemoryStream(), SgaMode.Create, SgaVersion.V2))
-// {
-//     newSga.ArchiveName = "MyNewArchive";
-//     var dataDrive = newSga.AddDrive("data", "gameData");
-//     var attrDrive = newSga.AddDrive("attribs", "gameAttributes");
+using(var newSga = new SgaArchive(new FileStream("output.sga", FileMode.Create, FileAccess.ReadWrite), SgaMode.Create, SgaVersion.V2))
+{
+    newSga.ArchiveName = "MyNewArchive";
+    var dataDrive = newSga.AddDrive("data", "gameData");
+    var attrDrive = newSga.AddDrive("attribs", "gameAttributes");
 
-//     dataDrive.RootFolder.Name = ""; 
-//     var subfolder = dataDrive.RootFolder.AddFolder("subfolder");   
-//     subfolder.AddFolder("subsubFolder");
-//     subfolder.AddFolder("folder2");
-//     var file1 = subfolder.AddFile("file1", StorageType.Uncompress);
-//     var fileStream = file1.Open();
+    dataDrive.RootFolder.Name = ""; 
+    var subfolder = dataDrive.RootFolder.AddFolder("subfolder");
+    subfolder.AddFolder("subsubFolder");
+    subfolder.AddFolder("folder2");
+    var file1 = subfolder.AddFile("file1.txt", StorageType.Uncompress);
+    using var fileStream = file1.Open();
 
-//     using(var fileWriter = new StreamWriter(fileStream, leaveOpen: true))
-//     {
-//         fileWriter.WriteLine("Hello world!");        
-//     }
+    using(var fileWriter = new StreamWriter(fileStream, leaveOpen: true))
+    {
+        fileWriter.Write("Hello world!");
+    }
 
-//     Console.WriteLine(fileStream.Position);
-//     fileStream.Position = 0;
-//     Console.WriteLine(fileStream.ReadByte());
-// }
+    Console.WriteLine(fileStream.Position);
+    fileStream.Position = 0;
+    Console.WriteLine(fileStream.ReadByte());
+}
+
+Console.WriteLine();
 
 using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
 {
-    Console.WriteLine(archive.ArchiveName);
-    archive.ArchiveName = "";
+    //var drive = archive.GetDrive("gameData");
 }

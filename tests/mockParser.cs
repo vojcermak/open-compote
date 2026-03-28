@@ -1,7 +1,6 @@
 using System.IO.Compression;
 using System.Text;
 using OpenCompote.SGA.Parsers;
-using Xunit;
 
 namespace OpenCompote.SGA.Tests;
 
@@ -71,9 +70,7 @@ public class MockParser : ISgaParser
                 compressedSize = (uint)_testStream.Length - dataOffset;
             }
 
-            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size);
-            file.Drive = drive;
-            file.Parent = folder;
+            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, drive, folder);
             folder._contents.Add(file);
         }
 
@@ -94,7 +91,6 @@ public class MockParser : ISgaParser
     public static void Assert_Folder(TestFolder expectedFolder, SgaFolder actualFolder, SgaFolder? expectedParent, SgaDrive expectedDrive )
     {
         Assert.Equal(expectedFolder.Name, actualFolder.Name);
-
         Assert.Same(expectedParent, actualFolder.Parent);
         Assert.Same(expectedDrive, actualFolder.Drive);
 
@@ -145,9 +141,21 @@ public class MockParser : ISgaParser
         Assert.Same(expectedParent, actualFile.Parent);
         Assert.Same(expectedDrive, actualFile.Drive);
 
-        Stream stream = actualFile.Open();
-        var buffer = new byte [actualFile.Size];
-        stream.ReadExactly(buffer);
+        Stream stream = actualFile.GetResultStream();
+        byte[] buffer = new byte [actualFile.Size];
+
+        if(stream != null)
+        {
+            if(actualFile.StorageType != StorageType.Uncompress)
+            {
+                using var zLib = new ZLibStream(stream, CompressionMode.Decompress);
+                zLib.ReadExactly(buffer);
+            }
+            else
+                stream.ReadExactly(buffer);
+
+        }
+
         string actualContents = Encoding.Default.GetString(buffer);
 
         Assert.Equal(expectedFile.FileContent, actualContents);

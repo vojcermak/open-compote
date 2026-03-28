@@ -98,6 +98,8 @@ internal sealed class WrapperStream : Stream
 
             if (_closeBaseStream)
                 _baseStream.Dispose();
+            else
+                _baseStream.Position = 0;
 
             _isDisposed = true;
         }

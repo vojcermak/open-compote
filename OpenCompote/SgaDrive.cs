@@ -2,52 +2,75 @@ using System.Runtime.InteropServices;
 
 namespace OpenCompote.SGA;
 
+/// <summary>
+/// Represents a SGA archive drive.
+/// </summary>
 public class SgaDrive
 {
-    private string _Alias;
-    private string _Name;
+    private string _alias;
+    private string _name;
     
+    /// <summary>
+    /// Gets the alias of the drive.
+    /// </summary>
     public string Alias
     {
         get
         {
             ThrowIfDeleted();
-            return _Alias;
+            return _alias;
         }
         set
         {
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
                 throw new NotSupportedException("Writing is not supported.");
-            _Alias = value;
+            _alias = value;
         }
     }
+
+    /// <summary>
+    /// Gets the name of the drive.
+    /// </summary>
     public string Name
     {
         get
         {
             ThrowIfDeleted();
-            return _Name;
+            return _name;
         }
         set
         {
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
                 throw new NotSupportedException("Writing is not supported.");
-            _Name = value;
+            _name = value;
         }
     }
+
+    /// <summary>
+    /// Gets the SGA archive that the drive belongs to.
+    /// </summary>
     public SgaArchive? Archive {get; private set;}
+
+    /// <summary>
+    /// Gets the RootFolder of this drive.
+    /// </summary>
     public SgaFolder RootFolder {get; internal set;}
 
     internal SgaDrive(string alias, string name, SgaArchive archive)
     {
-        _Alias = alias;
-        _Name = name;
+        _alias = alias;
+        _name = name;
         Archive = archive;
         RootFolder = new SgaFolder(name, this, null);
     }
 
+    /// <summary>
+    /// Deletes the drive from the archive.
+    /// </summary>
+    /// <exception cref="NotSupportedException">The SGA archive for this drive was open in readonly mode.</exception>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this entry has been disposed.</exception>
     public void Delete()
     {
         if(Archive == null)
@@ -70,7 +93,10 @@ public class SgaDrive
     }
 
     // ------------------------ Extending functions ------------------------
-    // List of future ideas.  
+    // List of future ideas.
+    /// <summary>
+    /// NOT IMPLEMENTED! DO NOT USE
+    /// </summary>  
     public SgaEntry GetEntry(string entryName)
     {
         throw new NotImplementedException();

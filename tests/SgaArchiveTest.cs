@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
+using System.Text;
 using Xunit.Sdk;
 
 
@@ -220,6 +222,7 @@ public class SgaArchiveTest
             Assert.Single(drive.RootFolder.Contents);
             Assert.Same(newFolder, drive.RootFolder.Contents[0]);
             Assert.Equal("SubFolder", newFolder.Name);
+            Assert.Equal("Name\\SubFolder", newFolder.Path);
             Assert.Same(drive.RootFolder, newFolder.Parent);
             Assert.Same(drive, newFolder.Drive);
         }
@@ -258,7 +261,7 @@ public class SgaArchiveTest
                         new TestFile{
                             Name = "TestFile.txt",
                             StorageType = StorageType.Uncompress,
-                            FileContent = ""
+                            FileContent = "File Contents"
                         }
                     ]
                 }
@@ -276,9 +279,21 @@ public class SgaArchiveTest
             Assert.Single(drive.RootFolder.Contents);
             Assert.Same(newFile, drive.RootFolder.Contents[0]);
             Assert.Equal("TestFile.txt", newFile.Name);
+            Assert.Equal("Name\\TestFile.txt", newFile.Path);
             Assert.Equal(StorageType.Uncompress, newFile.StorageType);
             Assert.Same(drive.RootFolder, newFile.Parent);
             Assert.Same(drive, newFile.Drive);
+            Assert.Equal(0u, newFile.CompressedSize);
+            Assert.Equal(0u, newFile.Size);
+
+            using(var fileContent = newFile.Open())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes("File Contents");
+                fileContent.Write(inputBytes);
+            }
+
+            Assert.Equal(13u, newFile.CompressedSize);
+            Assert.Equal(13u, newFile.Size);
         }
     }
 
@@ -322,6 +337,7 @@ public class SgaArchiveTest
             }
         ]);
 
+        // TODO: Add writing into the file.
         using (var archive = new SgaArchive(stream, SgaMode.Create, SgaVersion.V2, parser))
         {
             SgaDrive drive = archive.AddDrive("Alias", "Name");
@@ -380,6 +396,320 @@ public class SgaArchiveTest
             Assert.Same(drive.RootFolder, folder1.Parent);
             Assert.Same(folder1, folder2.Parent);
             Assert.Same(folder2, file.Parent);
+        }
+    }
+
+
+    #endregion
+
+    #region Edit Tests
+
+    [Fact]
+    public void ChangeName_InEditMode_ChangesPathAsWell()
+    {
+        var stream = new MemoryStream();
+        var parser = new MockParser([
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "SubFolder",
+                        Folders = [new TestFolder{
+                            Name = "SubSubFolder",
+                            Folders = [],
+                            Files = []
+                        }],
+                        Files = []
+                    }],
+                    Files = []
+                }
+            }
+        ],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [new TestFolder{
+                            Name = "MyFolder",
+                            Folders = [],
+                            Files = []
+                        }],
+                        Files = []
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaDrive drive = archive.Drives[0];
+            SgaFolder data = (SgaFolder)drive.RootFolder.Contents[0];
+            SgaFolder myFolder = (SgaFolder)data.Contents[0];
+
+            Assert.Equal("SubFolder", data.Name);
+            Assert.Equal("SubFolder", data.Path);
+
+            Assert.Equal("SubSubFolder", myFolder.Name);
+            Assert.Equal("SubFolder\\SubSubFolder", myFolder.Path);
+
+            data.Name = "Data";
+            myFolder.Name = "MyFolder";
+
+            Assert.Equal("Data", data.Name);
+            Assert.Equal("Data", data.Path);
+
+            Assert.Equal("MyFolder", myFolder.Name);
+            Assert.Equal("Data\\MyFolder", myFolder.Path);
+
+        }
+    }
+
+    [Fact]
+    public void ChangeFileContents_AndReopenTheFile()
+    {
+        var stream = new MemoryStream();
+        var parser = new MockParser([
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = []
+                    }],
+                    Files = []
+                }
+            }
+        ],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.StreamCompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaFolder dataDrive = (SgaFolder)archive.GetDrive("DriveName")!.RootFolder!.Contents[0];
+
+            SgaFile file = dataDrive.AddFile("File1", StorageType.StreamCompress);
+
+            using(var contents = file.Open()){
+                byte[] inputBytes = Encoding.UTF8.GetBytes("File Contents");
+                contents.Write(inputBytes);
+            }
+
+            using(var contents = file.Open())
+            {
+                byte[] outputBytes = new byte[file.Size];
+                contents.ReadExactly(outputBytes);
+                Assert.Equal("File Contents", Encoding.Default.GetString(outputBytes));
+            }
+        }
+    }
+
+    [Fact]
+    public void ChangeFileStorageType_ToCompressed_CompressesContents()
+    {
+        var stream = new MemoryStream();
+        var parser = new MockParser([],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.StreamCompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaDrive drive = archive.AddDrive("DriveAlias", "DriveName");
+            drive.RootFolder.Name = "";
+            SgaFolder data = drive.RootFolder.AddFolder("Data");
+            SgaFile file1 = data.AddFile("File1", StorageType.Uncompress);
+            
+            using(var contents = file1.Open()){
+                byte[] inputBytes = Encoding.UTF8.GetBytes("File Contents");
+                contents.Write(inputBytes);
+            }
+
+            file1.StorageType = StorageType.StreamCompress;
+            
+        }
+    }
+
+    [Fact]
+    public void ChangeFileStorageType_ToUncompressed_DecompressesContents()
+    {
+        var stream = new MemoryStream();
+        var parser = new MockParser([],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.Uncompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaDrive drive = archive.AddDrive("DriveAlias", "DriveName");
+            drive.RootFolder.Name = "";
+            SgaFolder data = drive.RootFolder.AddFolder("Data");
+            SgaFile file1 = data.AddFile("File1", StorageType.StreamCompress);
+            
+            using(var contents = file1.Open()){
+                byte[] inputBytes = Encoding.UTF8.GetBytes("File Contents");
+                contents.Write(inputBytes);
+            }
+
+            file1.StorageType = StorageType.Uncompress;   
+        }
+    }
+
+    [Fact]
+    public void ChangeFileStorageType_ToCompressed_WhenContentNotLoaded_CompressesContents()
+    {
+        var stream = new MemoryStream();
+        var parser = new MockParser([
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.Uncompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.StreamCompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaDrive drive = archive.GetDrive("DriveAlias")!;
+            SgaFolder data = (SgaFolder)drive.RootFolder.Contents[0];
+            SgaFile file1 = (SgaFile)data.Contents[0];
+
+            file1.StorageType = StorageType.StreamCompress;
+        }
+    }
+
+    [Fact]
+    public void ChangeFileStorageType_ToUncompressed_WhenContentNotLoaded_DecompressesContents()
+    {
+                var stream = new MemoryStream();
+        var parser = new MockParser([
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.StreamCompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ],[
+            new TestDrive{
+                Name = "DriveName",
+                Alias = "DriveAlias",
+                RootFolder = new TestFolder{
+                    Name = "",
+                    Folders = [new TestFolder{
+                        Name= "Data",
+                        Folders = [],
+                        Files = [new TestFile{
+                            Name= "File1",
+                            StorageType = StorageType.Uncompress,
+                            FileContent = "File Contents"
+                        }]
+                    }],
+                    Files = []
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(stream, SgaMode.Write, SgaVersion.V2, parser))
+        {
+            SgaDrive drive = archive.GetDrive("DriveAlias")!;
+            SgaFolder data = (SgaFolder)drive.RootFolder.Contents[0];
+            SgaFile file1 = (SgaFile)data.Contents[0];
+
+            file1.StorageType = StorageType.Uncompress;
         }
     }
 
@@ -678,5 +1008,4 @@ public class SgaArchiveTest
 
     #endregion
 }
-
 

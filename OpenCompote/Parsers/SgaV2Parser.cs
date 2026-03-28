@@ -1,29 +1,47 @@
+using System.ComponentModel.Design;
+using System.IO.Compression;
+using System.Runtime.InteropServices;
 using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
 
 internal class SgaV2Parser : ISgaParser
 {
+    // Archive record sizes
+    private const int DRIVE_SIZE = 138;
+    private const int FOLDER_SIZE = 12;
+    private const int FILE_SIZE = 20;
+
+    private const int FILE_HEADER_SIZE = 180;
+
+    // Static length name lengths
+    private const int ARCHIVE_NAME_LENGTH = 64;
+    private const int DRIVE_NAME_LENGTH = 64;
+
+    // MD5 default hashes
+    private const string TOC_HASH_INIT = "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF";
+    private const string FILE_HASH_INIT = "E01519D6-2DB7-4640-AF54-0A23319C56C3";
+
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
         List<DriveRecord> driveList = new List<DriveRecord>();
         List<FolderRecord> folderList = new List<FolderRecord>();
-        List<SgaFile> fileList = new List<SgaFile>();
+        List<FileRecord> fileList = new List<FileRecord>();
 
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 
-        archive._archiveName = ParserUtils.ReadWideStaticString(sgaStream, 128);
+        archive._archiveName = ParserUtils.ReadWideStaticString(sgaStream, ARCHIVE_NAME_LENGTH);
 
         byte[] tocHash = ParserUtils.ReadHash(sgaStream);
 
         uint tocSize = ParserUtils.ReadUInt32(sgaStream);
         uint dataOffset = ParserUtils.ReadUInt32(sgaStream);
 
-        byte[]? generatedFileHash = ParserUtils.HashMD5(sgaStream, sgaStream.Length-sgaStream.Position, "E01519D6-2DB7-4640-AF54-0A23319C56C3");
+        byte[]? generatedFileHash = ParserUtils.HashMD5(sgaStream, sgaStream.Length-sgaStream.Position, FILE_HASH_INIT);
         if(generatedFileHash == null || !fileHash.SequenceEqual(generatedFileHash))
             Console.WriteLine("Hash is not valid");
 
-        byte[]? generatedTocHash = ParserUtils.HashMD5(sgaStream, tocSize, "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF");
+        byte[]? generatedTocHash = ParserUtils.HashMD5(sgaStream, tocSize, TOC_HASH_INIT);
         if(generatedTocHash == null || !tocHash.SequenceEqual(generatedTocHash))
             Console.WriteLine("Hash is  not valid");
 
@@ -37,14 +55,14 @@ internal class SgaV2Parser : ISgaParser
         uint nameListOffset = ParserUtils.ReadUInt32(sgaStream);
         ushort nameCount = ParserUtils.ReadUInt16(sgaStream);
 
-        bool isIc =  (nameListOffset - fileOffset)/fileCount == 17;
+        bool isIc = fileCount != 0 && (nameListOffset - fileOffset)/fileCount == 17;
 
         // Read drive definitions
         for (int i = 0; i < driveCount; i++)
         {
             DriveRecord internalDrive = new DriveRecord(
-                ParserUtils.ReadStaticString(sgaStream, 64),
-                ParserUtils.ReadStaticString(sgaStream, 64),
+                ParserUtils.ReadStaticString(sgaStream, DRIVE_NAME_LENGTH),
+                ParserUtils.ReadStaticString(sgaStream, DRIVE_NAME_LENGTH),
                 ParserUtils.ReadUInt16(sgaStream),
                 ParserUtils.ReadUInt16(sgaStream),
                 ParserUtils.ReadUInt16(sgaStream),
@@ -78,13 +96,9 @@ internal class SgaV2Parser : ISgaParser
             uint compressSize = ParserUtils.ReadUInt32(sgaStream);
             uint decompressSize = ParserUtils.ReadUInt32(sgaStream);
 
-            uint nameStart = nameOffset + 180 + nameListOffset;
-            string fileName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
-
-            var file = new SgaFile(fileName, storageFlag, rawDataOffset + dataOffset, compressSize, decompressSize);
+            var file = new FileRecord(nameOffset, storageFlag, rawDataOffset + dataOffset, compressSize, decompressSize);
             fileList.Add(file);
         }
-
 
         // build the archive tree 
         foreach (DriveRecord driveRecord in driveList)
@@ -92,16 +106,16 @@ internal class SgaV2Parser : ISgaParser
             SgaDrive newDrive = new SgaDrive(driveRecord.DriveAlias, driveRecord.DriveName, archive);
             archive._drives.Add(newDrive);
 
-            Stack<Tuple<FolderRecord, SgaFolder?>> stack = new ();
-            stack.Push(new (folderList[driveRecord.RootFolder], null));
+            Queue<Tuple<FolderRecord, SgaFolder?>> stack = new ();
+            stack.Enqueue(new (folderList[driveRecord.RootFolder], null));
 
             while(stack.Count > 0)
             {
-                var item = stack.Pop();
+                var item = stack.Dequeue();
                 FolderRecord currentRecord = item.Item1;
                 SgaFolder? parent = item.Item2;
                 
-                uint nameStart = currentRecord.NameOffset + 180 + nameListOffset;
+                uint nameStart = currentRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
                 string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
 
                 SgaFolder currentFolder = new SgaFolder(folderName, newDrive, parent);
@@ -113,14 +127,23 @@ internal class SgaV2Parser : ISgaParser
 
                 for (ushort i = currentRecord.FirstFolder; i < currentRecord.LastFolder; i++)
                 {
-                    stack.Push(new(folderList[i], currentFolder));
+                    stack.Enqueue(new(folderList[i], currentFolder));
                 }
 
                 for (ushort i = currentRecord.FirstFile; i < currentRecord.LastFile; i++)
                 {
-                    SgaFile currentFile = fileList[i];
-                    currentFile.Drive = newDrive;
-                    currentFile.Parent = currentFolder;
+                    FileRecord fileRecord = fileList[i];
+
+                    uint fileNameOffset = fileRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
+                    string fileName = ParserUtils.ReadDynamicString(sgaStream, fileNameOffset);
+
+                    SgaFile currentFile = new SgaFile(fileName,
+                                                      fileRecord.StorageType,
+                                                      fileRecord.RawDataOffset,
+                                                      fileRecord.CompressedSize,
+                                                      fileRecord.Size,
+                                                      newDrive,
+                                                      currentFolder);
                     currentFolder._contents.Add(currentFile);
                 }
             }
@@ -129,39 +152,170 @@ internal class SgaV2Parser : ISgaParser
 
     public void Write(SgaArchive archive, Stream sgaStream)
     {
-        // Mock implementation. For testing only. Will be replaces by actual implementation when i will be satisfied by the public interface.
-        Console.WriteLine("Archive name: {0}",archive.ArchiveName);
-        Console.WriteLine("Drives:");
+        //LogArchive(archive); //Used for debugging
+        using var tempStream = new MemoryStream();
 
-        foreach (var drive in archive.Drives)
+        List<DriveRecord> driveList = new List<DriveRecord>();
+        List<FolderWriterRecord> folderList = new List<FolderWriterRecord>();
+        List<SgaFile> fileList = new List<SgaFile>();
+
+        // Traverse drives and append their folder trees
+        foreach (var drive in archive._drives)
         {
-            Console.WriteLine("    Drive name: {0}", drive.Name);
-            Console.WriteLine("    Drive alias: {0}", drive.Alias);
+            var stack = new Stack<FolderWriterRecord>();
+            ushort firstFolder = (ushort)folderList.Count;
+            ushort firstFile = (ushort)fileList.Count;
 
-            Stack<Tuple<SgaEntry, int>> stack = new Stack<Tuple<SgaEntry, int>>();
-            stack.Push(new Tuple<SgaEntry, int>(drive.RootFolder,0));
-
-            while(stack.Count > 0)
+            if (drive.RootFolder != null)
             {
-                var item = stack.Pop();
-                SgaEntry entry = item.Item1;
+                FolderWriterRecord folderTest = new FolderWriterRecord(drive.RootFolder);
+                stack.Push(folderTest);
+                folderList.Add(folderTest);
+            }
 
-                if (entry is SgaFile file)
+            while (stack.Count > 0)
+            {
+                var f = stack.Pop();
+                f.FirstFolder = (ushort)folderList.Count;
+                f.FirstFile = (ushort)fileList.Count;
+                var Contents = f.Folder.Contents;
+
+                // Add files of this folder (collect now but add their names later)
+                foreach (var e in Contents)
                 {
-                    Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name}");
-                    //file.Open();
-                }
-                else if (entry is SgaFolder folder)
-                {
-                    Console.WriteLine(new string(' ', item.Item2 *2) + $"    Folder: {folder.Name}");
-                    // Push subentries onto the stack
-                    for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
+                    if (e is SgaFile sf)
                     {
-                        stack.Push(new Tuple<SgaEntry, int>(folder.Contents[i], item.Item2 + 1));
+                        // record file will be appended to fileList, but we also need to keep mapping for names
+                        fileList.Add(sf);
+                    }
+
+                    if (e is SgaFolder childFolder)
+                    {
+                        FolderWriterRecord child = new FolderWriterRecord(childFolder);
+                        folderList.Add(child);
                     }
                 }
+
+                for(int i = folderList.Count-1; i >= f.FirstFolder; i--)
+                    stack.Push(folderList[i]);
+
+                f.LastFolder = (ushort)folderList.Count;
+                f.LastFile = (ushort)fileList.Count;
+                
             }
+            driveList.Add(new DriveRecord(drive.Name, drive.Alias, firstFolder, (ushort)folderList.Count, firstFile ,(ushort)fileList.Count, 0));
         }
+
+        
+        using var toc = new MemoryStream();
+        using var nameBuffer = new MemoryStream();
+        
+        uint folderOffset = (uint)(24 + driveList.Count * DRIVE_SIZE);
+        uint fileOffset = folderOffset + (uint)folderList.Count * FOLDER_SIZE;
+        uint nameOffset = fileOffset + (uint)fileList.Count * FILE_SIZE;
+
+        // Write TOC Header
+        ParserUtils.WriteUInt32(toc, 24);                               // Drive offset
+        ParserUtils.WriteUInt16(toc, (ushort)driveList.Count);          // Drive count
+        ParserUtils.WriteUInt32(toc, folderOffset);                     // Folder offset
+        ParserUtils.WriteUInt16(toc, (ushort)folderList.Count);         // Folder count
+        ParserUtils.WriteUInt32(toc, fileOffset);                       // File offset
+        ParserUtils.WriteUInt16(toc, (ushort)fileList.Count);           // File count        
+        ParserUtils.WriteUInt32(toc, nameOffset);                       // Name offset
+        ParserUtils.WriteUInt16(toc, (ushort)(folderList.Count + fileList.Count)); // Name count
+
+        // Write drives
+        foreach (var drive in driveList)
+        {
+            ParserUtils.WriteStaticString(toc, drive.DriveName, DRIVE_NAME_LENGTH);
+            ParserUtils.WriteStaticString(toc, drive.DriveAlias, DRIVE_NAME_LENGTH);
+            ParserUtils.WriteUInt16(toc, drive.FirstFolder);
+            ParserUtils.WriteUInt16(toc, drive.LastFolder);
+            ParserUtils.WriteUInt16(toc, drive.FirstFile);
+            ParserUtils.WriteUInt16(toc, drive.LastFile);
+            ParserUtils.WriteUInt16(toc, drive.FirstFolder);
+        }
+
+        // Write folders
+        foreach (var f in folderList)
+        {
+            uint folderNameOffset = (uint)nameBuffer.Position;
+            ParserUtils.WriteDynamicString(nameBuffer, f.Folder.Path);
+
+            ParserUtils.WriteUInt32(toc, folderNameOffset);
+            ParserUtils.WriteUInt16(toc, f.FirstFolder);
+            ParserUtils.WriteUInt16(toc, f.LastFolder);
+            ParserUtils.WriteUInt16(toc, f.FirstFile);
+            ParserUtils.WriteUInt16(toc, f.LastFile);
+        }
+
+        uint dataOffset = 264; // Add temporary Data offset buffer for the optional file info. This will be replaced later.
+        // Write Files
+        foreach (var f in fileList)
+        {
+            uint folderNameOffset = (uint)nameBuffer.Position;
+            ParserUtils.WriteDynamicString(nameBuffer, f.Name);
+
+            ParserUtils.WriteUInt32(toc, folderNameOffset);
+            ParserUtils.WriteUInt32(toc, WriteStorageType(f.StorageType));
+            ParserUtils.WriteUInt32(toc, dataOffset);
+            ParserUtils.WriteUInt32(toc, f.CompressedSize);
+            ParserUtils.WriteUInt32(toc, f.Size);
+
+            dataOffset += f.CompressedSize + 264;
+        }
+
+        // write TOC
+        nameBuffer.Seek(0, SeekOrigin.Begin);
+        nameBuffer.CopyTo(toc);
+        toc.Seek(0, SeekOrigin.Begin);
+
+        byte[]? tocHash = ParserUtils.HashMD5(toc, toc.Length, TOC_HASH_INIT);
+
+
+        // Start writing actual file it self.
+        ParserUtils.WriteStaticString(tempStream, "_ARCHIVE", 8); // Write magic world 
+        ParserUtils.WriteUInt32(tempStream, (uint)archive.Version); // Write archive version
+        
+        // Temporarily fill the template hash with zeroes.
+        byte[] emptyHash = new byte[16];
+        tempStream.Write(emptyHash); 
+        
+        // Write Archive name
+        ParserUtils.WriteWideStaticString(tempStream, archive.ArchiveName, ARCHIVE_NAME_LENGTH);
+        
+        //Write TOC hash
+        tempStream.Write(tocHash);
+        
+        // Write the rest of the file header
+        ParserUtils.WriteUInt32(tempStream, (uint)toc.Length); // TOC size
+        ParserUtils.WriteUInt32(tempStream, (uint)(toc.Length + FILE_HEADER_SIZE)); // Data offset
+        
+        toc.CopyTo(tempStream); // copy the TOC to the new archive
+
+        byte[] emptyMetaData = new byte[264];
+
+        // Write the actual content of the files.
+        foreach(var file in fileList)
+        {
+            tempStream.Write(emptyMetaData);
+            using var contents = file.GetResultStream();
+            contents.CopyTo(tempStream);
+        }
+
+        // Calculate the File hash
+        tempStream.Position = FILE_HEADER_SIZE;
+        byte[]? fileHash = ParserUtils.HashMD5(tempStream, tempStream.Length-tempStream.Position, FILE_HASH_INIT);
+        
+        // Write the file hash
+        tempStream.Position = 12;
+        tempStream.Write(fileHash);
+
+        // Copy the new archive to the original position.
+        sgaStream.Position = 0;
+        tempStream.Position = 0;
+        tempStream.CopyTo(sgaStream);
+        sgaStream.SetLength(sgaStream.Position);
     }
 
     private static StorageType ReadStorageType(Stream sgaStream, bool isIC)
@@ -184,6 +338,16 @@ internal class SgaV2Parser : ISgaParser
             0 => StorageType.Uncompress,
             16 => StorageType.BufferCompress,
             32 => StorageType.StreamCompress,
+            _ => throw new Exception("Invalid storage flag value."),
+        };
+    }
+
+    private static uint WriteStorageType(StorageType type){
+        return type switch
+        {
+            StorageType.Uncompress => 0,
+            StorageType.BufferCompress => 16,
+            StorageType.StreamCompress => 32,
             _ => throw new Exception("Invalid storage flag value."),
         };
     }

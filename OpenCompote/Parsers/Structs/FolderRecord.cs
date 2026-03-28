@@ -13,3 +13,12 @@ internal readonly struct FolderRecord(
     public ushort FirstFile { get; } = firstFile;
     public ushort LastFile { get; } = lastFile;
 }
+
+internal class FolderWriterRecord(SgaFolder folder)
+{
+    public SgaFolder Folder { get; set; } = folder;
+    public ushort FirstFolder {get; set;}
+    public ushort LastFolder {get; set;}
+    public ushort FirstFile {get; set;}
+    public ushort LastFile {get; set;}
+}
