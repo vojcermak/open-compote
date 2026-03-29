@@ -6,16 +6,22 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 `open-compote` is a open source project aimed at providing  mod tools developers and experienced modders with robust tools for working with `.sga` archives. Whether you're developing mods, analyzing game data, or building mod tools, this library offers a simple API for archive manipulation.
 
-> **Current Status:** Early-stage development · Schema documentation complete · V2 parser implemented
+> [!NOTE] **Current Status:** 
+> Early-stage development · Schema documentation complete · V2 parser implemented
 
 ## Supported SGA Versions
 
 | Version | Games | Status | Documentation |
 |---------|-------|--------|---|
-| **V2** | Company of Heroes (original) | ![](./docs/images/check-circle.svg) Supported | [SGA-V2.md](docs/schema/SGA-V2.md) |
-| **V4** | Company of Heroes 2 (early) | ![](./docs/images/close-circle.svg) Planned | [SGA-V4.md](docs/schema/SGA-V4.md) |
-| **V5** | Company of Heroes 2, Dawn of War II | ![](./docs/images/close-circle.svg) Planned | [SGA-V5.md](docs/schema/SGA-V5.md) |
-| **V7** | Company of Heroes 3 | ![](./docs/images/close-circle.svg) Planned | [SGA-V7.md](docs/schema/SGA-V7.md) |
+| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of war | ![](./docs/images/check-circle.svg) Supported | [SGA-V2.md](docs/schema/SGA-V2.md) |
+| **V3**  | The Outfit                                       | ![](./docs/images/close-circle.svg) Planned | |
+| **V4**  | Company of Heroes 1                              | ![](./docs/images/close-circle.svg) Planned | [SGA-V4.md](docs/schema/SGA-V4.md) |
+| **V5**  | Warhammer 40,000: Dawn of War 2                  | ![](./docs/images/close-circle.svg) Planned | [SGA-V5.md](docs/schema/SGA-V5.md) |
+| **V6**  | Can be created using Company of Heroes 2 archive.exe.| ![](./docs/images/close-circle.svg) Planned
+| **V7**  | Company of Heroes 2                              | ![](./docs/images/close-circle.svg) Planned | [SGA-V7.md](docs/schema/SGA-V7.md) |
+| **V9**  | Warhammer 40,000: Dawn of War 3                  | ![](./docs/images/close-circle.svg) Planned |
+| **V10** | Age of Empires 4,<br> Company of Heroes 3        | ![](./docs/images/close-circle.svg) Planned |
+
 
 ## Key Features
 
@@ -31,16 +37,16 @@ For comprehensive documentation, API reference, and detailed schema specificatio
 ### Quick Links
 
 - 📚 [Full Documentation](https://vojcermak.github.io/open-compote/)
-- 📋 [SGA Format Schemas](docs/schema/)
-- 🏗️ [API Documentation](docs/api/)
+- 📋 [SGA Format Schemas](https://vojcermak.github.io/open-compote/schema/SGA-V2.html)
+- 🏗️ [API Documentation](https://vojcermak.github.io/open-compote/api/OpenCompote.SGA.html)
 
 ## Development
 
 The project is organized as a .NET solution with the following components:
 
-- **OpenCompote** — Core library with parsers and archive handling
-- **OpenCompote.Cli** — Command-line tools for working with SGA archives
-- **tests** — Unit tests ensuring correctness and reliability
+- **OpenCompote.SGA** — Core library for working with SGA Archives.
+- **OpenCompote.Cli** — **Currently only for testing.** Command-line tools for simple manipulation with SGA archives.
+- **tests** — Unit tests.
 
 ## Disclaimer
 
