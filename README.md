@@ -12,10 +12,10 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 | Version | Games | Status | Documentation |
 |---------|-------|--------|---|
-| **V2** | Company of Heroes (original) | ![ok](./docs/images/check-circle.svg) Supported | [SGA-V2.md](docs/schema/SGA-V2.md) |
-| **V4** | Company of Heroes 2 (early) | 📋 Planned | [SGA-V4.md](docs/schema/SGA-V4.md) |
-| **V5** | Company of Heroes 2, Dawn of War II | 📋 Planned | [SGA-V5.md](docs/schema/SGA-V5.md) |
-| **V7** | Company of Heroes 3 | 📋 Planned | [SGA-V7.md](docs/schema/SGA-V7.md) |
+| **V2** | Company of Heroes (original) | ![](./docs/images/check-circle.svg) Supported | [SGA-V2.md](docs/schema/SGA-V2.md) |
+| **V4** | Company of Heroes 2 (early) | ![](./docs/images/close-circle.svg) Planned | [SGA-V4.md](docs/schema/SGA-V4.md) |
+| **V5** | Company of Heroes 2, Dawn of War II | ![](./docs/images/close-circle.svg) Planned | [SGA-V5.md](docs/schema/SGA-V5.md) |
+| **V7** | Company of Heroes 3 | ![](./docs/images/close-circle.svg) Planned | [SGA-V7.md](docs/schema/SGA-V7.md) |
 
 ## Key Features
 
