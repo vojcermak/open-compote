@@ -4,7 +4,7 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 ## About
 
-`open-compote` is a open source project aimed at providing  mod tools developers and experienced modders with robust tools for working with `.sga` archives. Whether you're developing mods, analyzing game data, or building mod tools, this library offers a easy to use, API for archive manipulation.
+`open-compote` is a open source project aimed at providing  mod tools developers and experienced modders with robust tools for working with `.sga` archives. Whether you're developing mods, analyzing game data, or building mod tools, this library offers a simple API for archive manipulation.
 
 > **Current Status:** Early-stage development · Schema documentation complete · V2 parser implemented
 
@@ -12,7 +12,7 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 | Version | Games | Status | Documentation |
 |---------|-------|--------|---|
-| **V2** | Company of Heroes (original) | ✅ Supported | [SGA-V2.md](docs/schema/SGA-V2.md) |
+| **V2** | Company of Heroes (original) | ![ok](./docs/images/check-circle.svg) Supported | [SGA-V2.md](docs/schema/SGA-V2.md) |
 | **V4** | Company of Heroes 2 (early) | 📋 Planned | [SGA-V4.md](docs/schema/SGA-V4.md) |
 | **V5** | Company of Heroes 2, Dawn of War II | 📋 Planned | [SGA-V5.md](docs/schema/SGA-V5.md) |
 | **V7** | Company of Heroes 3 | 📋 Planned | [SGA-V7.md](docs/schema/SGA-V7.md) |
