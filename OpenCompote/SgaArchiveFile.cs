@@ -68,11 +68,11 @@ public class SgaArchiveFile
     /// </summary>
     /// <param name="sourceFileName">The path to the file where the archive should be stored.</param>
     /// <param name="version">Version of the new SGA archive.</param>
-    /// <param name="Overwrite">If true, it overwrites an existing file; otherwise, it throws an exception when the file already exists.</param>
+    /// <param name="overwrite">If true, it overwrites an existing file; otherwise, it throws an exception when the file already exists.</param>
     /// <returns>The newly opened SGA archive.</returns>
-    public static SgaArchive Create(string sourceFileName, SgaVersion version, bool Overwrite = false)
+    public static SgaArchive Create(string sourceFileName, SgaVersion version, bool overwrite = false)
     {
-        FileStream fs = File.Open(sourceFileName, Overwrite ? FileMode.Create : FileMode.CreateNew , FileAccess.ReadWrite, FileShare.Read);
+        FileStream fs = File.Open(sourceFileName, overwrite ? FileMode.Create : FileMode.CreateNew , FileAccess.ReadWrite, FileShare.Read);
         return new SgaArchive(fs, SgaMode.Create, version);
     }
 }

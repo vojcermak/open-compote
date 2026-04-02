@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace OpenCompote.SGA;
 
 /// <summary>
-/// Represents a SGA archive drive.
+/// Represents a drive within a SGA archive.
 /// </summary>
 public class SgaDrive
 {
@@ -11,7 +11,7 @@ public class SgaDrive
     private string _name;
     
     /// <summary>
-    /// Gets the alias of the drive.
+    /// Gets or sets the alias of the drive.
     /// </summary>
     public string Alias
     {
@@ -30,7 +30,7 @@ public class SgaDrive
     }
 
     /// <summary>
-    /// Gets the name of the drive.
+    /// Gets or sets the name of the drive.
     /// </summary>
     public string Name
     {

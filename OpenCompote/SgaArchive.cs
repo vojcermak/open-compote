@@ -19,17 +19,17 @@ public class SgaArchive: IDisposable
     internal readonly List<SgaDrive> _drives;
 
     /// <summary>
-    /// Mode in which the archive was opened.
+    /// Gets the Mode in which the archive was opened.
     /// </summary>
     public SgaMode Mode {get;}
     
     /// <summary>
-    /// Version of the SGA archive.
+    /// Get the version of the SGA archive.
     /// </summary>
     public SgaVersion Version {get;}
 
     /// <summary>
-    /// Name of the SGA archive.
+    /// Gets or sets the name of the SGA archive.
     /// </summary>
     public string ArchiveName
     {
@@ -48,7 +48,7 @@ public class SgaArchive: IDisposable
     }
 
     /// <summary>
-    /// List of SGA Drives currently in the archive.
+    /// Gets the list of SGA Drives currently in the archive.
     /// </summary>
     public ReadOnlyCollection<SgaDrive> Drives
     {
@@ -57,6 +57,8 @@ public class SgaArchive: IDisposable
             return _driveCollection;
         }
     }
+
+    /// <exclude />
     public int BlockSize {get; set;}
 
     /// <summary>
@@ -191,6 +193,9 @@ public class SgaArchive: IDisposable
         throw new NotImplementedException();
     }
 
+    /// <summary>
+    /// Disposes the SGA archive, writing any pending changes if in create or write mode.
+    /// </summary>
     public void Dispose()
     {
         if(!_isDisposed)

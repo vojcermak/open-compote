@@ -3,12 +3,16 @@ using System.Reflection.Metadata.Ecma335;
 
 namespace OpenCompote.SGA;
 
+/// <summary>
+/// Represents an item in the sga archive like file or folder.
+/// </summary>
 public abstract class SgaEntry
 {
+    /// <exclude />
     protected string _name = "";
 
     /// <summary>
-    /// Gets the name of the entry in the zip archive.
+    /// Gets or sets the name of the entry in the SGA archive.
     /// </summary>
     public string Name
     {
@@ -27,7 +31,7 @@ public abstract class SgaEntry
     }
 
     /// <summary>
-    /// Gets the relative path of the entry in the zip archive.
+    /// Gets the relative path of the entry in the SGA drive.
     /// </summary>
     public string Path
     {
@@ -65,7 +69,7 @@ public abstract class SgaEntry
     /// <summary>
     /// Deletes the entry from the archive.
     /// </summary>
-    /// <exception cref="NotSupportedException">The SGA archive for this drive was open in readonly mode.</exception>
+    /// <exception cref="NotSupportedException">The SGA archive for this entry was open in readonly mode.</exception>
     /// <exception cref="ObjectDisposedException">The SGA archive for this entry has been disposed.</exception>
     public void Delete()
     {

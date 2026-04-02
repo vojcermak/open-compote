@@ -5,6 +5,9 @@ using OpenCompote.SGA.CustomStreams;
 
 namespace OpenCompote.SGA;
 
+/// <summary>
+/// Represents a file within a SGA archive.
+/// </summary>
 public class SgaFile: SgaEntry
 {
     private readonly bool _isInStream = false;
@@ -14,9 +17,9 @@ public class SgaFile: SgaEntry
     private StorageType _storageType;
 
     /// <summary>
-    /// Gets value that indicates whether the file is compressed or not.
+    /// Gets or sets the value that indicates how should the file is compressed.
     /// </summary>
-    /// <exception cref="ObjectDisposedException">The SGA archive for this file has been disposed.</exception>
+    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
     /// <exception cref="InvalidOperationException">The archive is opened in read-only mode or file is currently open."</exception>
     public StorageType StorageType
     {
@@ -50,7 +53,15 @@ public class SgaFile: SgaEntry
             _storageType = value;
         }
     }
+
+    /// <summary>
+    /// Gets the compressed size in bytes, of the file in the archive.
+    /// </summary>
     public uint CompressedSize {get; private set;}
+
+    /// <summary>
+    /// Gets the uncompressed size in bytes, of the file in the archive.
+    /// </summary>
     public uint Size {get; private set;}
 
     internal SgaFile(string name, StorageType type, SgaDrive drive, SgaFolder parent)
