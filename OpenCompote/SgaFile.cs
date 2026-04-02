@@ -205,6 +205,7 @@ public class SgaFile: SgaEntry
     /// <summary>
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
+    /// <exclude />
     public void ExtractToFile(string destination, bool overwrite = false)
     {
         throw new NotImplementedException();

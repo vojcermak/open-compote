@@ -97,6 +97,7 @@ public class SgaDrive
     /// <summary>
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>  
+    /// <exclude />
     public SgaEntry GetEntry(string entryName)
     {
         throw new NotImplementedException();
