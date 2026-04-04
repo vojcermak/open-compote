@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn> 
+    <PackageId>OpenCompote.SGA</PackageId>
+    <Version>0.0.1</Version>
+    <Authors>vojtacerm</Authors>
+    <Product>OpenCompote.SGA</Product>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
