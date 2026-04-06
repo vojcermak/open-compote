@@ -36,9 +36,9 @@ jobs:
             id: get-version
             run: |
               VERSION=(dotnet msbuild OpenCompote -getProperty:Version)
-              echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          - name: Upload artefact
-            uses: actions/upload-artifact@v4
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+          - name: Create Release
+            uses: softprops/action-gh-release@v2
             with:
-                name: OpenCompote-v${{steps.get-version.outputs.VERSION}}
-                path: ./OpenCompote/bin/Release/*.nupkg
+                tag_name: v${{ steps.get-version.outputs.version }}
+                name: Release v${{ steps.get-version.outputs.version }}
