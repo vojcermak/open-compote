@@ -1,8 +1,6 @@
 # Testing if this workflow runs when i trigger it manually.
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
 
 jobs:
