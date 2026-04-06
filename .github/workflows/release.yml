@@ -1,4 +1,5 @@
 # Testing if this workflow runs when i trigger it manually.
+name: Release
 
 on:
   workflow_dispatch:
