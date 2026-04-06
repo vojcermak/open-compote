@@ -19,32 +19,40 @@ if (args.Length == 0)
 
 string sgaPath = args[0];
 
-using(var newSga = new SgaArchive(new FileStream("output.sga", FileMode.Create, FileAccess.ReadWrite), SgaMode.Create, SgaVersion.V2))
+
+Console.WriteLine("Reading {0}", sgaPath);
+using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
 {
-    newSga.ArchiveName = "MyNewArchive";
-    var dataDrive = newSga.AddDrive("data", "gameData");
-    var attrDrive = newSga.AddDrive("attribs", "gameAttributes");
+    Console.WriteLine("Archive name: {0}",archive.ArchiveName);
+    Console.WriteLine("Drives:");
 
-    dataDrive.RootFolder.Name = ""; 
-    var subfolder = dataDrive.RootFolder.AddFolder("subfolder");
-    subfolder.AddFolder("subsubFolder");
-    subfolder.AddFolder("folder2");
-    var file1 = subfolder.AddFile("file1.txt", StorageType.Uncompress);
-    using var fileStream = file1.Open();
-
-    using(var fileWriter = new StreamWriter(fileStream, leaveOpen: true))
+    foreach (var drive in archive.Drives)
     {
-        fileWriter.Write("Hello world!");
+        Console.WriteLine("    Drive name: {0}", drive.Name);
+        Console.WriteLine("    Drive alias: {0}", drive.Alias);
+
+        Stack<Tuple<SgaEntry, int>> stack = new Stack<Tuple<SgaEntry, int>>();
+        stack.Push(new Tuple<SgaEntry, int>(drive.RootFolder,0));
+
+        while(stack.Count > 0)
+        {
+            var item = stack.Pop();
+            SgaEntry entry = item.Item1;
+
+            if (entry is SgaFile file)
+            {
+                Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name}");
+                //file.Open();
+            }
+            else if (entry is SgaFolder folder)
+            {
+                Console.WriteLine(new string(' ', item.Item2 *2) + $"    Folder: {folder.Name}");
+                // Push subentries onto the stack
+                for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
+                {
+                    stack.Push(new Tuple<SgaEntry, int>(folder.Contents[i], item.Item2 + 1));
+                }
+            }
+        }
     }
-
-    Console.WriteLine(fileStream.Position);
-    fileStream.Position = 0;
-    Console.WriteLine(fileStream.ReadByte());
-}
-
-Console.WriteLine();
-
-using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Write))
-{
-    //var drive = archive.GetDrive("gameData");
 }

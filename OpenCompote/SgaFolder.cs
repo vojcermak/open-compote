@@ -2,6 +2,9 @@ using System.Collections.ObjectModel;
 
 namespace OpenCompote.SGA;
 
+/// <summary>
+/// Represents a folder within a SGA archive.
+/// </summary>
 public class SgaFolder: SgaEntry
 {
     internal readonly List<SgaEntry> _contents;
@@ -92,6 +95,7 @@ public class SgaFolder: SgaEntry
     /// <summary>
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary> 
+    /// <exclude />
     public void ExtractToDirectory(string destination, bool overwrite = false)
     {
         throw new NotImplementedException();

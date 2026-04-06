@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="OpenCompote.Cli/OpenCompote.Cli.csproj" />
+  <Project Path="OpenCompote/OpenCompote.csproj" />
+  <Project Path="tests/OpenCompote.SGA.Tests.csproj" />
+</Solution>
