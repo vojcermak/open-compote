@@ -6,14 +6,25 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn> 
+
     <PackageId>OpenCompote.SGA</PackageId>
-    <Version>0.0.1</Version>
-    <Authors>vojtacerm</Authors>
+    <Version>0.0.2</Version>
+    <description>OpenCompote.SGA is a C# library for working with Relics .sga archive files.</description>
+    <Authors>vojcermak</Authors>
     <Product>OpenCompote.SGA</Product>
+
+    <PackageProjectUrl>https://vojcermak.github.io/open-compote/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vojcermak/open-compote</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>sga;relic-sga;relic-entertainment;essence-engine;dawn-of-war;library;archive;modding</PackageTags>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <InternalsVisibleTo Include="OpenCompote.SGA.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 </Project>

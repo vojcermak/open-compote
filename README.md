@@ -14,14 +14,14 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 | Version | Games | Status | Documentation |
 |---------|-------|--------|---|
-| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of war | ![](./docs/images/check-circle.svg) Supported | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
-| **V3**  | The Outfit                                       | ![](./docs/images/close-circle.svg) Planned | |
-| **V4**  | Company of Heroes 1                              | ![](./docs/images/close-circle.svg) Planned | [SGA-V4.md](https://vojcermak.github.io/open-compote/schema/SGA-V4.html) |
-| **V5**  | Warhammer 40,000: Dawn of War 2                  | ![](./docs/images/close-circle.svg) Planned | [SGA-V5.md](https://vojcermak.github.io/open-compote/schema/SGA-V5.html) |
-| **V6**  | Can be created using Company of Heroes 2 archive.exe.| ![](./docs/images/close-circle.svg) Planned
-| **V7**  | Company of Heroes 2                              | ![](./docs/images/close-circle.svg) Planned | [SGA-V7.md](https://vojcermak.github.io/open-compote/schema/SGA-V7.html) |
-| **V9**  | Warhammer 40,000: Dawn of War 3                  | ![](./docs/images/close-circle.svg) Planned |
-| **V10** | Age of Empires 4,<br> Company of Heroes 3        | ![](./docs/images/close-circle.svg) Planned |
+| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of war | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Supported | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
+| **V3**  | The Outfit                                       | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | |
+| **V4**  | Company of Heroes 1                              | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V4.md](https://vojcermak.github.io/open-compote/schema/SGA-V4.html) |
+| **V5**  | Warhammer 40,000: Dawn of War 2                  | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V5.md](https://vojcermak.github.io/open-compote/schema/SGA-V5.html) |
+| **V6**  | Can be created using Company of Heroes 2 archive.exe.| ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned
+| **V7**  | Company of Heroes 2                              | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V7.md](https://vojcermak.github.io/open-compote/schema/SGA-V7.html) |
+| **V9**  | Warhammer 40,000: Dawn of War 3                  | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
+| **V10** | Age of Empires 4,<br> Company of Heroes 3        | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 
 
 ## Key Features
