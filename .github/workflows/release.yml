@@ -35,7 +35,7 @@ jobs:
           - name: Get Version
             id: get-version
             run: |
-              VERSION=(dotnet msbuild OpenCompote -getProperty:Version)
+              VERSION=$(dotnet msbuild OpenCompote -getProperty:Version)
               echo "version=$VERSION" >> $GITHUB_OUTPUT
           - name: Create Release
             uses: softprops/action-gh-release@v2
