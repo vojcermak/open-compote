@@ -30,15 +30,26 @@ jobs:
             uses: actions/setup-dotnet@v4
             with:
                 dotnet-version: 10.x
+                
           - name: Pack
             run: dotnet pack OpenCompote
+
           - name: Get Version
             id: get-version
             run: |
               VERSION=$(dotnet msbuild OpenCompote -getProperty:Version)
               echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          - name: Get latest release info
+            id: get-notes
+            uses: release-flow/keep-a-changelog-action@v2
+            with:
+                command: query
+                version: latest
+
           - name: Create Release
             uses: softprops/action-gh-release@v2
             with:
                 tag_name: v${{ steps.get-version.outputs.version }}
                 name: Release v${{ steps.get-version.outputs.version }}
+                body: ${{ steps.get-notes.outputs.release-notes}}
