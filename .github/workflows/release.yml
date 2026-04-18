@@ -37,7 +37,7 @@ jobs:
           - name: Get Version
             id: get-version
             run: |
-              VERSION=$(dotnet msbuild OpenCompote -getProperty:Version)
+              VERSION=$(dotnet build OpenCompote -getProperty:Version)
               echo "version=$VERSION" >> $GITHUB_OUTPUT
 
           - name: Get latest release info
@@ -50,6 +50,13 @@ jobs:
           - name: Create Release
             uses: softprops/action-gh-release@v2
             with:
-                tag_name: v${{ steps.get-version.outputs.version }}
-                name: Release v${{ steps.get-version.outputs.version }}
+                tag_name: OpenCompote_v${{ steps.get-version.outputs.version }}
+                name: OpenCompote v${{ steps.get-version.outputs.version }}
                 body: ${{ steps.get-notes.outputs.release-notes}}
+          - name: NuGet login (OIDC → temp API key)
+            uses: NuGet/login@v1
+            id: login
+            with:
+                user: vojcermak
+          - name: NuGet push
+            run: dotnet nuget push ./OpenCompote/bin/Release/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
