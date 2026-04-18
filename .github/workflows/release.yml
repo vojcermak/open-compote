@@ -87,7 +87,7 @@ jobs:
         uses: NuGet/login@v1
         id: login
         with:
-          user: vojcermak
+          user: ${{ vars.NUGET_OWNER_NAME }}
       - name: Push package to NuGet
         run: |
           dotnet nuget push ./artifacts/*.nupkg \
