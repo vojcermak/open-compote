@@ -24,22 +24,19 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: write
+            id-token: write  # enable GitHub OIDC token issuance for this job
         steps:
           - uses: actions/checkout@v2
           - name: Setup .NET
             uses: actions/setup-dotnet@v4
             with:
                 dotnet-version: 10.x
-                
-          - name: Pack
-            run: dotnet pack OpenCompote
 
           - name: Get Version
             id: get-version
             run: |
               VERSION=$(dotnet build OpenCompote -getProperty:Version)
               echo "version=$VERSION" >> $GITHUB_OUTPUT
-
           - name: Get latest release info
             id: get-notes
             uses: release-flow/keep-a-changelog-action@v2
@@ -47,12 +44,15 @@ jobs:
                 command: query
                 version: latest
 
+          - name: Pack
+            run: dotnet pack OpenCompote -p:PackageReleaseNotes="${{ steps.get-notes.outputs.release-notes }}"
+
           - name: Create Release
             uses: softprops/action-gh-release@v2
             with:
                 tag_name: OpenCompote_v${{ steps.get-version.outputs.version }}
                 name: OpenCompote v${{ steps.get-version.outputs.version }}
-                body: ${{ steps.get-notes.outputs.release-notes}}
+                body: ${{ steps.get-notes.outputs.release-notes }}
           - name: NuGet login (OIDC → temp API key)
             uses: NuGet/login@v1
             id: login
