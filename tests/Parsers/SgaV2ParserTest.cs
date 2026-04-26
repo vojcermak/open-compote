@@ -1,4 +1,5 @@
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Xunit;
 
@@ -35,18 +36,77 @@ public class SgaV2ParserTest
     // 4. - Parser can open and read archive with no drives
     // 5. - Parser can open and read archive with multiple drives witch multiple nested folder and files
     
+    #region Invalid input tests
+    
+    [Fact] // Magic word is incorrect
+    public void Parser_Throw_InvalidSgaMagic()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/magic.sga", SgaMode.Read));
+    }
+
+    [Fact] // Version is incorrect
+    public void Parser_Throw_InvalidVersion()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/version-malformed.sga", SgaMode.Read));
+    }
+
+    [Fact] // Version is unsupported
+    public void Parser_Throw_UnsupportedVersion()
+    {
+        Assert.Throws<NotImplementedException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/version-unsupported.sga", SgaMode.Read));
+    }
+
+    [Fact] // FileHash is malformed
+    public void Parser_Throw_FileHashInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/filehash-invalid.sga", SgaMode.Read));
+    }
+
+    [Fact] // TOCHash is malformed
+    public void Parser_Throw_TocHashInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/tochash-invalid.sga", SgaMode.Read));
+    }
+
+    [Fact] // TOC Size is incorrect
+    public void Parser_Throw_TocSizeInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/tocSize-invalid.sga", SgaMode.Read));
+    }
+
+    [Fact] // DataOffset is incorrect
+    public void Parser_Throw_DataOffsetInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/dataOffset-invalid.sga", SgaMode.Read));
+    }
+
+    [Fact] // DriveOffset invalid
+    public void Parser_Throw_DriveOffsetInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/driveOffset_invalid.sga", SgaMode.Read));
+    }
+
+    [Fact] // FolderOffset and drive count does not match
+    public void Parser_Throw_FolderOffsetInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folderOffset-invalid.sga", SgaMode.Read));
+    }
+
+    [Fact] // FileOffset and folder count does not match
+    public void Parser_Throw_FileOffsetInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/fileOffset_invalid.sga", SgaMode.Read));
+    }
+
+    [Fact] // Name Offset and file count does not match
+    public void Parser_Throw_NameOffsetInvalid()
+    {
+        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/nameOffset_invalid.sga", SgaMode.Read));
+    }
+
+    #endregion
+
     //NOK
-    // 1. Magic word is incorrect .
-    // 2. Version is incorrect .
-    // 3. Version is unsupported .
-    // 4. FileHash is malformed .
-    // 5. TOCHash is malformed .
-    // 6. TOC Size is incorrect .
-    // 7. DataOffset is incorrect .
-    // 8. DriveOffset invalid .
-    // 9. FolderOffset and drive count does not match .
-    // 10. FileOffset and folder count does not match .
-    // 11. Name Offset and file count does not match .
     // 12. FirstFile/LastFile in drive does overlap
     // 13. FirstFile/LastFile in folder does overlap
     // 14. NameOffset is out of bounds of the name array
