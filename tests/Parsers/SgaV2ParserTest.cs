@@ -107,16 +107,15 @@ public class SgaV2ParserTest
     #endregion
 
     //NOK
-    // 12. FirstFile/LastFile in drive does overlap
-    // 13. FirstFile/LastFile in folder does overlap
-    // 14. NameOffset is out of bounds of the name array
-    // 15. StorageFlag is malformed
+    // 12. FirstFile/LastFile in drive does overlap .
+    // 13. FirstFile/LastFile in folder does overlap .
+    // 14. NameOffset is out of bounds of the name array .
+    // 15. StorageFlag is malformed .
     // 16. StorageFlag is compress, but file is not compressed
-    // 17. DataOffset points outside of a file
-    // 18. Names in invalid text format
-    // 19. Name does not have a null terminator
-    // 20. Decompressed file size doesn't match actual decompressed output
-    // 21. Root folder points to non-existing/invalid folder
+    // 17. DataOffset points outside of a file .
+    // 19. Name does not have a null terminator .
+    // 20. Decompressed file size doesn't match actual decompressed output .
+    // 21. Root folder points to non-existing/invalid folder .
 
     //Writer
     // 1. Opposite for OK 5 - writer can write valid archive
