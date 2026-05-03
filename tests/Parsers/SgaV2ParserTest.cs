@@ -1,5 +1,6 @@
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 using Xunit;
 
@@ -38,46 +39,52 @@ public class SgaV2ParserTest
     
     #region Invalid input tests
     
-    [Fact] // Magic word is incorrect
+    [Fact] // Magic word is invalid. (Opened file is not sga file.)
     public void Parser_Throw_InvalidSgaMagic()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/magic.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-magic.sga", SgaMode.Read));
+        Assert.Equal("File is not SGA Archive", exception.Message);
     }
 
-    [Fact] // Version is incorrect
+    [Fact] // Version is incorrect (Sga version attribute is set to value that does corresponds to any existing sga version.)
     public void Parser_Throw_InvalidVersion()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/version-malformed.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-version-malformed.sga", SgaMode.Read));
+        Assert.Equal("Version does not exists", exception.Message);
     }
 
     [Fact] // Version is unsupported
     public void Parser_Throw_UnsupportedVersion()
     {
-        Assert.Throws<NotImplementedException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/version-unsupported.sga", SgaMode.Read));
+        Assert.Throws<NotImplementedException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-version-unsupported.sga", SgaMode.Read));
     }
 
     [Fact] // FileHash is malformed
     public void Parser_Throw_FileHashInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/filehash-invalid.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-fileHash-invalid.sga", SgaMode.Read));
+        Assert.Equal("", exception.Message);
     }
 
     [Fact] // TOCHash is malformed
     public void Parser_Throw_TocHashInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/tochash-invalid.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-tocHash-invalid.sga", SgaMode.Read));
+        Assert.Equal("", exception.Message);
     }
 
-    [Fact] // TOC Size is incorrect
+    [Fact] // TOC Size is incorrect (Toc size attribute is set to be bigger then its actual size.)
     public void Parser_Throw_TocSizeInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/tocSize-invalid.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-tocSize-invalid.sga", SgaMode.Read));
+        Assert.Equal("", exception.Message);
     }
 
-    [Fact] // DataOffset is incorrect
+    [Fact] // DataOffset is incorrect (DataOffset attribute is set to be bigger then ist actual value.)
     public void Parser_Throw_DataOffsetInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/dataOffset-invalid.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-dataOffset-invalid.sga", SgaMode.Read));
+        Assert.Equal("", exception.Message);
     }
 
     [Fact] // DriveOffset invalid
