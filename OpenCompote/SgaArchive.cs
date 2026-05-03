@@ -101,7 +101,7 @@ public class SgaArchive: IDisposable
             string text = System.Text.Encoding.ASCII.GetString(magicBuffer);
             
             if(text != "_ARCHIVE")
-                throw new Exception("File is not SGA Archive");
+                throw new InvalidDataException("File is not a valid SGA Archive. (invalid magic byte)");
             
             Version = (SgaVersion)ParseVersion();
         }
@@ -112,7 +112,7 @@ public class SgaArchive: IDisposable
             SgaVersion.V4 => throw new NotImplementedException(),
             SgaVersion.V5 => throw new NotImplementedException(),
             SgaVersion.V7 => throw new NotImplementedException(),
-            _ => throw new ArgumentException("version is not supported"),
+            _ => throw new InvalidDataException($"SGA version '{Version}' is not supported or is invalid."),
         };
 
         if(Mode != SgaMode.Create)

@@ -39,11 +39,17 @@ internal class SgaV2Parser : ISgaParser
 
         byte[]? generatedFileHash = ParserUtils.HashMD5(sgaStream, sgaStream.Length-sgaStream.Position, FILE_HASH_INIT);
         if(generatedFileHash == null || !fileHash.SequenceEqual(generatedFileHash))
-            Console.WriteLine("Hash is not valid");
+            throw new InvalidDataException("File hash invalid.");
 
         byte[]? generatedTocHash = ParserUtils.HashMD5(sgaStream, tocSize, TOC_HASH_INIT);
         if(generatedTocHash == null || !tocHash.SequenceEqual(generatedTocHash))
-            Console.WriteLine("Hash is  not valid");
+            throw new InvalidDataException("Toc hash invalid.");
+
+        Console.WriteLine(sgaStream.Position + tocSize);
+        Console.WriteLine(dataOffset);
+
+        if(dataOffset != sgaStream.Position + tocSize)
+            throw new InvalidDataException("Data offset invalid.");
 
         // Read TOC header
         uint driveOffset = ParserUtils.ReadUInt32(sgaStream);

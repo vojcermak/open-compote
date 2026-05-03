@@ -43,17 +43,17 @@ public class SgaV2ParserTest
     public void Parser_Throw_InvalidSgaMagic()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-magic.sga", SgaMode.Read));
-        Assert.Equal("File is not SGA Archive", exception.Message);
+        Assert.Equal("File is not a valid SGA Archive. (invalid magic byte)", exception.Message);
     }
 
-    [Fact] // Version is incorrect (Sga version attribute is set to value that does corresponds to any existing sga version.)
+    [Fact] // Version is incorrect (Sga version attribute is set to value that does not corresponds to any existing sga version.)
     public void Parser_Throw_InvalidVersion()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-version-malformed.sga", SgaMode.Read));
-        Assert.Equal("Version does not exists", exception.Message);
+        Assert.Equal("SGA version '165' is not supported or is invalid.", exception.Message);
     }
 
-    [Fact] // Version is unsupported
+    [Fact] // Version is not yet supported.
     public void Parser_Throw_UnsupportedVersion()
     {
         Assert.Throws<NotImplementedException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-version-unsupported.sga", SgaMode.Read));
@@ -63,28 +63,28 @@ public class SgaV2ParserTest
     public void Parser_Throw_FileHashInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-fileHash-invalid.sga", SgaMode.Read));
-        Assert.Equal("", exception.Message);
+        Assert.Equal("File hash invalid.", exception.Message);
     }
 
     [Fact] // TOCHash is malformed
     public void Parser_Throw_TocHashInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-tocHash-invalid.sga", SgaMode.Read));
-        Assert.Equal("", exception.Message);
+        Assert.Equal("Toc hash invalid.", exception.Message);
     }
 
-    [Fact] // TOC Size is incorrect (Toc size attribute is set to be bigger then its actual size.)
+    [Fact] // TOC Size is incorrect (Toc size attribute is set to value bigger then its actual size.)
     public void Parser_Throw_TocSizeInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-tocSize-invalid.sga", SgaMode.Read));
-        Assert.Equal("", exception.Message);
+        Assert.Equal("Toc hash invalid.", exception.Message);
     }
 
-    [Fact] // DataOffset is incorrect (DataOffset attribute is set to be bigger then ist actual value.)
+    [Fact] // DataOffset is incorrect (DataOffset attribute is set to value bigger then ist actual value.)
     public void Parser_Throw_DataOffsetInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-dataOffset-invalid.sga", SgaMode.Read));
-        Assert.Equal("", exception.Message);
+        Assert.Equal("Data offset invalid.", exception.Message);
     }
 
     [Fact] // DriveOffset invalid
