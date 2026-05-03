@@ -13,6 +13,7 @@ internal class SgaV2Parser : ISgaParser
     private const int FILE_SIZE = 20;
 
     private const int FILE_HEADER_SIZE = 180;
+    private const int TOC_HEADER_SIZE = 24;
 
     // Static length name lengths
     private const int ARCHIVE_NAME_LENGTH = 64;
@@ -60,6 +61,19 @@ internal class SgaV2Parser : ISgaParser
         ushort fileCount = ParserUtils.ReadUInt16(sgaStream);
         uint nameListOffset = ParserUtils.ReadUInt32(sgaStream);
         ushort nameCount = ParserUtils.ReadUInt16(sgaStream);
+
+        // Validating TOC offsets.
+        if(driveOffset != TOC_HEADER_SIZE)
+            throw new InvalidDataException("TOC Drive offset invalid.");
+        
+        if(folderOffset != TOC_HEADER_SIZE + (DRIVE_SIZE * driveCount))
+            throw new InvalidDataException("TOC folder offset invalid.");
+
+        if(fileOffset != TOC_HEADER_SIZE + (DRIVE_SIZE * driveCount) + (FOLDER_SIZE * folderCount))
+            throw new InvalidDataException("TOC file offset invalid.");
+        
+        if(fileOffset != TOC_HEADER_SIZE + (DRIVE_SIZE * driveCount) + (FOLDER_SIZE * folderCount) + (FILE_SIZE * fileCount))
+            throw new InvalidDataException("TOC name offset invalid.");
 
         bool isIc = fileCount != 0 && (nameListOffset - fileOffset)/fileCount == 17;
 
@@ -216,12 +230,12 @@ internal class SgaV2Parser : ISgaParser
         using var toc = new MemoryStream();
         using var nameBuffer = new MemoryStream();
         
-        uint folderOffset = (uint)(24 + driveList.Count * DRIVE_SIZE);
+        uint folderOffset = (uint)(TOC_HEADER_SIZE + driveList.Count * DRIVE_SIZE);
         uint fileOffset = folderOffset + (uint)folderList.Count * FOLDER_SIZE;
         uint nameOffset = fileOffset + (uint)fileList.Count * FILE_SIZE;
 
         // Write TOC Header
-        ParserUtils.WriteUInt32(toc, 24);                               // Drive offset
+        ParserUtils.WriteUInt32(toc, TOC_HEADER_SIZE);                  // Drive offset
         ParserUtils.WriteUInt16(toc, (ushort)driveList.Count);          // Drive count
         ParserUtils.WriteUInt32(toc, folderOffset);                     // Folder offset
         ParserUtils.WriteUInt16(toc, (ushort)folderList.Count);         // Folder count

@@ -87,28 +87,39 @@ public class SgaV2ParserTest
         Assert.Equal("Data offset invalid.", exception.Message);
     }
 
-    [Fact] // DriveOffset invalid
+    [Fact] // DriveOffset invalid (Toc drive offset attribute is set to be bigger then the actual size)
     public void Parser_Throw_DriveOffsetInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/driveOffset_invalid.sga", SgaMode.Read));
+        var exception =  Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/toc-driveOffset-invalid.sga", SgaMode.Read));
+        Assert.Equal("TOC Drive offset invalid.", exception.Message);
     }
 
     [Fact] // FolderOffset and drive count does not match
     public void Parser_Throw_FolderOffsetInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folderOffset-invalid.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/toc-folderOffset-invalid.sga", SgaMode.Read));
+        Assert.Equal("TOC folder offset invalid.", exception.Message);
     }
 
     [Fact] // FileOffset and folder count does not match
     public void Parser_Throw_FileOffsetInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/fileOffset_invalid.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/toc-fileOffset-invalid.sga", SgaMode.Read));
+        Assert.Equal("TOC file offset invalid.", exception.Message);
     }
 
     [Fact] // Name Offset and file count does not match
     public void Parser_Throw_NameOffsetInvalid()
     {
-        Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/nameOffset_invalid.sga", SgaMode.Read));
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/toc-nameOffset-invalid.sga", SgaMode.Read));
+        Assert.Equal("TOC name offset invalid.", exception.Message);
+    }
+
+    [Fact] // Last name have no \0 string terminator set, allowing reading beyond toc.
+    public void Parser_Throw_WhenNameReadAfterTOC()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/toc-name-noTerminator.sga", SgaMode.Read));
+        Assert.Equal("TOC name read after toc.", exception.Message);
     }
 
     #endregion
