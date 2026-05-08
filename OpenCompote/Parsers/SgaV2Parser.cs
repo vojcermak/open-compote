@@ -120,6 +120,21 @@ internal class SgaV2Parser : ISgaParser
         // build the archive tree 
         foreach (DriveRecord driveRecord in driveList)
         {
+            if(driveRecord.FirstFolder > folderList.Count)
+                throw new InvalidDataException("Drive FirstFolder index is out of range.");
+            
+            if(driveRecord.LastFolder > folderList.Count)
+                throw new InvalidDataException("Drive LastFolder index is out of range.");
+
+            if(driveRecord.FirstFile > fileList.Count)
+                throw new InvalidDataException("Drive FirstFile index is out of range.");
+            
+            if(driveRecord.LastFile > fileList.Count)
+                throw new InvalidDataException("Drive LastFile index is out of range.");
+            
+            if(driveRecord.RootFolder > folderList.Count)
+                throw new InvalidDataException("Drive RootFolder index is out of range.");
+
             SgaDrive newDrive = new SgaDrive(driveRecord.DriveAlias, driveRecord.DriveName, archive);
             archive._drives.Add(newDrive);
 

@@ -126,48 +126,45 @@ public class SgaV2ParserTest
     public void Parser_Throw_DriveFirstFolderInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-firstFolder-outofrange.sga", SgaMode.Read));
-        Assert.Equal("Drive drive1 FirstFolder invalid.", exception.Message);
+        Assert.Equal("Drive FirstFolder index is out of range.", exception.Message);
     }
 
     [Fact] // First drive in the archive have LastFolder set to too big of a value, so the value points outside of the folder array.
     public void Parser_Throw_DriveLastFolderInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-lastFolder-outofrange.sga", SgaMode.Read));
-        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+        Assert.Equal("Drive LastFolder index is out of range.", exception.Message);
     }
 
     [Fact] // First drive in the archive have FirstFile set to too big of a value, so the value points outside of the file array.
     public void Parser_Throw_DriveFirstFileInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-firstFile-outofrange.sga", SgaMode.Read));
-        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+        Assert.Equal("Drive FirstFile index is out of range.", exception.Message);
     }
 
     [Fact] // First drive in the archive have LastFile set to too big of a value, so the value points outside of the file array.
     public void Parser_Throw_DriveLastFileInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-lastFile-outofrange.sga", SgaMode.Read));
-        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+        Assert.Equal("Drive LastFile index is out of range.", exception.Message);
     }
 
     [Fact] // First drive in the archive have RootFolder set to too big of a value, so the value points outside of the folder array.
     public void Parser_Throw_RootFolderInvalid()
     {
         var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-rootFolder-invalid.sga", SgaMode.Read));
-        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+        Assert.Equal("Drive RootFolder index is out of range.", exception.Message);
     }
 
     #endregion
 
     //NOK
     // 13. FirstFile/LastFile in folder does overlap .
-    // 14. NameOffset is out of bounds of the name array .
     // 15. StorageFlag is malformed .
     // 16. StorageFlag is compress, but file is not compressed
     // 17. DataOffset points outside of a file .
-    // 19. Name does not have a null terminator .
     // 20. Decompressed file size doesn't match actual decompressed output .
-    // 21. Root folder points to non-existing/invalid folder .
 
     //Writer
     // 1. Opposite for OK 5 - writer can write valid archive
