@@ -46,9 +46,6 @@ internal class SgaV2Parser : ISgaParser
         if(generatedTocHash == null || !tocHash.SequenceEqual(generatedTocHash))
             throw new InvalidDataException("Toc hash invalid.");
 
-        Console.WriteLine(sgaStream.Position + tocSize);
-        Console.WriteLine(dataOffset);
-
         if(dataOffset != sgaStream.Position + tocSize)
             throw new InvalidDataException("Data offset invalid.");
 
@@ -71,8 +68,8 @@ internal class SgaV2Parser : ISgaParser
 
         if(fileOffset != TOC_HEADER_SIZE + (DRIVE_SIZE * driveCount) + (FOLDER_SIZE * folderCount))
             throw new InvalidDataException("TOC file offset invalid.");
-        
-        if(fileOffset != TOC_HEADER_SIZE + (DRIVE_SIZE * driveCount) + (FOLDER_SIZE * folderCount) + (FILE_SIZE * fileCount))
+
+        if(nameListOffset != TOC_HEADER_SIZE + (DRIVE_SIZE * driveCount) + (FOLDER_SIZE * folderCount) + (FILE_SIZE * fileCount))
             throw new InvalidDataException("TOC name offset invalid.");
 
         bool isIc = fileCount != 0 && (nameListOffset - fileOffset)/fileCount == 17;
@@ -136,7 +133,7 @@ internal class SgaV2Parser : ISgaParser
                 SgaFolder? parent = item.Item2;
                 
                 uint nameStart = currentRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
-                string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart);
+                string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart, dataOffset);
 
                 SgaFolder currentFolder = new SgaFolder(folderName, newDrive, parent);
                 
@@ -155,7 +152,7 @@ internal class SgaV2Parser : ISgaParser
                     FileRecord fileRecord = fileList[i];
 
                     uint fileNameOffset = fileRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
-                    string fileName = ParserUtils.ReadDynamicString(sgaStream, fileNameOffset);
+                    string fileName = ParserUtils.ReadDynamicString(sgaStream, fileNameOffset, dataOffset);
 
                     SgaFile currentFile = new SgaFile(fileName,
                                                       fileRecord.StorageType,

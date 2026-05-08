@@ -40,7 +40,7 @@ internal static class ParserUtils
         sgaFile.Write(buffer);
     }
 
-    public static string ReadDynamicString(Stream sgaFile, long startPosition)
+    public static string ReadDynamicString(Stream sgaFile, long startPosition, long maxPosition)
     {
         List<byte> buffer = new List<byte>();
         long currentPosition = sgaFile.Position;
@@ -51,6 +51,9 @@ internal static class ParserUtils
         {
             if(b==0)
                 break;
+            if(sgaFile.Position >= maxPosition)
+                throw new InvalidDataException("TOC name read after toc.");
+
             buffer.Add((byte)b);
         }
 
