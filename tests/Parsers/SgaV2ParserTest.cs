@@ -157,6 +157,12 @@ public class SgaV2ParserTest
         Assert.Equal("Drive RootFolder index is out of range.", exception.Message);
     }
 
+    [Fact] // Drive in the list does not have any root folder present.
+    public void Parser_Throw_DriveWithoutRootFolder()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-noroot.sga", SgaMode.Read));
+    }
+
     #endregion
 
     //NOK
