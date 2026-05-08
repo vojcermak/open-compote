@@ -122,10 +122,44 @@ public class SgaV2ParserTest
         Assert.Equal("TOC name read after toc.", exception.Message);
     }
 
+    [Fact] // First drive in the archive have FirstFolder set to too big of a value, so the value points outside of the folder array.
+    public void Parser_Throw_DriveFirstFolderInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-firstFolder-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Drive drive1 FirstFolder invalid.", exception.Message);
+    }
+
+    [Fact] // First drive in the archive have LastFolder set to too big of a value, so the value points outside of the folder array.
+    public void Parser_Throw_DriveLastFolderInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-lastFolder-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+    }
+
+    [Fact] // First drive in the archive have FirstFile set to too big of a value, so the value points outside of the file array.
+    public void Parser_Throw_DriveFirstFileInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-firstFile-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+    }
+
+    [Fact] // First drive in the archive have LastFile set to too big of a value, so the value points outside of the file array.
+    public void Parser_Throw_DriveLastFileInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-lastFile-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+    }
+
+    [Fact] // First drive in the archive have RootFolder set to too big of a value, so the value points outside of the folder array.
+    public void Parser_Throw_RootFolderInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-rootFolder-invalid.sga", SgaMode.Read));
+        Assert.Equal("Drive drive1 LastFolder invalid.", exception.Message);
+    }
+
     #endregion
 
     //NOK
-    // 12. FirstFile/LastFile in drive does overlap .
     // 13. FirstFile/LastFile in folder does overlap .
     // 14. NameOffset is out of bounds of the name array .
     // 15. StorageFlag is malformed .
