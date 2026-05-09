@@ -11,23 +11,28 @@ public class MockParser : ISgaParser
 
     private Stream? _testStream;
 
+    public SgaVersion Version => throw new NotImplementedException();
+
     public MockParser(List<TestDrive> initialTree, List<TestDrive> expectedTree)
     {
         _drives = initialTree;
         _expectedTree = expectedTree;
     }
 
-    public void Parse(SgaArchive archive, Stream sgaStream)
+    public SgaArchive Parse(Stream sgaStream)
     {
         _testStream = sgaStream;
+        SgaArchive mockArchive = new SgaArchive(sgaStream, SgaMode.Create, SgaVersion.V2, this);
 
         foreach(var testDrive in _drives)
         {
-            var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, archive);
-            archive._drives.Add(newDrive);
+            var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, mockArchive);
+            mockArchive._drives.Add(newDrive);
 
             newDrive.RootFolder = ParseTree(testDrive.RootFolder, newDrive, null);
         }
+
+        return mockArchive;
     }
 
     public void Write(SgaArchive archive, Stream sgaStream)
