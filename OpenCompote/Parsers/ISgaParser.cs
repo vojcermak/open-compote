@@ -3,6 +3,7 @@ namespace OpenCompote.SGA.Parsers;
 
 interface ISgaParser
 {
-    void Parse(SgaArchive archive, Stream sgaStream);
+    SgaVersion Version { get; }
+    SgaArchive Parse(Stream sgaStream);
     void Write(SgaArchive archive, Stream sgaStream);
 }

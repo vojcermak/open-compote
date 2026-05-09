@@ -68,8 +68,9 @@ public class SgaArchive: IDisposable
     /// <param name="stream">The stream where the SGA archive is to be stored.</param>
     /// <param name="mode">Mode in which the archive should operate with.</param>
     /// <param name="version">Expected SGA version of the archive.</param>
+    /// <param name="parser"></param>
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
-    public SgaArchive(Stream stream, SgaMode mode, SgaVersion version, bool leaveOpen = false){
+    internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false){
         
         ArgumentNullException.ThrowIfNull(stream);
         
@@ -80,44 +81,15 @@ public class SgaArchive: IDisposable
             throw new ArgumentException("Cannot write to the stream");
         
         _archiveStream = stream;
-        Mode = mode;
-        _archiveName = "";
-        _isDisposed = false;
-        _leaveOpen = leaveOpen;
-        _drives = new List<SgaDrive>();
-        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
-        Version = version;
-
-        _parser = Version switch
-        {
-            SgaVersion.V2 => new SgaV2Parser(),
-            SgaVersion.V4 => throw new NotImplementedException(),
-            SgaVersion.V5 => throw new NotImplementedException(),
-            SgaVersion.V7 => throw new NotImplementedException(),
-            _ => throw new InvalidDataException($"SGA version '{Version}' is not supported or is invalid."),
-        };
-
-        if(Mode != SgaMode.Create)
-            _parser.Parse(this, _archiveStream);
-    }
-
-    #if DEBUG // For unit testing of the public API only, Do not include to release builds (Not very nice, but works.) 
-    internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false)
-    {
-        Mode = mode;
-        Version = version;
-        _archiveName = "";
-        _archiveStream = stream;
-        _isDisposed = false;
-        _leaveOpen = leaveOpen;
-        _drives = new List<SgaDrive>();
-        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
         _parser = parser;
-
-        if(Mode != SgaMode.Create)
-            _parser.Parse(this, _archiveStream);
+        Mode = mode;
+        _archiveName = "";
+        _isDisposed = false;
+        _leaveOpen = leaveOpen;
+        _drives = new List<SgaDrive>();
+        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
+        Version = version;
     }
-    #endif
     
     /// <summary>
     /// Creates new SgaDrive in the archive with the specific name and alias. New drive also contains a new empty RootFolder with the same name as the drive.

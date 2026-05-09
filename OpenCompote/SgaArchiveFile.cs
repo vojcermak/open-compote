@@ -63,7 +63,7 @@ public class SgaArchiveFile
 
         SgaVersion version = SgaVersionDetector.Detect(fs);
 
-        return new SgaArchive(fs, mode, version);
+        return SgaParserFactory.Create(version).Parse(fs);
     }
 
     /// <summary>
@@ -76,6 +76,6 @@ public class SgaArchiveFile
     public static SgaArchive Create(string sourceFileName, SgaVersion version, bool overwrite = false)
     {
         FileStream fs = File.Open(sourceFileName, overwrite ? FileMode.Create : FileMode.CreateNew , FileAccess.ReadWrite, FileShare.Read);
-        return new SgaArchive(fs, SgaMode.Create, version);
+        return SgaParserFactory.Create(version).Parse(fs);
     }
 }
