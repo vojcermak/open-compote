@@ -372,7 +372,7 @@ internal class SgaV2Parser : ISgaParser
                 0 => StorageType.Uncompress,
                 16 => StorageType.BufferCompress,
                 32 => StorageType.StreamCompress,
-                _ => throw new Exception("Invalid storage flag value."),
+                _ => throw new InvalidDataException("File Storage flag invalid."),
             };   
         }
 
@@ -382,7 +382,7 @@ internal class SgaV2Parser : ISgaParser
             0 => StorageType.Uncompress,
             16 => StorageType.BufferCompress,
             32 => StorageType.StreamCompress,
-            _ => throw new Exception("Invalid storage flag value."),
+            _ => throw new InvalidDataException("File Storage flag invalid."),
         };
     }
 

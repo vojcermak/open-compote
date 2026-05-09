@@ -198,13 +198,35 @@ public class SgaV2ParserTest
         Assert.Equal("Folder LastFile index is out of range.", exception.Message);
     }
 
-    #endregion
+    // [Fact]
+    // public void Parser_Throw_FileNameOffsetInvalid()
+    // {
+    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-nameOffset-invalid.sga", SgaMode.Read));
+    //     Assert.Equal("File name offset is out of range.", exception.Message);
+    // }
 
-    //NOK
-    // 15. StorageFlag is malformed .
-    // 16. StorageFlag is compress, but file is not compressed
-    // 17. DataOffset points outside of a file .
-    // 20. Decompressed file size doesn't match actual decompressed output .
+    [Fact] // File StorageFlag is malformed
+    public void Parser_Throw_FileStorageTypeInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-storageType-invalid.sga", SgaMode.Read));
+        Assert.Equal("File Storage flag invalid.", exception.Message);
+    }
+
+    // [Fact] // DataOffset points outside of a file.
+    // public void Parser_Throw_FileDataOffsetInvalid()
+    // {
+    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-dataOffset-invalid.sga", SgaMode.Read));
+    //     Assert.Equal("File data offset is out of range.", exception.Message);
+    // }
+
+    // [Fact] // File size is invalid.
+    // public void Parser_Throw_FileSizeInvalid()
+    // {
+    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-size-invalid.sga", SgaMode.Read));
+    //     Assert.Equal("File size is invalid.", exception.Message);
+    // }
+
+    #endregion
 
     //Writer
     // 1. Opposite for OK 5 - writer can write valid archive
