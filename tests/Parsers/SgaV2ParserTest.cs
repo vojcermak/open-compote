@@ -8,6 +8,8 @@ namespace OpenCompote.SGA.Tests.Parsers;
 
 public class SgaV2ParserTest
 {
+    #region Writer tests
+
     [Fact]
     public void Writer_Pass_SaveEmptyArchive()
     {
@@ -28,6 +30,13 @@ public class SgaV2ParserTest
                 File.Delete(testFilePath);
         }
     }
+
+    #endregion
+
+    //Writer
+    // 1. Opposite for OK 5 - writer can write valid archive
+    // 2. Save valid empty archive
+    // 4. Save valid archive with only empty folders
 
     //OK
     // 1. - Parser can open and read valid uncompress file
@@ -227,10 +236,4 @@ public class SgaV2ParserTest
     // }
 
     #endregion
-
-    //Writer
-    // 1. Opposite for OK 5 - writer can write valid archive
-    // 2. Save valid empty archive
-    // 3. Save valid archive with only empty drives
-    // 4. Save valid archive with only empty folders
 }

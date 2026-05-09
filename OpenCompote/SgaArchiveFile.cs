@@ -60,7 +60,10 @@ public class SgaArchiveFile
     public static SgaArchive Open(string sourceFileName, SgaMode mode)
     {
         FileStream fs = File.Open(sourceFileName, FileMode.Open, mode == SgaMode.Read ? FileAccess.Read : FileAccess.ReadWrite, FileShare.Read);
-        return new SgaArchive(fs, mode);
+
+        SgaVersion version = SgaVersionDetector.Detect(fs);
+
+        return new SgaArchive(fs, mode, version);
     }
 
     /// <summary>

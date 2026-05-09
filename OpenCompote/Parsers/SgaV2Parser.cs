@@ -29,6 +29,8 @@ internal class SgaV2Parser : ISgaParser
         List<FolderRecord> folderList = new List<FolderRecord>();
         List<FileRecord> fileList = new List<FileRecord>();
 
+        sgaStream.Position = 8+4;
+
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 
         archive._archiveName = ParserUtils.ReadWideStaticString(sgaStream, ARCHIVE_NAME_LENGTH);

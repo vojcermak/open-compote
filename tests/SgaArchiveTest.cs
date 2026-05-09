@@ -13,7 +13,7 @@ public class SgaArchiveTest
     {
         // Need to test what happens when stream is null.
         #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        Assert.Throws<ArgumentNullException>(() => new SgaArchive(null, SgaMode.Read));
+        Assert.Throws<ArgumentNullException>(() => new SgaArchive(null, SgaMode.Read, SgaVersion.V2));
         #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
     }
 
@@ -25,8 +25,8 @@ public class SgaArchiveTest
         unreadableStream.Dispose();
 
         Assert.Throws<ArgumentException>(() => new SgaArchive(readOnlyStream, SgaMode.Create, SgaVersion.V2, true));
-        Assert.Throws<ArgumentException>(() => new SgaArchive(unreadableStream, SgaMode.Read, true));
-        Assert.Throws<ArgumentException>(() => new SgaArchive(new MemoryStream(), SgaMode.Create, null));
+        Assert.Throws<ArgumentException>(() => new SgaArchive(unreadableStream, SgaMode.Read, SgaVersion.V2 ,true));
+        Assert.Throws<InvalidDataException>(() => new SgaArchive(new MemoryStream(), SgaMode.Create, (SgaVersion)128));
     }
 
     [Fact]
