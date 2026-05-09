@@ -146,7 +146,19 @@ internal class SgaV2Parser : ISgaParser
                 var item = stack.Dequeue();
                 FolderRecord currentRecord = item.Item1;
                 SgaFolder? parent = item.Item2;
-                
+
+                if(currentRecord.FirstFolder > folderList.Count)
+                    throw new InvalidDataException("Folder FirstFolder index is out of range.");
+
+                if(currentRecord.LastFolder > folderList.Count)
+                    throw new InvalidDataException("Folder LastFolder index is out of range.");
+
+                if(currentRecord.FirstFile > fileList.Count)
+                    throw new InvalidDataException("Folder FirstFile index is out of range.");
+
+                if(currentRecord.LastFile > fileList.Count)
+                    throw new InvalidDataException("Folder LastFile index is out of range.");
+
                 uint nameStart = currentRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
                 string folderName = ParserUtils.ReadDynamicString(sgaStream, nameStart, dataOffset);
 

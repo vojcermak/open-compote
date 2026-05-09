@@ -163,10 +163,44 @@ public class SgaV2ParserTest
         Assert.Throws<ArgumentOutOfRangeException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-noroot.sga", SgaMode.Read));
     }
 
+    // [Fact] // One of the folder in the list have NameOffset to bo out of range.
+    // public void Parser_Throw_FolderNameOffsetInvalid()
+    // {
+    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folder-nameOffset-outofrange.sga", SgaMode.Read));
+    //     Assert.Equal("Folder name offset is out of range.", exception.Message);
+    // }
+
+    [Fact] // First Folder in the list have FirstFolder set to too big of a value, so the value points outside of the folder array.
+    public void Parser_Throw_FolderFirstFolderInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folder-firstFolder-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Folder FirstFolder index is out of range.", exception.Message);
+    }
+
+    [Fact] // First Folder in the list have LastFolder set to too big of a value, so the value points outside of the folder array.
+    public void Parser_Throw_FolderLastFolderInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folder-lastFolder-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Folder LastFolder index is out of range.", exception.Message);
+    }
+
+    [Fact] // First Folder in the list have FirstFile set to too big of a value, so the value points outside of the file array.
+    public void Parser_Throw_FolderFirstFileInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folder-firstFile-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Folder FirstFile index is out of range.", exception.Message);
+    }
+
+    [Fact] // First Folder in the list have LastFile set to too big of a value, so the value points outside of the file array.
+    public void Parser_Throw_FolderLastFileInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folder-lastFile-outofrange.sga", SgaMode.Read));
+        Assert.Equal("Folder LastFile index is out of range.", exception.Message);
+    }
+
     #endregion
 
     //NOK
-    // 13. FirstFile/LastFile in folder does overlap .
     // 15. StorageFlag is malformed .
     // 16. StorageFlag is compress, but file is not compressed
     // 17. DataOffset points outside of a file .
