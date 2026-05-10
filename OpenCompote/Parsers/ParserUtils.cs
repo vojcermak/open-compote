@@ -46,6 +46,9 @@ internal static class ParserUtils
         long currentPosition = sgaFile.Position;
         sgaFile.Position = startPosition;
         
+        if(startPosition >= maxPosition)
+            throw new InvalidDataException("TOC name read after toc.");
+
         int b;
         while ((b = sgaFile.ReadByte()) != -1)
         {

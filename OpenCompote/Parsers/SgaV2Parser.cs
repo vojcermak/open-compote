@@ -183,6 +183,9 @@ internal class SgaV2Parser : ISgaParser
                     uint fileNameOffset = fileRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
                     string fileName = ParserUtils.ReadDynamicString(sgaStream, fileNameOffset, dataOffset);
 
+                    if(fileRecord.RawDataOffset + fileRecord.CompressedSize > sgaStream.Length)
+                        throw new InvalidDataException("File data offset or size is invalid.");
+
                     SgaFile currentFile = new SgaFile(fileName,
                                                       fileRecord.StorageType,
                                                       fileRecord.RawDataOffset,

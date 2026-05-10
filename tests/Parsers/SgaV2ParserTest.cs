@@ -152,12 +152,12 @@ public class SgaV2ParserTest
         Assert.Throws<ArgumentOutOfRangeException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/drive-noroot.sga", SgaMode.Read));
     }
 
-    // [Fact] // One of the folder in the list have NameOffset to bo out of range.
-    // public void Parser_Throw_FolderNameOffsetInvalid()
-    // {
-    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folder-nameOffset-outofrange.sga", SgaMode.Read));
-    //     Assert.Equal("Folder name offset is out of range.", exception.Message);
-    // }
+    [Fact] // One of the folder in the list have NameOffset to bo out of range.
+    public void Parser_Throw_FolderNameOffsetInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/folder-nameOffset-outofrange.sga", SgaMode.Read));
+        Assert.Equal("TOC name read after toc.", exception.Message);
+    }
 
     [Fact] // First Folder in the list have FirstFolder set to too big of a value, so the value points outside of the folder array.
     public void Parser_Throw_FolderFirstFolderInvalid()
@@ -187,12 +187,12 @@ public class SgaV2ParserTest
         Assert.Equal("Folder LastFile index is out of range.", exception.Message);
     }
 
-    // [Fact]
-    // public void Parser_Throw_FileNameOffsetInvalid()
-    // {
-    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-nameOffset-invalid.sga", SgaMode.Read));
-    //     Assert.Equal("File name offset is out of range.", exception.Message);
-    // }
+    [Fact]
+    public void Parser_Throw_FileNameOffsetInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-nameOffset-invalid.sga", SgaMode.Read));
+        Assert.Equal("TOC name read after toc.", exception.Message);
+    }
 
     [Fact] // File StorageFlag is malformed
     public void Parser_Throw_FileStorageTypeInvalid()
@@ -201,19 +201,12 @@ public class SgaV2ParserTest
         Assert.Equal("File Storage flag invalid.", exception.Message);
     }
 
-    // [Fact] // DataOffset points outside of a file.
-    // public void Parser_Throw_FileDataOffsetInvalid()
-    // {
-    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-dataOffset-invalid.sga", SgaMode.Read));
-    //     Assert.Equal("File data offset is out of range.", exception.Message);
-    // }
-
-    // [Fact] // File size is invalid.
-    // public void Parser_Throw_FileSizeInvalid()
-    // {
-    //     var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-size-invalid.sga", SgaMode.Read));
-    //     Assert.Equal("File size is invalid.", exception.Message);
-    // }
+    [Fact] // DataOffset points outside of a file.
+    public void Parser_Throw_FileDataOffsetInvalid()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/file-dataOffset-invalid.sga", SgaMode.Read));
+        Assert.Equal("File data offset or size is invalid.", exception.Message);
+    }
 
     #endregion
 }
