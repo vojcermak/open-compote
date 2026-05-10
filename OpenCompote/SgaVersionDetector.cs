@@ -1,9 +1,10 @@
-using System;
 using System.Buffers.Binary;
-using OpenCompote.SGA;
 
-namespace OpenCompote;
+namespace OpenCompote.SGA;
 
+/// <summary>
+/// Version detector is a static class used for Detection if a stream is SGA archive and what version is this archive.
+/// </summary>
 internal static class SgaVersionDetector
 {   
     /// <summary>

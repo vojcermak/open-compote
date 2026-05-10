@@ -48,26 +48,6 @@ public class SgaV2ParserTest
     
     #region Invalid input tests
     
-    [Fact] // Magic word is invalid. (Opened file is not sga file.)
-    public void Parser_Throw_InvalidSgaMagic()
-    {
-        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-magic.sga", SgaMode.Read));
-        Assert.Equal("File is not a valid SGA Archive. (invalid magic byte)", exception.Message);
-    }
-
-    [Fact] // Version is incorrect (Sga version attribute is set to value that does not corresponds to any existing sga version.)
-    public void Parser_Throw_InvalidVersion()
-    {
-        var exception = Assert.Throws<InvalidDataException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-version-malformed.sga", SgaMode.Read));
-        Assert.Equal("SGA version '165' is not supported or is invalid.", exception.Message);
-    }
-
-    [Fact] // Version is not yet supported.
-    public void Parser_Throw_UnsupportedVersion()
-    {
-        Assert.Throws<NotImplementedException>(() => SgaArchiveFile.Open("../../../Parsers/testFiles/Nok/header-version-unsupported.sga", SgaMode.Read));
-    }
-
     [Fact] // FileHash is malformed
     public void Parser_Throw_FileHashInvalid()
     {

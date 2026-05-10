@@ -29,7 +29,7 @@ internal class SgaV2Parser : ISgaParser
         List<FolderRecord> folderList = new List<FolderRecord>();
         List<FileRecord> fileList = new List<FileRecord>();
 
-        sgaStream.Position = 8+4;
+        sgaStream.Position = 12; // Skip the Magic word and version.
 
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 

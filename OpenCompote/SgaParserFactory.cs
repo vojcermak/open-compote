@@ -1,8 +1,6 @@
-using System;
-using OpenCompote.SGA;
 using OpenCompote.SGA.Parsers;
 
-namespace OpenCompote;
+namespace OpenCompote.SGA;
 
 static class SgaParserFactory
 {
