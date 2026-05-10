@@ -23,9 +23,7 @@ internal class SgaV2Parser : ISgaParser
     private const string TOC_HASH_INIT = "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF";
     private const string FILE_HASH_INIT = "E01519D6-2DB7-4640-AF54-0A23319C56C3";
 
-    public SgaVersion Version => SgaVersion.V2;
-
-    public SgaArchive Parse(Stream sgaStream)
+    public void Parse(SgaArchive archive, Stream sgaStream)
     {
         List<DriveRecord> driveList = new List<DriveRecord>();
         List<FolderRecord> folderList = new List<FolderRecord>();
@@ -35,7 +33,7 @@ internal class SgaV2Parser : ISgaParser
 
         byte[] fileHash = ParserUtils.ReadHash(sgaStream);
 
-        string archiveName = ParserUtils.ReadWideStaticString(sgaStream, ARCHIVE_NAME_LENGTH);
+        archive._archiveName = ParserUtils.ReadWideStaticString(sgaStream, ARCHIVE_NAME_LENGTH);
 
         byte[] tocHash = ParserUtils.ReadHash(sgaStream);
 
@@ -121,9 +119,6 @@ internal class SgaV2Parser : ISgaParser
             fileList.Add(file);
         }
 
-        SgaArchive archive = new SgaArchive(sgaStream, SgaMode.Read, Version, this);
-        archive._archiveName = archiveName;
-
         // build the archive tree 
         foreach (DriveRecord driveRecord in driveList)
         {
@@ -199,8 +194,6 @@ internal class SgaV2Parser : ISgaParser
                 }
             }
         }
-
-        return archive;
     }
 
     public void Write(SgaArchive archive, Stream sgaStream)

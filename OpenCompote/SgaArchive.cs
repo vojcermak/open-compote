@@ -89,6 +89,9 @@ public class SgaArchive: IDisposable
         _drives = new List<SgaDrive>();
         _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
         Version = version;
+
+        if(mode != SgaMode.Create)
+            parser.Parse(this, _archiveStream);
     }
     
     /// <summary>
@@ -164,14 +167,6 @@ public class SgaArchive: IDisposable
                     _archiveStream.Dispose();
             }
         }
-    }
-    
-    private int ParseVersion()
-    {
-        byte[] versionBuffer = new byte[4];
-        _archiveStream.ReadExactly(versionBuffer);
-        int version = BinaryPrimitives.ReadInt32LittleEndian(versionBuffer);
-        return version;
     }
 
     internal void ThrowIfDisposed()

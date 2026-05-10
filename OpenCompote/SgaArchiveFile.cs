@@ -1,3 +1,5 @@
+using OpenCompote.SGA.Parsers;
+
 namespace OpenCompote.SGA;
 
 /// <summary>
@@ -62,8 +64,9 @@ public class SgaArchiveFile
         FileStream fs = File.Open(sourceFileName, FileMode.Open, mode == SgaMode.Read ? FileAccess.Read : FileAccess.ReadWrite, FileShare.Read);
 
         SgaVersion version = SgaVersionDetector.Detect(fs);
+        ISgaParser parser =  SgaParserFactory.Create(version);
 
-        return SgaParserFactory.Create(version).Parse(fs);
+        return new SgaArchive(fs, mode, version, parser);
     }
 
     /// <summary>
@@ -76,6 +79,9 @@ public class SgaArchiveFile
     public static SgaArchive Create(string sourceFileName, SgaVersion version, bool overwrite = false)
     {
         FileStream fs = File.Open(sourceFileName, overwrite ? FileMode.Create : FileMode.CreateNew , FileAccess.ReadWrite, FileShare.Read);
-        return SgaParserFactory.Create(version).Parse(fs);
+        
+        ISgaParser parser =  SgaParserFactory.Create(version);
+
+        return new SgaArchive(fs, SgaMode.Create, version, parser);
     }
 }
