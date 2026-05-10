@@ -20,12 +20,11 @@ public class MockParser : ISgaParser
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
         _testStream = sgaStream;
-        SgaArchive mockArchive = new SgaArchive(sgaStream, SgaMode.Create, SgaVersion.V2, this);
 
         foreach(var testDrive in _drives)
         {
-            var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, mockArchive);
-            mockArchive._drives.Add(newDrive);
+            var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, archive);
+            archive._drives.Add(newDrive);
 
             newDrive.RootFolder = ParseTree(testDrive.RootFolder, newDrive, null);
         }
