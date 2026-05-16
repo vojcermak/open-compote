@@ -122,19 +122,23 @@ internal class SgaV2Parser : ISgaParser
         // build the archive tree 
         foreach (DriveRecord driveRecord in driveList)
         {
-            if(driveRecord.FirstFolder > folderList.Count)
+            // Basic validation of Folder/File offset of the Drive record.
+            // First folder must always be inside of the folder list, because all drives must have at least one folder(root folder)
+            if(driveRecord.FirstFolder >= folderList.Count)
                 throw new InvalidDataException("Drive FirstFolder index is out of range.");
             
-            if(driveRecord.LastFolder > folderList.Count)
+            // Last folder must be bigger then the FirstFolder and must be smaller or equal to drive count.
+            if(driveRecord.LastFolder <= driveRecord.FirstFolder || driveRecord.LastFolder > folderList.Count)
                 throw new InvalidDataException("Drive LastFolder index is out of range.");
 
             if(driveRecord.FirstFile > fileList.Count)
                 throw new InvalidDataException("Drive FirstFile index is out of range.");
             
-            if(driveRecord.LastFile > fileList.Count)
+            if(driveRecord.LastFile < driveRecord.FirstFile || driveRecord.LastFile > fileList.Count)
                 throw new InvalidDataException("Drive LastFile index is out of range.");
             
-            if(driveRecord.RootFolder > folderList.Count)
+            // Root folder always must be Greater then or equal to the FirstFolder and Smaller then the LastFolder.
+            if(driveRecord.RootFolder < driveRecord.FirstFolder || driveRecord.RootFolder >= driveRecord.LastFolder)
                 throw new InvalidDataException("Drive RootFolder index is out of range.");
 
             SgaDrive newDrive = new SgaDrive(driveRecord.DriveAlias, driveRecord.DriveName, archive);
@@ -149,16 +153,17 @@ internal class SgaV2Parser : ISgaParser
                 FolderRecord currentRecord = item.Item1;
                 SgaFolder? parent = item.Item2;
 
+                // Basic validation of the Folder/File records in the current record.
                 if(currentRecord.FirstFolder > folderList.Count)
                     throw new InvalidDataException("Folder FirstFolder index is out of range.");
 
-                if(currentRecord.LastFolder > folderList.Count)
+                if(currentRecord.LastFolder < currentRecord.FirstFolder || currentRecord.LastFolder > folderList.Count)
                     throw new InvalidDataException("Folder LastFolder index is out of range.");
 
                 if(currentRecord.FirstFile > fileList.Count)
                     throw new InvalidDataException("Folder FirstFile index is out of range.");
 
-                if(currentRecord.LastFile > fileList.Count)
+                if(currentRecord.LastFile < currentRecord.FirstFile || currentRecord.LastFile > fileList.Count)
                     throw new InvalidDataException("Folder LastFile index is out of range.");
 
                 uint nameStart = currentRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
@@ -166,16 +171,19 @@ internal class SgaV2Parser : ISgaParser
 
                 SgaFolder currentFolder = new SgaFolder(folderName, newDrive, parent);
                 
+                // If parent is null that means the currentFolder is a root folder. Else is the parent set as the parent folder of the current folder.
                 if(parent == null)
                     newDrive.RootFolder = currentFolder;
                 else
                     parent._contents.Add(currentFolder);
 
+                // Loop through the sub folder of this folder and add it to the queue
                 for (ushort i = currentRecord.FirstFolder; i < currentRecord.LastFolder; i++)
                 {
                     stack.Enqueue(new(folderList[i], currentFolder));
                 }
 
+                // Loop through the files in this folder and create them.
                 for (ushort i = currentRecord.FirstFile; i < currentRecord.LastFile; i++)
                 {
                     FileRecord fileRecord = fileList[i];
@@ -183,6 +191,7 @@ internal class SgaV2Parser : ISgaParser
                     uint fileNameOffset = fileRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
                     string fileName = ParserUtils.ReadDynamicString(sgaStream, fileNameOffset, dataOffset);
 
+                    // If compressed size + Data offset is bigger then the file size throw exception because there is something wrong.
                     if(fileRecord.RawDataOffset + fileRecord.CompressedSize > sgaStream.Length)
                         throw new InvalidDataException("File data offset or size is invalid.");
 
@@ -269,7 +278,7 @@ internal class SgaV2Parser : ISgaParser
         ParserUtils.WriteUInt32(toc, folderOffset);                     // Folder offset
         ParserUtils.WriteUInt16(toc, (ushort)folderList.Count);         // Folder count
         ParserUtils.WriteUInt32(toc, fileOffset);                       // File offset
-        ParserUtils.WriteUInt16(toc, (ushort)fileList.Count);           // File count        
+        ParserUtils.WriteUInt16(toc, (ushort)fileList.Count);           // File count
         ParserUtils.WriteUInt32(toc, nameOffset);                       // Name offset
         ParserUtils.WriteUInt16(toc, (ushort)(folderList.Count + fileList.Count)); // Name count
 
