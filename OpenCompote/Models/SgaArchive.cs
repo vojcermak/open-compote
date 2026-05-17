@@ -5,7 +5,7 @@ using OpenCompote.SGA.Parsers;
 namespace OpenCompote.SGA;
 
 /// <summary>
-/// Represents the open archive file itself.
+/// Represents the open SGA archive file itself.
 /// </summary>
 public class SgaArchive: IDisposable
 {
@@ -70,8 +70,8 @@ public class SgaArchive: IDisposable
     /// <param name="version">Expected SGA version of the archive.</param>
     /// <param name="parser"></param>
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
-    internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false){
-        
+    internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false)
+    {    
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(parser);
         

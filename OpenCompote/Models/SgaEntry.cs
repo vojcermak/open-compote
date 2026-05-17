@@ -4,7 +4,7 @@ using System.Reflection.Metadata.Ecma335;
 namespace OpenCompote.SGA;
 
 /// <summary>
-/// Represents an item in the sga archive like file or folder.
+/// Represents an item in the SGA archive like file or folder.
 /// </summary>
 public abstract class SgaEntry
 {
