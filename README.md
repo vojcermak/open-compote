@@ -4,7 +4,7 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 ## About
 
-`open-compote` is an open-source project aimed at providing mod tools developers and experienced modders with robust and easy to use tools for working with `.sga` archives. Whether you're developing mods, analysing game data, or building mod tools, this library offers a simple API for archive manipulation.
+`open-compote` is an open-source project aimed at providing mod tools developers and experienced modders with robust and easy to use tools for working with `.sga` archives. Whether you're developing mods, analyzing game data, or building mod tools, this library offers a simple API for archive manipulation.
 
 > [!NOTE]
 > **Current Status:**
@@ -43,7 +43,7 @@ For comprehensive documentation, API reference, and detailed schema specificatio
 
 ## Development
 
-The project is organised as a .NET solution with the following components:
+The project is organized as a .NET solution with the following components:
 
 - **OpenCompote.SGA** — Core library for working with SGA Archives.
 - **OpenCompote.Cli** — **Currently only for testing.** Command-line tools for simple manipulation with SGA archives.

@@ -1,7 +1,7 @@
 namespace OpenCompote.SGA;
 
 /// <summary>
-/// Specifies values for interacting with sga archive
+/// Specifies how the archive was opened.
 /// </summary>
 public enum SgaMode
 {    
@@ -10,7 +10,7 @@ public enum SgaMode
     /// </summary>
     Read,
     /// <summary>
-    /// Only creating new entries is permitted.
+    /// Both read and write operations are permitted, but the archive has been newly created and until the file is closed, the source stream will remain empty.
     /// </summary>
     Create,
     /// <summary>

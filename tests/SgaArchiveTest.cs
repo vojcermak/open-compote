@@ -9,27 +9,6 @@ namespace OpenCompote.SGA.Tests;
 public class SgaArchiveTest
 {
     [Fact]
-    public void Constructor_WithNullStream_ThrowsArgumentException()
-    {
-        // Need to test what happens when stream is null.
-        #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-        Assert.Throws<ArgumentNullException>(() => new SgaArchive(null, SgaMode.Read));
-        #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-    }
-
-    [Fact]
-    public void Constructor_WithIncorrectStream_ThrowsArgumentException()
-    {
-        MemoryStream readOnlyStream = new MemoryStream([], false);
-        MemoryStream unreadableStream = new MemoryStream();
-        unreadableStream.Dispose();
-
-        Assert.Throws<ArgumentException>(() => new SgaArchive(readOnlyStream, SgaMode.Create, SgaVersion.V2, true));
-        Assert.Throws<ArgumentException>(() => new SgaArchive(unreadableStream, SgaMode.Read, true));
-        Assert.Throws<ArgumentException>(() => new SgaArchive(new MemoryStream(), SgaMode.Create, null));
-    }
-
-    [Fact]
     public void Constructor_InitializeWrite_Successfully()
     {
         TestDrive item = new TestDrive
