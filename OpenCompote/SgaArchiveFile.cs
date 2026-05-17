@@ -70,6 +70,21 @@ public class SgaArchiveFile
     }
 
     /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="existingStream"></param>
+    /// <param name="mode"></param>
+    /// <param name="leaveOpen"></param>
+    /// <returns></returns>
+    public static SgaArchive Open(Stream existingStream, SgaMode mode, bool leaveOpen)
+    {
+        SgaVersion version = SgaVersionDetector.Detect(existingStream);
+        ISgaParser parser =  SgaParserFactory.Create(version);
+
+        return new SgaArchive(existingStream, mode, version, parser, leaveOpen);
+    }
+
+    /// <summary>
     /// Creates a new SGA archive at the path specified by sourceFileName in the specified version.
     /// </summary>
     /// <param name="sourceFileName">The path to the file where the archive should be stored.</param>
@@ -79,9 +94,23 @@ public class SgaArchiveFile
     public static SgaArchive Create(string sourceFileName, SgaVersion version, bool overwrite = false)
     {
         FileStream fs = File.Open(sourceFileName, overwrite ? FileMode.Create : FileMode.CreateNew , FileAccess.ReadWrite, FileShare.Read);
-        
+
         ISgaParser parser =  SgaParserFactory.Create(version);
 
         return new SgaArchive(fs, SgaMode.Create, version, parser);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="existingStream"></param>
+    /// <param name="version"></param>
+    /// <param name="leaveOpen"></param>
+    /// <returns></returns>
+    public static SgaArchive Create(Stream existingStream, SgaVersion version, bool leaveOpen)
+    {
+        ISgaParser parser = SgaParserFactory.Create(version);
+
+        return new SgaArchive(existingStream, SgaMode.Create, version, parser, leaveOpen);
     }
 }

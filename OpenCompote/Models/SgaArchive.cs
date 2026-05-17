@@ -73,6 +73,7 @@ public class SgaArchive: IDisposable
     internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false){
         
         ArgumentNullException.ThrowIfNull(stream);
+        ArgumentNullException.ThrowIfNull(parser);
         
         if(!stream.CanRead || !stream.CanSeek)
             throw new ArgumentException("stream is not supported");
