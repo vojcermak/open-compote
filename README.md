@@ -14,7 +14,7 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 | Version | Games | Status | Documentation |
 |---------|-------|--------|---|
-| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of war | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Supported | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
+| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of war | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Supported* | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
 | **V3**  | The Outfit                                       | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | |
 | **V4**  | Company of Heroes 1                              | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V4.md](https://vojcermak.github.io/open-compote/schema/SGA-V4.html) |
 | **V5**  | Warhammer 40,000: Dawn of War 2                  | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V5.md](https://vojcermak.github.io/open-compote/schema/SGA-V5.html) |
@@ -24,12 +24,26 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 | **V10** | Age of Empires 4,<br> Company of Heroes 3        | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 
 
+> \* SGA V2 currently does not support reading and writing [file metadata](https://vojcermak.github.io/open-compote/schema/SGA-V2.html#file-metadata), but they are not required by the game engine so it's marked as supported.
+
 ## Key Features
 
 - **Type-safe API** — Full C# integration with comprehensive type definitions
 - **Forward-looking** — Comprehensive schema documentation for planned versions (V4, V5, V7)
 - **Well-documented** — Detailed format specifications and examples
 - **Modular architecture** — Clean separation between parsers and core functionality
+
+## Planned Features
+
+The following features are currently not implemented but are planned for future implementation.
+
+| Method | Purpose | Status |
+|--------|---------|--------|
+|`SgaArchiveFile.CreateFromDirectory(...)` | Create an SGA archive from a filesystem directory | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
+| `SgaArchiveFile.ExtractToDirectory(...)` | Extract an archive to a directory | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
+| `GetEntry(...)` | Locate an entry inside the archive, drive or folder | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
+| `SgaFolder.ExtractToDirectory(...)` | Extract a folder and its contents to disk | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
+| `SgaFile.ExtractToFile(...)` | Extract a single file to disk | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 
 ## Getting Started
 
