@@ -34,7 +34,7 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 ## Getting Started
 
 - 📚 [Quick start guide]() - Not implemented yet.
-- 📋 [SGA Format Schemas](./schema/)
+- 📋 [SGA Format Schemas](./schema/index.md)
 - 🏗️ [API Documentation](./api/OpenCompote.SGA.yml)
 
 ## Contributing

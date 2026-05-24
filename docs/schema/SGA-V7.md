@@ -134,4 +134,4 @@ Name list is an Array of UTF-8 null-terminated strings representing the names of
 A Hash list is a combined array of block CRC, MD5 or SHA-1 hashes. For more info, see [Error correction](./Error-Correction.md#newer-error-correction-v7---).
 
 ## Data Block
-The Data block remains the same between all SGA versions. For more info, see [Data block](../index.md#data-block).
+The Data block remains the same between all SGA versions. For more info, see [Data block](index.md#data-block).

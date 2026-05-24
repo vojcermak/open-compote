@@ -1,8 +1,6 @@
 # Format Schema
 
-This page contains documentation for the open-compote libraries and schema documentation for all supported formats and versions. Currently, only .sga versions 2, 4, 5 and 7 are supported. But I would like to add support for all .sga versions in the future.
-
-If you find any errors with this documentation, please open a new GitHub issue.
+This page contains documentation for the open-compote libraries and schema documentation for all supported formats and versions. Currently, only `.sga` versions 2, 4, 5 and 7 have documented schema. But I would like to add support for all `.sga` versions and other Relic formats in the future.
 
 # SGA Archive
 Relic game archive is a binary file format. It is used for storing compressed folder structures similar to ZIP or RAR formats. SGA format is developed by Relic Entertainment for their Essence game engine. Can be identified by the .sga file extension.
@@ -15,21 +13,21 @@ List of Essence engine games and associated .sga versions:
 
 | Version        | Games                                                          |
 | --------       | -------------                                                  |
-| [2.0](schema/SGA-V2.md)| Impossible Creatures,<br> Warhammer 40,000: Dawn of War|
+| [2.0](SGA-V2.md)| Impossible Creatures,<br> Warhammer 40,000: Dawn of War|
 | 3.0            | The Outfit                                                     |
-| [4.0](schema/SGA-V4.md)| Company of heroes                                      |
-| [5.0](schema/SGA-V5.md)| Warhammer 40,000: Dawn of War 2                        |
+| [4.0](SGA-V4.md)| Company of heroes                                      |
+| [5.0](SGA-V5.md)| Warhammer 40,000: Dawn of War 2                        |
 | 6.0            | Can be created using Company of Heroes 2 archive.exe.          |
-| [7.0](schema/SGA-V7.md)| Company of Heroes 2                                    |
+| [7.0](SGA-V7.md)| Company of Heroes 2                                    |
 | 9.0            | Warhammer 40,000: Dawn of War 3                                |
 | 10.0           | Age of Empires 4,<br> Company of Heroes 3                      |
 
 </div>
 
-> SGA archives used by Impossible Creatures and Warhammer 40,000: Dawn of War are both marked as version 2, but both formats are incompatible with each other. More info in [2.0](schema/SGA-V2.md#file-definition).
+> SGA archives used by Impossible Creatures and Warhammer 40,000: Dawn of War are both marked as version 2, but both formats are incompatible with each other. More info in [2.0](SGA-V2.md#file-definition).
 
-## SGA structure overview 
-SGA archive is divided into three main parts: Archive header, Table of contents and Data block. Position, size and exact fields of all parts are different between SGA versions.
+## SGA file structure overview 
+SGA archive is divided into three main parts: Archive header, Table of contents and Data block. Position, size and exact fields of all parts are different between versions.
 
 ### SGA Archive header
 It`s always at the beginning of the file. It always starts with an ASCII string "ARCHVIE_" followed by the version field and other global information about the archive, like its size or checksum. 
@@ -38,6 +36,6 @@ It`s always at the beginning of the file. It always starts with an ASCII string 
 The table of contents always contains metadata about files and folders in the archive, like their names, structure and sizes. It is usually positioned directly after the archive header, but in some versions(v5.0) of SGA format can also be positioned at the end of the file.
 
 ### Data block
-The data block contains the actual content of archived files. In most cases, the files are compressed using ZLIB compression, but SGA also supports storing uncompressed files. All file contents are put after each other without any spacing or metadata. Position, size and compression type are stored in file metadata in TOC.
+The data block contains the actual content of archived files. In most cases, the files are compressed using ZLIB compression, but SGA also supports storing uncompressed files. All file contents are put after each other without any spacing or metadata(Except for SGA V2 which stores additional metadata in the Data block for each file.). Position, size and compression type are stored in file metadata in TOC.
 
 Beginning of the data block does not need to be aligned with the start of the first file content.
