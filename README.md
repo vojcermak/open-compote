@@ -35,13 +35,13 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 ## Planned Features
 
-The following features are currently not implemented but are planned for future implementation.
+The following features are currently not implemented but are planned for future releases.
 
 | Method | Purpose | Status |
 |--------|---------|--------|
-|`SgaArchiveFile.CreateFromDirectory(...)` | Create an SGA archive from a filesystem directory | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
+|`SgaArchiveFile.CreateFromDirectory(...)` | Create an SGA archive from <br>a filesystem directory | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 | `SgaArchiveFile.ExtractToDirectory(...)` | Extract an archive to a directory | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
-| `GetEntry(...)` | Locate an entry inside the archive, drive or folder | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
+| `GetEntry(...)` | Locate an entry inside the archive,<br> drive or folder | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 | `SgaFolder.ExtractToDirectory(...)` | Extract a folder and its contents to disk | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 | `SgaFile.ExtractToFile(...)` | Extract a single file to disk | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 
