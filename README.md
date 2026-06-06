@@ -28,10 +28,9 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 ## Key Features
 
-- **Type-safe API** — Full C# integration with comprehensive type definitions
+- **Easy to use API** — Simple, consistent APIs with, I hope good documentation
 - **Forward-looking** — Comprehensive schema documentation for planned versions (V4, V5, V7)
 - **Well-documented** — Detailed format specifications and examples
-- **Modular architecture** — Clean separation between parsers and core functionality
 
 ## Planned Features
 
