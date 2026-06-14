@@ -24,7 +24,7 @@ public class SgaArchive: IDisposable
     public SgaMode Mode {get;}
     
     /// <summary>
-    /// Get the version of the SGA archive.
+    /// Gets the version of the SGA archive.
     /// </summary>
     public SgaVersion Version {get;}
 
@@ -59,7 +59,7 @@ public class SgaArchive: IDisposable
     }
 
     /// <exclude />
-    public int BlockSize {get; set;}
+    internal int BlockSize {get; set;}
 
     /// <summary>
     /// Initializes new instance of SgaArchive on the given empty stream in the specific mode, using specific SGA version, specifying whether to leave the stream open. 
@@ -67,7 +67,7 @@ public class SgaArchive: IDisposable
     /// <remarks>This constructor should be used only for creating a new SGA archive. If you want to just open already existing fle, please use the Open constructor</remarks>
     /// <param name="stream">The stream where the SGA archive is to be stored.</param>
     /// <param name="mode">Mode in which the archive should operate with.</param>
-    /// <param name="version">Expected SGA version of the archive.</param>
+    /// <param name="version">SGA archive version</param>
     /// <param name="parser"></param>
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
     internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false)
@@ -96,13 +96,13 @@ public class SgaArchive: IDisposable
     }
     
     /// <summary>
-    /// Creates new SgaDrive in the archive with the specific name and alias. New drive also contains a new empty RootFolder with the same name as the drive.
+    /// Creates new <see cref="SgaDrive"/> in the archive with the specific <paramref name="alias"/> and <paramref name="name"/>. New drive also contains a new empty RootFolder with the same name as the drive.
     /// </summary>
     /// <param name="alias">Alias of the new drive.</param>
     /// <param name="name">Name of the new drive.</param>
     /// <returns>New SgaDrive object</returns>
     /// <exception cref="NotSupportedException">Archive does not support writing.</exception>
-    /// <exception cref="ArgumentNullException">alias or name is null.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="alias"/> or <paramref name="name"/> are null.</exception>
     /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public SgaDrive AddDrive(string alias, string name)
     {
@@ -119,10 +119,10 @@ public class SgaArchive: IDisposable
     }
     
     /// <summary>
-    /// Returns SgaDrive with name or alias matching the parameter. If no matching drive is found returns null.
+    /// Returns <see cref="SgaDrive"/> with name or alias matching the parameter. If no matching drive is found returns null.
     /// </summary>
-    /// <param name="driveName">Name or alias of the Drive.</param>
-    /// <returns>SgaDrive or null if no matching drive was found.</returns>
+    /// <param name="driveName"><see cref="SgaDrive.Name"/> or <see cref="SgaDrive.Alias"/> of the Drive.</param>
+    /// <returns><see cref="SgaDrive"/> or null if no matching drive was found.</returns>
     /// <exception cref="ArgumentNullException">driveName is null.</exception>
     /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public SgaDrive? GetDrive(string driveName)

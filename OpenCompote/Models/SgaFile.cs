@@ -17,10 +17,10 @@ public class SgaFile: SgaEntry
     private StorageType _storageType;
 
     /// <summary>
-    /// Gets or sets the value that indicates how should the file is compressed.
+    /// Gets or sets the file's storage type.
     /// </summary>
     /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
-    /// <exception cref="InvalidOperationException">The archive is opened in read-only mode or file is currently open."</exception>
+    /// <exception cref="InvalidOperationException">The archive is opened in read-only mode or the file is currently open."</exception>
     public StorageType StorageType
     {
         get
@@ -85,12 +85,12 @@ public class SgaFile: SgaEntry
     }
 
     /// <summary>
-    /// Opens the file from the SGA archive.
+    /// Opens the file and gets the file contents.
     /// </summary>
-    /// <returns>The stream that represents the contents of the file.</returns>
-    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed.</exception>
-    /// <exception cref="IOException">The entry is already currently open for writing.</exception>
-    /// <exception cref="InvalidOperationException">The archive was opened in invalid mode.</exception>
+    /// <returns>A stream with the file contents.</returns>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this file has been disposed, or this file is deleted.</exception>
+    /// <exception cref="IOException">The entry is currently open for writing.</exception>
+    /// <exception cref="InvalidOperationException">Archive <see cref="SgaMode"/> value is invalid.</exception>
     public Stream Open()
     {   
         ThrowIfDeleted();
