@@ -137,7 +137,7 @@ public class SgaArchive: IDisposable
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public SgaEntry GetEntry(string entryName)
+    internal SgaEntry GetEntry(string entryName)
     {
         throw new NotImplementedException();
     }

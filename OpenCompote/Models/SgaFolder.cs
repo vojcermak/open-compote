@@ -96,7 +96,7 @@ public class SgaFolder: SgaEntry
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary> 
     /// <exclude />
-    public void ExtractToDirectory(string destination, bool overwrite = false)
+    internal void ExtractToDirectory(string destination, bool overwrite = false)
     {
         throw new NotImplementedException();
     }

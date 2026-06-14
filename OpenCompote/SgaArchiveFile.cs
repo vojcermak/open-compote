@@ -11,7 +11,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void CreateFromDirectory(string sourceDirectoryName,
+    internal static void CreateFromDirectory(string sourceDirectoryName,
                                            string destinationArchiveFileName,
                                            int version,
                                            bool rootDirAsDrive = false,
@@ -25,7 +25,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void CreateFromDirectory(string sourceDirectoryName,
+    internal static void CreateFromDirectory(string sourceDirectoryName,
                                            Stream destination,
                                            int version,
                                            bool rootDirAsDrive = false,
@@ -39,7 +39,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void ExtractToDirectory(string sourceFileName, string destinationDirectoryName)
+    internal static void ExtractToDirectory(string sourceFileName, string destinationDirectoryName)
     {
         throw new NotImplementedException();
     }
@@ -48,7 +48,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void ExtractToDirectory(Stream source, string destinationDirectoryName)
+    internal static void ExtractToDirectory(Stream source, string destinationDirectoryName)
     {
         throw new NotImplementedException();
     }
