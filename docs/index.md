@@ -1,41 +1,45 @@
-This page contains documentation for the open-compote libraries and schema documentation for all supported formats and versions. Currently, only .sga versions 2, 4, 5 and 7 are supported. But I would like to add support for all .sga versions in the future.
+# open-compote
 
-If you find any errors with this documentation, please open a new GitHub issue.
+A modern C# library for working with Relic Entertainment's `.sga` archive format. This project provides support for reading and writing SGA archives used in games built using the Essence engine.
 
-# SGA Archive
-Relic game archive is a binary file format. It is used for storing compressed folder structures similar to ZIP or RAR formats. SGA format is developed by Relic Entertainment for their Essence game engine. Can be identified by the .sga file extension.
+## About
 
-SGA folder structure is similar to the Windows file system. The structure is divided into drives, folders and files. Where a drive functions as a root object of the folder structure, similarly to Windows drives.(`C:\`, `D:\`, ...) But unlike Windows, SGA drives do not contain files directly. Each Drive needs to have one root folder. Each folder can contain files and other subfolders.
+**open-compote** is an open-source project aimed at providing mod tools developers and experienced modders with robust and easy to use tools for working with `.sga` archives. Whether you're developing mods, analyzing game data, or building mod tools, this library offers a simple API for SGA archive manipulation.
 
-List of Essence engine games and associated .sga versions:
+### Key Features
+- **Easy to use API** — Simple, consistent APIs with, I hope good documentation
+- **Forward-looking** — Comprehensive schema documentation for planned versions (V4, V5, V7)
+- **Well-documented** — Detailed format specifications and examples
 
-<div style="max-width: 600px;">
+> [!NOTE]
+> **Current Status:**
+> **Beta-stage development**. Only SGA V2 is implemented and the package is available on [NuGet](https://www.nuget.org/packages/OpenCompote.SGA). If you want support for additional versions early, you can contribute with issues, feature requests, or pull requests. Community contributions are welcome.
 
-| Version        | Games                                                          |
-| --------       | -------------                                                  |
-| [2.0](schema/SGA-V2.md)| Impossible Creatures,<br> Warhammer 40,000: Dawn of War|
-| 3.0            | The Outfit                                                     |
-| [4.0](schema/SGA-V4.md)| Company of heroes                                      |
-| [5.0](schema/SGA-V5.md)| Warhammer 40,000: Dawn of War 2                        |
-| 6.0            | Can be created using Company of Heroes 2 archive.exe.          |
-| [7.0](schema/SGA-V7.md)| Company of Heroes 2                                    |
-| 9.0            | Warhammer 40,000: Dawn of War 3                                |
-| 10.0           | Age of Empires 4,<br> Company of Heroes 3                      |
+## Getting Started
 
-</div>
+- 📚 [Quick start guide](./examples/quickstart.md)
+- 📋 [SGA Format Schemas](./schema/index.md)
+- 🏗️ [API Documentation](./api/OpenCompote.SGA.yml)
 
-> SGA archives used by Impossible Creatures and Warhammer 40,000: Dawn of War are both marked as version 2, but both formats are incompatible with each other. More info in [2.0](schema/SGA-V2.md#file-definition).
+## Supported SGA Versions
 
-## SGA structure overview 
-SGA archive is divided into three main parts: Archive header, Table of contents and Data block. Position, size and exact fields of all parts are different between SGA versions.
+| Version | Games | Status | Documentation |
+|---------|-------|--------|---|
+| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of War | ![](./images/check-circle.svg) Supported | [SGA-V2.md](./schema/SGA-V2.md) |
+| **V3**  | The Outfit                                       | ![](./images/close-circle.svg) Planned | |
+| **V4**  | Company of Heroes 1                              | ![](./images/close-circle.svg) Planned | [SGA-V4.md](./schema/SGA-V4.md) |
+| **V5**  | Warhammer 40,000: Dawn of War 2                  | ![](./images/close-circle.svg) Planned | [SGA-V5.md](./schema/SGA-V5.md) |
+| **V6**  | Can be created using Company of Heroes 2 archive.exe. | ![](./images/close-circle.svg) Planned | |
+| **V7**  | Company of Heroes 2                              | ![](./images/close-circle.svg) Planned | [SGA-V7.md](./schema/SGA-V7.md) |
+| **V9**  | Warhammer 40,000: Dawn of War 3                  | ![](./images/close-circle.svg) Planned | |
+| **V10** | Age of Empires 4,<br> Company of Heroes 3        | ![](./images/close-circle.svg) Planned | |
 
-### SGA Archive header
-It`s always at the beginning of the file. It always starts with an ASCII string "ARCHVIE_" followed by the version field and other global information about the archive, like its size or checksum. 
+## Contributing
 
-### Table of contents (TOC)
-The table of contents always contains metadata about files and folders in the archive, like their names, structure and sizes. It is usually positioned directly after the archive header, but in some versions(v5.0) of SGA format can also be positioned at the end of the file.
+If you want support for additional SGA versions or want to improve parser coverage, please open an issue or submit a pull request on GitHub: [GitHub Issues](https://github.com/vojcermak/open-compote/issues) or [GitHub Pull Requests](https://github.com/vojcermak/open-compote/pulls).
 
-### Data block
-The data block contains the actual content of archived files. In most cases, the files are compressed using ZLIB compression, but SGA also supports storing uncompressed files. All file contents are put after each other without any spacing or metadata. Position, size and compression type are stored in file metadata in TOC.
+Contributions are the fastest way to expand version support.
 
-Beginning of the data block does not need to be aligned with the start of the first file content.
+## Disclaimer
+
+Not affiliated with Relic Entertainment, Sega, or THQ Nordic. All rights belong to their respective parties.

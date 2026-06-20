@@ -67,7 +67,7 @@ public abstract class SgaEntry
     internal abstract void Delete(bool subDelete);
 
     /// <summary>
-    /// Deletes the entry from the archive.
+    /// Deletes the entry and all its sub entries from the archive.
     /// </summary>
     /// <exception cref="NotSupportedException">The SGA archive for this entry was open in readonly mode.</exception>
     /// <exception cref="ObjectDisposedException">The SGA archive for this entry has been disposed.</exception>

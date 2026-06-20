@@ -129,4 +129,4 @@ The storage type flag determines whether the file is compressed and, if so, whic
 Name list is an Array of ASCII null-terminated strings representing the names of all files and folders in the archive.
 
 ## Data Block
-The Data block remains the same between all SGA versions. For more info, see [Data block](../index.md#data-block).
+The Data block remains the same between all SGA versions. For more info, see [Data block](index.md#data-block).

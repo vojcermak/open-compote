@@ -11,7 +11,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void CreateFromDirectory(string sourceDirectoryName,
+    internal static void CreateFromDirectory(string sourceDirectoryName,
                                            string destinationArchiveFileName,
                                            int version,
                                            bool rootDirAsDrive = false,
@@ -25,7 +25,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void CreateFromDirectory(string sourceDirectoryName,
+    internal static void CreateFromDirectory(string sourceDirectoryName,
                                            Stream destination,
                                            int version,
                                            bool rootDirAsDrive = false,
@@ -39,7 +39,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void ExtractToDirectory(string sourceFileName, string destinationDirectoryName)
+    internal static void ExtractToDirectory(string sourceFileName, string destinationDirectoryName)
     {
         throw new NotImplementedException();
     }
@@ -48,7 +48,7 @@ public class SgaArchiveFile
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    public static void ExtractToDirectory(Stream source, string destinationDirectoryName)
+    internal static void ExtractToDirectory(Stream source, string destinationDirectoryName)
     {
         throw new NotImplementedException();
     }
@@ -62,8 +62,6 @@ public class SgaArchiveFile
     /// <remarks>
     /// This function cannot be used with <paramref name="mode"/> set to <see cref="SgaMode.Create"/>. For creating a new archive use the <see cref="SgaArchiveFile.Create(string, OpenCompote.SGA.SgaVersion, bool)"/> function. When you set the <paramref name="mode"/> to <see cref="SgaMode.Create"/> an <see cref="ArgumentException"/> is thrown.
     /// 
-    /// When you set the <paramref name="mode"/> to null or any other undefined value <see cref="ArgumentException"/> is thrown.
-    /// 
     /// When you set the <paramref name="mode"/> to <see cref="SgaMode.Read"/> or <see cref="SgaMode.Write"/>, the archive is opened with Open from the FileMode enumeration as the file mode value. If the archive does not exist, a FileNotFoundException exception is thrown.
     /// 
     /// If the <paramref name="mode"/> is <see cref="SgaMode.Write"/>, the archive entries can be modified.
@@ -71,8 +69,12 @@ public class SgaArchiveFile
     /// 
     /// The archive <see cref="SgaVersion"/> is automatically detected based on the input file. If the version cannot be detected, a <see cref="InvalidDataException"/> is thrown.
     /// </remarks>
+    /// <exception cref="ArgumentNullException"> The <paramref name="sourceFileName"/> parameter is null.</exception>
+    /// <exception cref="ArgumentException">The <paramref name="mode"/> is set to <see cref="SgaMode.Create"/>.</exception>
     public static SgaArchive Open(string sourceFileName, SgaMode mode)
     {
+        ArgumentNullException.ThrowIfNull(sourceFileName);
+
         FileStream fs = File.Open(sourceFileName, FileMode.Open, mode == SgaMode.Write ? FileAccess.ReadWrite : FileAccess.Read, FileShare.Read);
 
         SgaVersion version = SgaVersionDetector.Detect(fs);
@@ -93,8 +95,6 @@ public class SgaArchiveFile
     /// 
     /// This function cannot be used with <paramref name="mode"/> set to <see cref="SgaMode.Create"/>. For creating a new archive use the <see cref="SgaArchiveFile.Create(Stream, OpenCompote.SGA.SgaVersion, bool)"/> function. When you set the <paramref name="mode"/> to <see cref="SgaMode.Create"/> an <see cref="ArgumentException"/> is thrown.
     /// 
-    /// When you set the <paramref name="mode"/> to null or any other undefined value <see cref="ArgumentException"/> is thrown.
-    /// 
     /// When you set the <paramref name="mode"/> to <see cref="SgaMode.Read"/> or <see cref="SgaMode.Write"/>, the archive is opened with Open from the FileMode enumeration as the file mode value. If the archive does not exist, a FileNotFoundException exception is thrown.
     /// 
     /// If the <paramref name="mode"/> is <see cref="SgaMode.Write"/>, the archive entries can be modified.
@@ -102,8 +102,12 @@ public class SgaArchiveFile
     /// 
     /// The archive <see cref="SgaVersion"/> is automatically detected based on the input file. If the version cannot be detected, a <see cref="InvalidDataException"/> is thrown.
     /// </remarks>
+    /// <exception cref="ArgumentNullException"> The <paramref name="existingStream"/> parameter is null.</exception>
+    /// <exception cref="ArgumentException">The <paramref name="existingStream"/> does not support reading, writing or seeking, or <paramref name="mode"/> is set to <see cref="SgaMode.Create"/>.</exception>
     public static SgaArchive Open(Stream existingStream, SgaMode mode, bool leaveOpen = false)
     {
+        ArgumentNullException.ThrowIfNull(existingStream);
+
         SgaVersion version = SgaVersionDetector.Detect(existingStream);
         ISgaParser parser =  SgaParserFactory.Create(version);
 
@@ -120,12 +124,13 @@ public class SgaArchiveFile
     /// <remarks>
     /// The new 'SgaArchive' is always created with `mode` set to <see cref="SgaMode.Create"/>.
     /// 
-    /// When you set the <paramref name="version"/> to null or any other undefined value <see cref="ArgumentException"/> is thrown.
-    /// 
     /// Not all version of Sga archive file are supported. For more info see status page.
     /// </remarks>
+    /// <exception cref="ArgumentNullException"> The <paramref name="sourceFileName"/> parameter is null.</exception>
     public static SgaArchive Create(string sourceFileName, SgaVersion version, bool overwrite = false)
     {
+        ArgumentNullException.ThrowIfNull(sourceFileName);
+
         FileStream fs = File.Open(sourceFileName, overwrite ? FileMode.Create : FileMode.CreateNew , FileAccess.ReadWrite, FileShare.Read);
 
         ISgaParser parser =  SgaParserFactory.Create(version);
@@ -143,14 +148,16 @@ public class SgaArchiveFile
     /// <remarks>
     /// The new <paramref name="existingStream"/> is always created with `mode` set to <see cref="SgaMode.Create"/>.
     /// 
-    /// When you set the <paramref name="version"/> to null or any other undefined value <see cref="ArgumentException"/> is thrown.
-    /// 
     /// Not all version of Sga archive file are supported. For more info see status page.
     /// 
     /// The <paramref name="existingStream"/> must be empty and support reading, writing and seeking. If the <paramref name="existingStream"/> does not meet this criteria an <see cref="ArgumentException"/> is thrown.
     /// </remarks>
+    /// <exception cref="ArgumentNullException">The <paramref name="existingStream"/> parameter is null.</exception>
+    /// <exception cref="ArgumentException">The <paramref name="existingStream"/> does not support reading, writing or seeking.</exception>
     public static SgaArchive Create(Stream existingStream, SgaVersion version, bool leaveOpen)
     {
+        ArgumentNullException.ThrowIfNull(existingStream);
+
         ISgaParser parser = SgaParserFactory.Create(version);
 
         return new SgaArchive(existingStream, SgaMode.Create, version, parser, leaveOpen);

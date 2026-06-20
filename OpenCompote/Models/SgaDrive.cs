@@ -67,7 +67,7 @@ public class SgaDrive
     }
 
     /// <summary>
-    /// Deletes the drive from the archive.
+    /// Deletes the drive and all its contents from the archive.
     /// </summary>
     /// <exception cref="NotSupportedException">The SGA archive for this drive was open in readonly mode.</exception>
     /// <exception cref="ObjectDisposedException">The SGA archive for this entry has been disposed.</exception>
@@ -98,7 +98,7 @@ public class SgaDrive
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>  
     /// <exclude />
-    public SgaEntry GetEntry(string entryName)
+    internal SgaEntry GetEntry(string entryName)
     {
         throw new NotImplementedException();
     }
