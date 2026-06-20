@@ -17,6 +17,7 @@
     <RepositoryUrl>https://github.com/vojcermak/open-compote</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>(Package release notes are in CHANGELOG.md)</PackageReleaseNotes>
     <PackageTags>sga;relic-sga;relic-entertainment;essence-engine;dawn-of-war;library;archive;modding</PackageTags>
   </PropertyGroup>
 
@@ -27,4 +28,10 @@
   <ItemGroup>
     <None Include="../README.md" Pack="true" PackagePath="" />
   </ItemGroup>
+
+  <Target Name="InjectPackageReleaseNotesFromFile" BeforeTargets="GenerateNuspec" Condition="Exists('../CHANGELOG.md')">
+		<PropertyGroup>
+			<PackageReleaseNotes>$(RELEASE_NOTES)</PackageReleaseNotes>
+		</PropertyGroup>
+	</Target>
 </Project>

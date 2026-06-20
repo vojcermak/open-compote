@@ -53,10 +53,11 @@ jobs:
           command: query
           version: latest
       - name: Pack NuGet package
+        env:
+          RELEASE_NOTES: ${{ steps.get-notes.outputs.release-notes }}
         run: |
           dotnet pack OpenCompote \
-            -c Release \
-            -p:PackageReleaseNotes="${{ steps.get-notes.outputs.release-notes }}"
+            -c Release
       - name: Upload NuGet package artifact
         uses: actions/upload-artifact@v4
         with:
