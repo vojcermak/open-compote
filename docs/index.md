@@ -6,9 +6,20 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 
 **open-compote** is an open-source project aimed at providing mod tools developers and experienced modders with robust and easy to use tools for working with `.sga` archives. Whether you're developing mods, analyzing game data, or building mod tools, this library offers a simple API for SGA archive manipulation.
 
+### Key Features
+- **Easy to use API** — Simple, consistent APIs with, I hope good documentation
+- **Forward-looking** — Comprehensive schema documentation for planned versions (V4, V5, V7)
+- **Well-documented** — Detailed format specifications and examples
+
 > [!NOTE]
 > **Current Status:**
-> **Very early-stage development.** Only SGA V2 is implemented today. If you want support for additional versions early, please contribute issues, feature requests, or pull requests. Community contributions are welcome.
+> **Beta-stage development**. Only SGA V2 is implemented and the package is available on [NuGet](https://www.nuget.org/packages/OpenCompote.SGA). If you want support for additional versions early, you can contribute with issues, feature requests, or pull requests. Community contributions are welcome.
+
+## Getting Started
+
+- 📚 [Quick start guide](./examples/quickstart.md)
+- 📋 [SGA Format Schemas](./schema/index.md)
+- 🏗️ [API Documentation](./api/OpenCompote.SGA.yml)
 
 ## Supported SGA Versions
 
@@ -22,19 +33,6 @@ A modern C# library for working with Relic Entertainment's `.sga` archive format
 | **V7**  | Company of Heroes 2                              | ![](./images/close-circle.svg) Planned | [SGA-V7.md](./schema/SGA-V7.md) |
 | **V9**  | Warhammer 40,000: Dawn of War 3                  | ![](./images/close-circle.svg) Planned | |
 | **V10** | Age of Empires 4,<br> Company of Heroes 3        | ![](./images/close-circle.svg) Planned | |
-
-
-## Key Features
-
-- **Easy to use API** — Simple, consistent APIs with, I hope good documentation
-- **Forward-looking** — Comprehensive schema documentation for planned versions (V4, V5, V7)
-- **Well-documented** — Detailed format specifications and examples
-
-## Getting Started
-
-- 📚 [Quick start guide](./examples/quickstart.md)
-- 📋 [SGA Format Schemas](./schema/index.md)
-- 🏗️ [API Documentation](./api/OpenCompote.SGA.yml)
 
 ## Contributing
 
