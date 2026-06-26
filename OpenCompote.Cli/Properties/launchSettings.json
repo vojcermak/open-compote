@@ -3,7 +3,7 @@
     "OpenCompote.Cli": {
       "commandName": "Project",
       "workingDirectory": "..",
-      "commandLineArgs": "\"output.sga\""
+      "commandLineArgs": "/home/Vojta/Dokumenty/coh2_modding/open-compote/W40kData-Sound-Low(dow1).sga"
     }
   }
 }

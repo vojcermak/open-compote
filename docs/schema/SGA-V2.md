@@ -98,10 +98,10 @@ Offsets represent the count of bytes from the start of the TOC header. (Toc star
 | Start | Stop | Size  | Type              | Name              |
 | ----- | ---- | ----- | ----------------- | ----------------- |
 | 0     | 3    | 4     | UInt-32           | Name offset       |
-| 0     | 3    | 4     | UInt-32           | Storage Flag      |
-| 0     | 3    | 4     | UInt-32           | Data Offset       |
-| 0     | 3    | 4     | UInt-32           | Compressed Size   |
-| 0     | 3    | 4     | UInt-32           | Decompressed Size |
+| 4     | 7    | 4     | UInt-32           | Storage Flag      |
+| 8     | 11   | 4     | UInt-32           | Data Offset       |
+| 12    | 15   | 4     | UInt-32           | Compressed Size   |
+| 16    | 19   | 4     | UInt-32           | Decompressed Size |
 
 1. Name offset - Byte offset to the beginning of the name of this folder in the name list. 
 2. Storage Flag - Type [file compression](./SGA-V2.md#storage-flag).
@@ -133,8 +133,8 @@ File metadata is a block of information about a file directly **before** the com
 | Start | Stop | Size  | Type              | Name              |
 | ----- | ---- | ----- | ----------------- | ----------------- |
 | 0     | 255  | 256   | String (UTF-8)    | File name         |
-| 0     | 3    | 4     | UInt-32           | Modified          |
-| 0     | 3    | 4     | UInt-32           | CRC               |
+| 256   | 259  | 4     | UInt-32           | Modified          |
+| 260   | 263  | 4     | UInt-32           | CRC               |
 
 1. File name - Name of the file. Same as the name from the Name list for this file 
 2. Last modified - 32-bit Linux timestamp when the file was last changed.

@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.ComponentModel.Design;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
@@ -14,6 +15,7 @@ internal class SgaV2Parser : ISgaParser
 
     private const int FILE_HEADER_SIZE = 180;
     private const int TOC_HEADER_SIZE = 24;
+    private const int FILE_METADATA_SIZE = 264;
 
     // Static length name lengths
     private const int ARCHIVE_NAME_LENGTH = 64;
@@ -22,6 +24,8 @@ internal class SgaV2Parser : ISgaParser
     // MD5 default hashes
     private const string TOC_HASH_INIT = "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF";
     private const string FILE_HASH_INIT = "E01519D6-2DB7-4640-AF54-0A23319C56C3";
+
+    private bool HasMetadata = true;
 
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
@@ -190,6 +194,8 @@ internal class SgaV2Parser : ISgaParser
 
                     uint fileNameOffset = fileRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
                     string fileName = ParserUtils.ReadDynamicString(sgaStream, fileNameOffset, dataOffset);
+
+                    V2FileMetadata metadata = ReadFileMetadata(fileRecord, fileName, sgaStream);
 
                     // If compressed size + Data offset is bigger then the file size throw exception because there is something wrong.
                     if(fileRecord.RawDataOffset + fileRecord.CompressedSize > sgaStream.Length)
@@ -408,5 +414,34 @@ internal class SgaV2Parser : ISgaParser
             StorageType.StreamCompress => 32,
             _ => throw new Exception("Invalid storage flag value."),
         };
+    }
+
+    private V2FileMetadata ReadFileMetadata(FileRecord file, string headerName, Stream sgaStream)
+    {
+        if(!HasMetadata)
+            return new V2FileMetadata();
+
+        long currentPosition = sgaStream.Position;
+        sgaStream.Position = file.RawDataOffset - FILE_METADATA_SIZE;
+
+        Span<byte> buffer = stackalloc byte[FILE_METADATA_SIZE];
+        sgaStream.ReadExactly(buffer);
+
+        string metaFileName = System.Text.Encoding.UTF8.GetString(buffer[..256]).TrimEnd('\0');
+        uint modified = BinaryPrimitives.ReadUInt32LittleEndian(buffer[256..260]);
+        uint crc = BinaryPrimitives.ReadUInt32LittleEndian(buffer[260..264]);
+
+        DateTimeOffset modifiedDate = DateTimeOffset.FromUnixTimeSeconds(modified);
+
+        Console.WriteLine($"{metaFileName} - {modifiedDate}");
+
+        if(metaFileName != headerName)
+        {
+            HasMetadata = false;
+            return new V2FileMetadata();
+        }
+
+        sgaStream.Position = currentPosition;
+        return new V2FileMetadata(metaFileName, modifiedDate, crc);
     }
 }
