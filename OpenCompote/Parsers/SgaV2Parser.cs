@@ -1,7 +1,4 @@
 using System.Buffers.Binary;
-using System.ComponentModel.Design;
-using System.IO.Compression;
-using System.Runtime.InteropServices;
 using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
@@ -25,7 +22,16 @@ internal class SgaV2Parser : ISgaParser
     private const string TOC_HASH_INIT = "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF";
     private const string FILE_HASH_INIT = "E01519D6-2DB7-4640-AF54-0A23319C56C3";
 
-    private bool HasMetadata = true;
+    /// <summary>
+    /// Specifies whether SGA file metadata are present in the archive.
+    /// </summary>
+    /// <remarks>
+    /// This value is determined during parsing and is consistent for the entire archive. During writing is behaves like this:
+    /// - <see cref="MetadataState.Present"/> - metadata blocks are written for all files
+    /// - <see cref="MetadataState.Missing"/> - no metadata blocks are written
+    /// - <c>null</c> → treated as <see cref="MetadataState.Present"/>
+    /// </remarks>
+    private MetadataState? _metadataState = null;
 
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
@@ -416,32 +422,45 @@ internal class SgaV2Parser : ISgaParser
         };
     }
 
+    /// <summary>
+    /// Retrieves file metadata for the specified file.
+    /// </summary>
     private V2FileMetadata ReadFileMetadata(FileRecord file, string headerName, Stream sgaStream)
-    {
-        if(!HasMetadata)
+    {   
+        // If whe know that archive does not contain any metadata return empty directly.
+        if(_metadataState == MetadataState.Missing)
             return new V2FileMetadata();
 
         long currentPosition = sgaStream.Position;
         sgaStream.Position = file.RawDataOffset - FILE_METADATA_SIZE;
 
+        // Read file metadata into stack buffer.
         Span<byte> buffer = stackalloc byte[FILE_METADATA_SIZE];
         sgaStream.ReadExactly(buffer);
 
+        // Parser the file metadata into usable data.
         string metaFileName = System.Text.Encoding.UTF8.GetString(buffer[..256]).TrimEnd('\0');
         uint modified = BinaryPrimitives.ReadUInt32LittleEndian(buffer[256..260]);
         uint crc = BinaryPrimitives.ReadUInt32LittleEndian(buffer[260..264]);
 
         DateTimeOffset modifiedDate = DateTimeOffset.FromUnixTimeSeconds(modified);
 
-        Console.WriteLine($"{metaFileName} - {modifiedDate}");
+        sgaStream.Position = currentPosition;
 
-        if(metaFileName != headerName)
+        // If _metadataState is not known test if the metadata are valid. if yes return metadata if not return empty.
+        if(_metadataState == null && metaFileName != headerName)
         {
-            HasMetadata = false;
-            return new V2FileMetadata();
+            _metadataState = MetadataState.Missing;
+            return new V2FileMetadata();   
         }
 
-        sgaStream.Position = currentPosition;
+        _metadataState = MetadataState.Present;
         return new V2FileMetadata(metaFileName, modifiedDate, crc);
+    }
+
+    enum MetadataState
+    {
+        Present,
+        Missing
     }
 }
