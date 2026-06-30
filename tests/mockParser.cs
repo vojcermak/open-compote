@@ -70,7 +70,7 @@ public class MockParser : ISgaParser
                 compressedSize = (uint)_testStream.Length - dataOffset;
             }
 
-            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, drive, folder);
+            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, null, null, drive, folder);
             folder._contents.Add(file);
         }
 

@@ -15,6 +15,8 @@ public class SgaFile: SgaEntry
     private Stream? _fileContents;
     private bool _isOpen;
     private StorageType _storageType;
+    private DateTimeOffset? _modified;
+    private uint? _crc;
 
     /// <summary>
     /// Gets or sets the file's storage type.
@@ -63,6 +65,28 @@ public class SgaFile: SgaEntry
     /// Gets the uncompressed size in bytes, of the file in the archive.
     /// </summary>
     public uint Size {get; private set;}
+     
+    /// <summary>
+    /// The last write time of the file in the archive. When setting this property, the DateTime will be converted to the 32-bit unix timestamp format.
+    /// This property could be <see langword="null"/> when opening SGA V2 archive without file metadata present. 
+    /// Modified is automatically set to the current data and time when new file is created or changed file content stream is closed.  
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
+    /// <exception cref="InvalidOperationException">The archive is opened in read-only mode.</exception>
+    public DateTimeOffset? Modified {
+        get
+        {
+            ThrowIfDeleted();
+            return _modified;
+        }
+        set
+        {
+            ThrowIfDeleted();
+            if(Drive!.Archive!.Mode == SgaMode.Read)
+                throw new InvalidOperationException("Writing is not supported.");
+            _modified = value;
+        }
+    }
 
     internal SgaFile(string name, StorageType type, SgaDrive drive, SgaFolder parent)
     {   
@@ -70,9 +94,20 @@ public class SgaFile: SgaEntry
         _name = name;
         _storageType = type;
         Parent = parent;
+        _modified = DateTimeOffset.Now;
     }
 
-    internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size, SgaDrive drive, SgaFolder parent)
+    internal SgaFile(
+        string name, 
+        StorageType type,
+        uint dataOffset,
+        uint compressedSize,
+        uint size,
+        DateTimeOffset? modified,
+        uint? crc,
+        SgaDrive drive,
+        SgaFolder parent
+    )
     {
         _dataOffset = dataOffset;
         _name = name;
@@ -81,6 +116,8 @@ public class SgaFile: SgaEntry
         Size = size;
         Drive = drive;
         Parent = parent;
+        _modified = modified;
+        _crc = crc;
         _isInStream = true;
     }
 

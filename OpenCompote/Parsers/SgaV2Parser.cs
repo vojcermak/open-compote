@@ -212,6 +212,8 @@ internal class SgaV2Parser : ISgaParser
                                                       fileRecord.RawDataOffset,
                                                       fileRecord.CompressedSize,
                                                       fileRecord.Size,
+                                                      metadata.LastModified,
+                                                      metadata.CRC,
                                                       newDrive,
                                                       currentFolder);
                     currentFolder._contents.Add(currentFile);
