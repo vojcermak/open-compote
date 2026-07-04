@@ -1,6 +1,5 @@
 using System.IO.Compression;
-using System.Reflection.PortableExecutable;
-using System.Runtime.CompilerServices;
+using System.IO.Hashing;
 using OpenCompote.SGA.CustomStreams;
 
 namespace OpenCompote.SGA;
@@ -227,6 +226,19 @@ public class SgaFile: SgaEntry
         return decompressedStream;
     }
 
+    private uint CalculateCrc()
+    {
+        if(_fileContents == null)
+            ArgumentNullException.ThrowIfNull(_fileContents);
+
+        _fileContents.Position = 0;
+
+        var crc = new Crc32();
+        crc.Append(_fileContents);
+        
+        return crc.GetCurrentHashAsUInt32();
+    }
+
     private Stream OpenReadOnly()
     {
         ReadSubStream compressed = new ReadSubStream(Drive!.Archive!._archiveStream, _dataOffset, CompressedSize);
@@ -253,6 +265,7 @@ public class SgaFile: SgaEntry
         return new WrapperStream(_fileContents, () =>
         {
             Size = (uint)_fileContents.Length;
+            _crc = CalculateCrc();
 
             if(StorageType != StorageType.Uncompress)
                 _fileContents = CompressFileContents();

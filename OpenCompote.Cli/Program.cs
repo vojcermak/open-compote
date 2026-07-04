@@ -41,7 +41,7 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
 
             if (entry is SgaFile file)
             {
-                Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name} - Size: {file.CompressedSize} - Modified: {file.Modified} - CRC: {file.Crc:X8}");
+                Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name} - Size: {file.Size} - Modified: {file.Modified} - CRC: {file.Crc:X8}");
                 //file.Open();
             }
             else if (entry is SgaFolder folder)
