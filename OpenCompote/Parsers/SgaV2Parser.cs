@@ -321,7 +321,11 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt16(toc, f.LastFile);
         }
 
-        uint dataOffset = 264; // Add temporary Data offset buffer for the optional file info. This will be replaced later.
+        uint dataOffset = 0; // Set data offset counter to 0;
+        // If resulting archive will contain file metadata add the offset for the first file metadata
+        if(_metadataState != MetadataState.Missing)
+            dataOffset = FILE_METADATA_SIZE;
+        
         // Write Files
         foreach (var f in fileList)
         {
@@ -334,7 +338,11 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt32(toc, f.CompressedSize);
             ParserUtils.WriteUInt32(toc, f.Size);
 
-            dataOffset += f.CompressedSize + 264;
+            // If new archive file will contain metadata add their size as well, else only add the file size.
+            if(_metadataState != MetadataState.Missing)
+                dataOffset += f.CompressedSize + FILE_METADATA_SIZE;
+            else
+                dataOffset += f.CompressedSize;
         }
 
         // write TOC
@@ -365,12 +373,21 @@ internal class SgaV2Parser : ISgaParser
         
         toc.CopyTo(tempStream); // copy the TOC to the new archive
 
-        byte[] emptyMetaData = new byte[264];
+        Span<byte> fileMetaData = stackalloc byte[FILE_METADATA_SIZE];
 
         // Write the actual content of the files.
         foreach(var file in fileList)
         {
-            tempStream.Write(emptyMetaData);
+            // Do not write file metadata if they were not present in the original file.
+            if(_metadataState != MetadataState.Missing)
+            {   
+                System.Text.Encoding.UTF8.GetBytes(file.Name, fileMetaData[..256]);
+                BinaryPrimitives.WriteUInt32LittleEndian(fileMetaData[256..260], ParserUtils.ConvertToSgaTimestamp(file.Modified));
+                BinaryPrimitives.WriteUInt32LittleEndian(fileMetaData[260..264], file.Crc ?? 0 );
+
+                tempStream.Write(fileMetaData);
+            }
+
             using var contents = file.GetResultStream();
             contents.CopyTo(tempStream);
         }
