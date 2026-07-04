@@ -67,9 +67,9 @@ public class SgaFile: SgaEntry
     public uint Size {get; private set;}
      
     /// <summary>
-    /// The last write time of the file in the archive. When setting this property, the DateTime will be converted to the 32-bit unix timestamp format.
+    /// Gets or sets the last write time of the file in the archive. When setting this property, the DateTime will be converted to the 32-bit unix timestamp format.
     /// This property could be <see langword="null"/> when opening SGA V2 archive without file metadata present. 
-    /// Modified is automatically set to the current data and time when new file is created or changed file content stream is closed.  
+    /// Modified is automatically set to the current date and time when new file is created or changed file content stream is closed.  
     /// </summary>
     /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
     /// <exception cref="InvalidOperationException">The archive is opened in read-only mode.</exception>
@@ -85,6 +85,20 @@ public class SgaFile: SgaEntry
             if(Drive!.Archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Writing is not supported.");
             _modified = value;
+        }
+    }
+
+    /// <summary>
+    /// Get the CRC(Cyclic redundant check) of the opened file. Only loaded when present in the archive. If the crc in newly open archive this property will be <see langword="null"/>.
+    /// CRC is automatically calculated for sga versions which are using CRCs. CRCs are not automatically check when file is opened, but you can check the your self by opening the file.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
+    public uint? Crc
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _crc;
         }
     }
 
@@ -245,6 +259,7 @@ public class SgaFile: SgaEntry
 
             CompressedSize = (uint)_fileContents.Length;
             _isOpen = false;
+            _modified = DateTimeOffset.Now;
         });
     }
 
