@@ -41,6 +41,7 @@ public class SgaFolder: SgaEntry
     public SgaFolder AddFolder(string name)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
+        ArgumentNullException.ThrowIfNull(name);
 
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new NotSupportedException("Writing is not supported in this mode.");

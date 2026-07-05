@@ -8,13 +8,15 @@ namespace OpenCompote.SGA.Tests;
 
 public class MockParser : ISgaParser
 {
+    private readonly string _archiveName;
     private readonly List<TestDrive> _drives;
     private readonly List<TestDrive> _expectedTree;
 
     private Stream? _testStream;
 
-    public MockParser(List<TestDrive> initialTree, List<TestDrive> expectedTree)
+    public MockParser(string archiveName ,List<TestDrive> initialTree, List<TestDrive> expectedTree)
     {
+        _archiveName = archiveName;
         _drives = initialTree;
         _expectedTree = expectedTree;
     }
@@ -22,6 +24,7 @@ public class MockParser : ISgaParser
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
         _testStream = sgaStream;
+        archive._archiveName = _archiveName;
 
         foreach(var testDrive in _drives)
         {
