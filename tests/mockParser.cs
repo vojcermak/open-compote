@@ -1,4 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using System.IO.Compression;
+using System.IO.Hashing;
 using System.Text;
 using OpenCompote.SGA.Parsers;
 
@@ -55,6 +57,7 @@ public class MockParser : ISgaParser
             byte[] inputBytes = Encoding.UTF8.GetBytes(testFile.FileContent);
             uint size = (uint)inputBytes.Length;
             uint compressedSize = 0;
+            uint crc =  Crc32.HashToUInt32(inputBytes);
 
             if(testFile.StorageType == StorageType.Uncompress)
             {
@@ -70,7 +73,7 @@ public class MockParser : ISgaParser
                 compressedSize = (uint)_testStream.Length - dataOffset;
             }
 
-            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, null, null, drive, folder);
+            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, testFile.Modified, crc, drive, folder);
             folder._contents.Add(file);
         }
 
@@ -135,6 +138,7 @@ public class MockParser : ISgaParser
 
         Assert.Equal(expectedFile.Name, actualFile.Name);
         Assert.Equal(expectedFile.StorageType, actualFile.StorageType);
+        Assert.Equal(expectedFile.Modified, actualFile.Modified);
         Assert.Equal(expectedSize, actualFile.Size);
         Assert.Equal(expectedCompressedSize, actualFile.CompressedSize);
 
@@ -156,8 +160,10 @@ public class MockParser : ISgaParser
 
         }
 
+        uint crc = Crc32.HashToUInt32(buffer);
         string actualContents = Encoding.Default.GetString(buffer);
 
+        Assert.Equal(crc, actualFile.Crc ?? 0);
         Assert.Equal(expectedFile.FileContent, actualContents);
     }
 }
@@ -180,5 +186,6 @@ public class TestFile
 {
     public required string Name {get; set;}
     public required StorageType StorageType {get; set;}
+    public DateTimeOffset Modified {get; set;}
     public required string FileContent {get; set;}
 }

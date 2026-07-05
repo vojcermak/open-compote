@@ -107,7 +107,7 @@ public class SgaFile: SgaEntry
         _name = name;
         _storageType = type;
         Parent = parent;
-        _modified = DateTimeOffset.Now;
+        _modified = drive!.Archive!._timeProvider.GetLocalNow();
     }
 
     internal SgaFile(
@@ -272,7 +272,7 @@ public class SgaFile: SgaEntry
 
             CompressedSize = (uint)_fileContents.Length;
             _isOpen = false;
-            _modified = DateTimeOffset.Now;
+            _modified = Drive!.Archive!._timeProvider.GetLocalNow();
         });
     }
 

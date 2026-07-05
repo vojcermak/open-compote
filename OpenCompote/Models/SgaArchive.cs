@@ -17,6 +17,7 @@ public class SgaArchive: IDisposable
     internal string _archiveName;
     internal readonly Stream _archiveStream;
     internal readonly List<SgaDrive> _drives;
+    internal readonly TimeProvider _timeProvider;
 
     /// <summary>
     /// Gets the Mode in which the archive was opened.
@@ -70,7 +71,8 @@ public class SgaArchive: IDisposable
     /// <param name="version">SGA archive version</param>
     /// <param name="parser"></param>
     /// <param name="leaveOpen">true to leave the stream open upon disposing the SgaArchive, otherwise false.</param>
-    internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false)
+    /// <param name="timeProvider">Used for file modified time assignment. Needed for testing.</param>
+    internal SgaArchive(Stream stream, SgaMode mode, SgaVersion version, ISgaParser parser, bool leaveOpen = false, TimeProvider? timeProvider = null)
     {    
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(parser);
@@ -83,6 +85,7 @@ public class SgaArchive: IDisposable
         
         _archiveStream = stream;
         _parser = parser;
+        _timeProvider = timeProvider ?? TimeProvider.System;
         Mode = mode;
         _archiveName = "";
         _isDisposed = false;

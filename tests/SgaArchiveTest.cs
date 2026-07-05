@@ -240,6 +240,7 @@ public class SgaArchiveTest
                         new TestFile{
                             Name = "TestFile.txt",
                             StorageType = StorageType.Uncompress,
+                            Modified = DateTimeOffset.Now,
                             FileContent = "File Contents"
                         }
                     ]
@@ -298,6 +299,7 @@ public class SgaArchiveTest
     public void AddFile_WithCompressedStorageType_CreatesFileSuccessfully()
     {
         var stream = new MemoryStream();
+        MockTimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
         var parser = new MockParser([], [
             new TestDrive{
                 Name = "Name",
@@ -309,6 +311,7 @@ public class SgaArchiveTest
                         new TestFile{
                             Name = "Compressed.txt",
                             StorageType = StorageType.StreamCompress,
+                            Modified = timeProvider.GetLocalNow(),
                             FileContent = ""
                         }
                     ]
@@ -317,7 +320,7 @@ public class SgaArchiveTest
         ]);
 
         // TODO: Add writing into the file.
-        using (var archive = new SgaArchive(stream, SgaMode.Create, SgaVersion.V2, parser))
+        using (var archive = new SgaArchive(stream, SgaMode.Create, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.AddDrive("Alias", "Name");
             
