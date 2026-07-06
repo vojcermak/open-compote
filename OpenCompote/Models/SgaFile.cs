@@ -108,6 +108,7 @@ public class SgaFile: SgaEntry
         _storageType = type;
         Parent = parent;
         _modified = drive!.Archive!._timeProvider.GetLocalNow();
+        _crc = 0;
     }
 
     internal SgaFile(

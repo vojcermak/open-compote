@@ -1,4 +1,6 @@
-﻿using System.Security.Cryptography.X509Certificates;
+﻿using System.IO.Hashing;
+using System.Reflection.Metadata;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using OpenCompote.SGA.Parsers;
 
@@ -278,7 +280,7 @@ public class SgaArchiveTest
     #endregion
     #region Folders
 
-    // This test tests if Add drive function works and creates new folder.
+    // This test tests if Add folder function works and creates new folder.
     [Fact]
     public void SgaFolder_AddFolder_ValidArguments()
     {
@@ -327,6 +329,7 @@ public class SgaArchiveTest
         }
     }
 
+    // This tests if the add folder function throws when have invalid arguments.
     [Fact]
     public void SgaFolder_AddFolder_InvalidArguments()
     {
@@ -364,6 +367,7 @@ public class SgaArchiveTest
         }
     }
 
+    // This tests if the folder name can be updated and the path updates as well.
     [Fact]
     public void SgaFolder_UpdateFolder()
     {
@@ -425,6 +429,7 @@ public class SgaArchiveTest
         }
     }
 
+    // This tests if folder delete function work and deletes the folder and all its content
     [Fact]
     public void SgaFolder_RemoveFolder()
     {
@@ -470,20 +475,393 @@ public class SgaArchiveTest
             }
         ]);
         TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+
+        using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
+        {
+            SgaDrive drive = archive.GetDrive("Drive-Name")!;
+            SgaFolder folder = (SgaFolder)drive.RootFolder.Contents[0];
+
+            // Get sub contents.
+            SgaFolder subFolder = (SgaFolder)folder.Contents[0];
+            SgaFile subFile = (SgaFile)folder.Contents[1];
+            
+            folder.Delete();
+
+            // Test if the folder is deleted
+            Assert.Throws<ObjectDisposedException>(() => folder.Name);
+            Assert.Throws<ObjectDisposedException>(() => folder.Name = "");
+            Assert.Throws<ObjectDisposedException>(() => folder.Path);
+            Assert.Throws<ObjectDisposedException>(() => folder.Contents);
+            Assert.Null(folder.Parent);
+            Assert.Null(folder.Drive);
+            Assert.Empty(drive.RootFolder.Contents);
+
+            // Test if the subfolder is deleted
+            Assert.Throws<ObjectDisposedException>(() => subFolder.Name);
+            Assert.Throws<ObjectDisposedException>(() => subFolder.Name = "");
+            Assert.Throws<ObjectDisposedException>(() => subFolder.Path);
+            Assert.Throws<ObjectDisposedException>(() => subFolder.Contents);
+            Assert.Null(subFolder.Parent);
+            Assert.Null(subFolder.Drive);
+
+            // Test if the subFile is deleted
+            Assert.Null(subFile.Parent);
+            Assert.Null(subFile.Drive);
+        }
     }
 
+     // Test if the root folder only deleted the content and not the folder it self. Root folder cannot be deleted.
+    [Fact]
+    public void SgaFolder_Remove_RootFolder()
+    {
+        Stream archiveStream = new MemoryStream();
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "RootFolder",
+                    Folders = [
+                        new TestFolder{
+                            Name = "SubFolder",
+                            Folders = [
+                                new TestFolder{
+                                    Name = "SubSubFolder",
+                                    Folders = [],
+                                    Files = []
+                                }
+                            ],
+                            Files = [
+                                new TestFile{
+                                    Name = "testFile",
+                                    StorageType = StorageType.Uncompress,
+                                    Modified = DateTimeOffset.Now,
+                                    FileContent = "Test file contents"
+                                }
+                            ]
+                        }
+                    ],
+                    Files = []
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ]);
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+
+        using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
+        {
+            SgaDrive drive = archive.GetDrive("Drive-Name")!;
+            SgaFolder folder = drive.RootFolder;
+
+            folder.Delete();
+
+            Assert.Empty(folder.Contents);
+            Assert.Equal(drive.Name, folder.Name);
+            Assert.Equal(drive.RootFolder, folder);
+        }
+    }
+
+    // This tests if any action that would result in archive modification throws when archive is read only.
     [Fact]
     public void SgaFolder_UpdateFolder_ThrowsWhenReadonly()
     {
+        Stream archiveStream = new MemoryStream();
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ]);
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+
+        using (var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider))
+        {
+            SgaDrive drive = archive.GetDrive("Drive-Name")!;
+            SgaFolder folder = drive.RootFolder;
+
+            Assert.Throws<NotSupportedException>(() => folder.AddFolder("New Folder"));
+            Assert.Throws<NotSupportedException>(() => folder.Name = "changed");
+            Assert.Throws<NotSupportedException>(folder.Delete);
+        }
     }
 
+    // This tests if a disposed archive throws when user tries to change any part of a folder in the disposed archive.
     [Fact]
     public void SgaFolder_UpdateFolder_ThrowsWhenDisposed()
     {
+        Stream archiveStream = new MemoryStream();
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ]);
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+        var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider);
+        SgaDrive drive = archive.GetDrive("Drive-Name")!;
+        SgaFolder folder = drive.RootFolder;
+        archive.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => folder.Name);
+        Assert.Throws<ObjectDisposedException>(() => folder.Name = "");
+        Assert.Throws<ObjectDisposedException>(() => folder.Path);
+        Assert.Throws<ObjectDisposedException>(() => folder.Contents);
+        Assert.Throws<ObjectDisposedException>(() => folder.AddFolder("NewFolder"));
+        Assert.Throws<ObjectDisposedException>(folder.Delete);
     }
 
     #endregion
+    #region Files
 
+    // This tests if the Add file function works correctly with valid arguments
+    [Fact]
+    public void SgaFile_CreateFile_ValidArguments()
+    {
+        Stream archiveStream = new MemoryStream();
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = [new TestFile{
+                        Name = "New file",
+                        StorageType = StorageType.Uncompress,
+                        Modified = timeProvider.GetLocalNow(),
+                        FileContent = ""
+                    }]
+                }
+            }
+        ]);
+        using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
+        {
+            SgaDrive drive = archive.GetDrive("Drive-Name")!;
+            SgaFolder folder = drive.RootFolder;
+
+            SgaFile file = folder.AddFile("New file", StorageType.Uncompress);
+
+            Assert.Equal("New file", file.Name);
+            Assert.Equal(StorageType.Uncompress, file.StorageType);
+            Assert.Equal(timeProvider.GetLocalNow(), file.Modified);
+            Assert.Equal(0u, file.Size);
+            Assert.Equal(0u, file.CompressedSize);
+            Assert.Equal(0u, file.Crc);
+        }
+    }
+    
+    // This tests if the add file function correctly reject(throw) invalid arguments.
+    [Fact]
+    public void SgaFile_CreateFile_InvalidArguments()
+    {
+        Stream archiveStream = new MemoryStream();
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = []
+                }
+            }
+        ]);
+        using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
+        {
+            SgaDrive drive = archive.GetDrive("Drive-Name")!;
+            SgaFolder folder = drive.RootFolder;
+
+            #pragma warning disable CS8625
+            Assert.Throws<ArgumentNullException>(() => folder.AddFile(null, StorageType.Uncompress));
+            Assert.Throws<ArgumentOutOfRangeException>(() => folder.AddFile("Test", (StorageType)256));
+            #pragma warning restore CS8625
+        }
+    }
+    
+    // This tests if the file Name and Modified can be modified
+    [Fact]
+    public void SgaFile_UpdateFileData()
+    {
+        Stream archiveStream = new MemoryStream();
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = [
+                        new TestFile{
+                            Name = "testFile",
+                            StorageType = StorageType.Uncompress,
+                            Modified = DateTimeOffset.Now,
+                            FileContent = ""
+                        }
+                    ]
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = [
+                        new TestFile{
+                            Name = "Updated",
+                            StorageType = StorageType.Uncompress,
+                            Modified = timeProvider.GetLocalNow(),
+                            FileContent = ""
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
+        {
+            SgaDrive drive = archive.GetDrive("Drive-Name")!;
+            SgaFolder folder = drive.RootFolder;
+            SgaFile file = (SgaFile)folder.Contents[0];
+
+            Assert.Equal("testFile", file.Name);
+            Assert.Equal("Drive-Name\\testFile", file.Path);
+
+            file.Modified = timeProvider.GetLocalNow();
+            file.Name = "Updated";
+
+            Assert.Equal("Updated", file.Name);
+            Assert.Equal("Drive-Name\\Updated", file.Path);
+            Assert.Equal(timeProvider.GetLocalNow(), file.Modified);
+        }
+    }
+
+    // This tests if the file contents changes when i open and change the content stream.
+    [Fact]
+    public void SgaFile_UpdateFileContents()
+    {
+        Stream archiveStream = new MemoryStream();
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = [
+                        new TestFile{
+                            Name = "testFile",
+                            StorageType = StorageType.Uncompress,
+                            Modified = DateTimeOffset.Now,
+                            FileContent = ""
+                        }
+                    ]
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = [
+                        new TestFile{
+                            Name = "testFile",
+                            StorageType = StorageType.Uncompress,
+                            Modified = timeProvider.GetLocalNow(),
+                            FileContent = "This is a file contents"
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        using var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider);
+        SgaDrive drive = archive.GetDrive("Drive-Name")!;
+        SgaFolder folder = drive.RootFolder;
+        SgaFile file = (SgaFile)folder.Contents[0];
+        
+        byte[] content = Encoding.UTF8.GetBytes("This is a file contents");
+        uint crc =  Crc32.HashToUInt32(content);
+
+
+        using ( var fileContents = file.Open())
+        {
+            fileContents.Write(content);
+        }
+
+        Assert.Equal(23u, file.Size);
+        Assert.Equal(23u, file.CompressedSize);
+        Assert.Equal(crc, file.Crc);
+        Assert.Equal(timeProvider.GetLocalNow(), file.Modified);
+    }
+
+    #endregion
     // OLD WILL BE REMOVED
     /*#region Add Tests
 
@@ -960,95 +1338,6 @@ public class SgaArchiveTest
     #endregion
 
     #region Delete Tests
-
-    [Fact]
-    public void DeleteFolder_InCreateMode_RemovesFolderSuccessfully()
-    {
-        var stream = new MemoryStream();
-        var parser = new MockParser([], [
-            new TestDrive{
-                Name = "Name",
-                Alias = "Alias",
-                RootFolder = new TestFolder{
-                    Name = "Name",
-                    Folders = [ new TestFolder{
-                        Name = "Folder2",
-                        Folders = [],
-                        Files = []
-                    }],
-                    Files = []
-                }
-            }
-        ]);
-
-        using (var archive = new SgaArchive(stream, SgaMode.Create, SgaVersion.V2, parser))
-        {
-            SgaDrive drive = archive.AddDrive("Alias", "Name");
-            SgaFolder folder1 = drive.RootFolder.AddFolder("Folder1");
-            SgaFolder folder2 = drive.RootFolder.AddFolder("Folder2");
-
-            Assert.Equal(2, drive.RootFolder.Contents.Count);
-
-            folder1.Delete();
-
-            Assert.Single(drive.RootFolder.Contents);
-            Assert.Same(folder2, drive.RootFolder.Contents[0]);
-            Assert.Null(folder1.Parent);
-            Assert.Null(folder1.Drive);
-        }
-    }
-
-    [Fact]
-    public void DeleteFolder_InReadMode_ThrowsNotSupportedException()
-    {
-        var drive = new TestDrive
-        {
-            Name = "Drive1",
-            Alias = "Drive1",
-            RootFolder = new TestFolder { Name = "Drive1", Folders = [new TestFolder { Name = "SubFolder", Folders = [], Files = [] }], Files = [] }
-        };
-        var parser = new MockParser([drive], [drive]);
-        var stream = new MemoryStream();
-
-        using (var archive = new SgaArchive(stream, SgaMode.Read, SgaVersion.V2, parser))
-        {
-            var subFolder = (SgaFolder)archive.Drives[0].RootFolder.Contents[0];
-            Assert.Throws<NotSupportedException>(subFolder.Delete);
-        }
-    }
-
-    [Fact]
-    public void DeleteFolder_WithContents_DeletesAllContentsRecursively()
-    {
-        var stream = new MemoryStream();
-        var parser = new MockParser([], [
-            new TestDrive{
-                Name = "Name",
-                Alias = "Alias",
-                RootFolder = new TestFolder{
-                    Name = "Name",
-                    Files = [],
-                    Folders = []
-                }
-            }
-        ]);
-
-        using (var archive = new SgaArchive(stream, SgaMode.Create, SgaVersion.V2, parser))
-        {
-            SgaDrive drive = archive.AddDrive("Alias", "Name");
-            SgaFolder folder1 = drive.RootFolder.AddFolder("Folder1");
-            SgaFolder folder2 = folder1.AddFolder("Folder2");
-            SgaFile file = folder2.AddFile("File.txt", StorageType.Uncompress);
-
-            folder1.Delete();
-
-            Assert.Empty(drive.RootFolder.Contents);
-            Assert.Null(folder1.Parent);
-            Assert.Null(folder1.Drive);
-            Assert.Null(folder2.Drive);
-            Assert.Null(file.Drive);
-        }
-    }
 
     [Fact]
     public void DeleteFile_InCreateMode_RemovesFileSuccessfully()

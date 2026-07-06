@@ -62,6 +62,9 @@ public class SgaFolder: SgaEntry
     public SgaFile AddFile(string name, StorageType type)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
+        ArgumentNullException.ThrowIfNull(name);
+        if (!Enum.IsDefined(type))
+            throw new ArgumentOutOfRangeException("Invalid file storage type value.");
 
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new NotSupportedException("Writing is not supported in this mode.");
@@ -82,13 +85,21 @@ public class SgaFolder: SgaEntry
         {
             item.Delete(true);
         }
+
+        // Do not delete the root folder. SGA expects the root folder to exists.
+        // So i only delete contents and set the name to the default one.
+        if(Drive.RootFolder == this)
+        {
+            Name = Drive.Name;
+            _contents.Clear();
+            return;
+        }
         
         if(!subDelete)
             Parent?._contents.Remove(this);
-
-        Parent = null;
-        Drive = null;
         
+        Parent = null;
+        Drive = null;   
     }
 
     // ------------------------ Extending functions ------------------------
