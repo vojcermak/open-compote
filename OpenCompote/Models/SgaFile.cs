@@ -82,7 +82,7 @@ public class SgaFile: SgaEntry
         {
             ThrowIfDeleted();
             if(Drive!.Archive!.Mode == SgaMode.Read)
-                throw new InvalidOperationException("Writing is not supported.");
+                throw new NotSupportedException("Writing is not supported.");
             _modified = value;
         }
     }

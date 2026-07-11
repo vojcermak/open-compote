@@ -52,7 +52,7 @@ internal sealed class ReadSubStream : Stream
 
     public override void Flush()
     {
-        throw new NotImplementedException("This stream does not support writing.");
+        throw new NotSupportedException("This stream does not support writing.");
     }
 
     public override int Read(byte[] buffer, int offset, int count)
@@ -111,7 +111,7 @@ internal sealed class ReadSubStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        throw new NotImplementedException("This stream does not support writing.");
+        throw new NotSupportedException("This stream does not support writing.");
     }
 
     protected override void Dispose(bool disposing)
