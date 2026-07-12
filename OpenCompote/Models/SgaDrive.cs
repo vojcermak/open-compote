@@ -13,6 +13,8 @@ public class SgaDrive
     /// <summary>
     /// Gets or sets the alias of the drive.
     /// </summary>
+    /// <exception cref="InvalidOperationException">Setter throws this exception when the parent archive was opened in read-only mode.</exception>
+    /// <exception cref="ObjectDisposedException">The parent archive was already closed.</exception>
     public string Alias
     {
         get
@@ -24,7 +26,7 @@ public class SgaDrive
         {
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
-                throw new NotSupportedException("Writing is not supported.");
+                throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
             _alias = value;
         }
     }
@@ -32,6 +34,8 @@ public class SgaDrive
     /// <summary>
     /// Gets or sets the name of the drive.
     /// </summary>
+    /// <exception cref="InvalidOperationException">Setter throws this exception when the parent archive was opened in read-only mode.</exception>
+    /// <exception cref="ObjectDisposedException">The parent archive was already closed.</exception>
     public string Name
     {
         get
@@ -43,7 +47,7 @@ public class SgaDrive
         {
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
-                throw new NotSupportedException("Writing is not supported.");
+                throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
             _name = value;
         }
     }
@@ -51,6 +55,7 @@ public class SgaDrive
     /// <summary>
     /// Gets the SGA archive that the drive belongs to.
     /// </summary>
+    /// <remarks>This property is <see langword="null"/> when this drive is deleted.</remarks>
     public SgaArchive? Archive {get; private set;}
 
     /// <summary>
@@ -69,15 +74,19 @@ public class SgaDrive
     /// <summary>
     /// Deletes the drive and all its contents from the archive.
     /// </summary>
-    /// <exception cref="NotSupportedException">The SGA archive for this drive was open in readonly mode.</exception>
-    /// <exception cref="ObjectDisposedException">The SGA archive for this entry has been disposed.</exception>
+    /// <exception cref="InvalidOperationException">The parent <see cref="SgaArchive"/> was open in readonly mode.</exception>
+    /// <exception cref="ObjectDisposedException">The parent <see cref="SgaArchive"/> has already been closed.</exception>
+    /// <remarks> 
+    ///     <para>When <see cref="SgaDrive"/> is deleted it is removed from the <see cref="SgaArchive.Drives"/> list and the <see cref="SgaDrive.Archive"/> property is set to <see langword="null"/></para>
+    ///     <para>Deleting already deleted drive do not change the state of the drive or throw any exception.</para>
+    /// </remarks>
     public void Delete()
     {
         if(Archive == null)
             return;
 
         if(Archive.Mode == SgaMode.Read)
-            throw new NotSupportedException("Writing is not supported.");
+            throw new InvalidOperationException("Cannot delete from an archive opened in read-only mode.");
 
         Archive.ThrowIfDisposed();
 

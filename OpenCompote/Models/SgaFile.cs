@@ -82,7 +82,7 @@ public class SgaFile: SgaEntry
         {
             ThrowIfDeleted();
             if(Drive!.Archive!.Mode == SgaMode.Read)
-                throw new NotSupportedException("Writing is not supported.");
+                throw new InvalidOperationException("Writing is not supported.");
             _modified = value;
         }
     }
@@ -171,7 +171,7 @@ public class SgaFile: SgaEntry
         ThrowIfDeleted();
         
         if(Drive!.Archive!.Mode == SgaMode.Read)
-            throw new NotSupportedException("Deleting is not supported in this mode.");
+            throw new InvalidOperationException("Deleting is not supported in this mode.");
         
         if(!subDelete)
             Parent!._contents.Remove(this);

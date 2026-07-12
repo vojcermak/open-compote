@@ -48,7 +48,7 @@ public class SgaArchiveTest
             Assert.Equal(SgaVersion.V2, archive.Version);
             Assert.Equal("testArchive", archive.ArchiveName);
 
-            Assert.Throws<NotSupportedException>(() => archive.ArchiveName = "New Archive name.");
+            Assert.Throws<InvalidOperationException>(() => archive.ArchiveName = "New Archive name.");
         }
         
         Assert.Equal(0, archiveStream.Position);
@@ -230,10 +230,10 @@ public class SgaArchiveTest
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
 
-            Assert.Throws<NotSupportedException>(()=> archive.AddDrive("alias", "name"));
-            Assert.Throws<NotSupportedException>(()=> drive.Alias = "");
-            Assert.Throws<NotSupportedException>(()=> drive.Name = "");
-            Assert.Throws<NotSupportedException>(drive.Delete);
+            Assert.Throws<InvalidOperationException>(()=> archive.AddDrive("alias", "name"));
+            Assert.Throws<InvalidOperationException>(()=> drive.Alias = "");
+            Assert.Throws<InvalidOperationException>(()=> drive.Name = "");
+            Assert.Throws<InvalidOperationException>(drive.Delete);
         }
     }
 
@@ -603,9 +603,9 @@ public class SgaArchiveTest
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
             SgaFolder folder = drive.RootFolder;
 
-            Assert.Throws<NotSupportedException>(() => folder.AddFolder("New Folder"));
-            Assert.Throws<NotSupportedException>(() => folder.Name = "changed");
-            Assert.Throws<NotSupportedException>(folder.Delete);
+            Assert.Throws<InvalidOperationException>(() => folder.AddFolder("New Folder"));
+            Assert.Throws<InvalidOperationException>(() => folder.Name = "changed");
+            Assert.Throws<InvalidOperationException>(folder.Delete);
         }
     }
 
@@ -1149,7 +1149,7 @@ public class SgaArchiveTest
                     Files = [
                         new TestFile{
                             Name = "testFile",
-                            StorageType = StorageType.BufferCompress,
+                            StorageType = StorageType.Uncompress,
                             Modified = timeProvider.GetLocalNow(),
                             FileContent = "This is a file contents"
                         },
@@ -1166,7 +1166,7 @@ public class SgaArchiveTest
                     Files = [
                         new TestFile{
                             Name = "testFile",
-                            StorageType = StorageType.BufferCompress,
+                            StorageType = StorageType.Uncompress,
                             Modified = timeProvider.GetLocalNow(),
                             FileContent = "This is a file contents"
                         },
@@ -1180,14 +1180,14 @@ public class SgaArchiveTest
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
             SgaFile file = (SgaFile)drive.RootFolder.Contents[0];
 
-            Assert.Throws<NotSupportedException>(() => drive.RootFolder.AddFile("New File", StorageType.Uncompress));
-            Assert.Throws<NotSupportedException>(() => file.Name = "changed");
-            Assert.Throws<NotSupportedException>(() => file.Modified = DateTimeOffset.Now);
+            Assert.Throws<InvalidOperationException>(() => drive.RootFolder.AddFile("New File", StorageType.Uncompress));
+            Assert.Throws<InvalidOperationException>(() => file.Name = "changed");
+            Assert.Throws<InvalidOperationException>(() => file.Modified = DateTimeOffset.Now);
             Assert.Throws<InvalidOperationException>(() => file.StorageType = StorageType.Uncompress);
-            Assert.Throws<NotSupportedException>(file.Delete);
+            Assert.Throws<InvalidOperationException>(file.Delete);
 
             using Stream fileContents = file.Open();
-            Assert.Throws<InvalidOperationException>(() => fileContents.Write(" HI!"u8));
+            Assert.Throws<NotSupportedException>(() => fileContents.Write(" HI!"u8));
         }
     }
 

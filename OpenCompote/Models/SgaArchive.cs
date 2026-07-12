@@ -32,6 +32,8 @@ public class SgaArchive: IDisposable
     /// <summary>
     /// Gets or sets the name of the SGA archive.
     /// </summary>
+    /// <exception cref="InvalidOperationException">Setter throws this exception when the archive was opened in read-only mode.</exception>
+    /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public string ArchiveName
     {
         get
@@ -43,7 +45,7 @@ public class SgaArchive: IDisposable
         {
             ThrowIfDisposed();
             if(Mode == SgaMode.Read)
-                throw new NotSupportedException("Writing is not supported.");
+                throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
             _archiveName = value;
         }
     }
@@ -51,6 +53,7 @@ public class SgaArchive: IDisposable
     /// <summary>
     /// Gets the list of SGA Drives currently in the archive.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public ReadOnlyCollection<SgaDrive> Drives
     {
         get {
@@ -104,8 +107,8 @@ public class SgaArchive: IDisposable
     /// <param name="alias">Alias of the new drive.</param>
     /// <param name="name">Name of the new drive.</param>
     /// <returns>New SgaDrive object</returns>
-    /// <exception cref="NotSupportedException">Archive does not support writing.</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="alias"/> or <paramref name="name"/> are null.</exception>
+    /// <exception cref="InvalidOperationException">Archive was open in read-only mode.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="alias"/> or <paramref name="name"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public SgaDrive AddDrive(string alias, string name)
     {
@@ -114,7 +117,7 @@ public class SgaArchive: IDisposable
         ArgumentNullException.ThrowIfNull(name);
 
         if(Mode == SgaMode.Read)
-            throw new NotSupportedException("Writing is not supported.");
+            throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
 
         SgaDrive newDrive = new(alias, name, this);
         _drives.Add(newDrive);
@@ -122,11 +125,11 @@ public class SgaArchive: IDisposable
     }
     
     /// <summary>
-    /// Returns <see cref="SgaDrive"/> with name or alias matching the parameter. If no matching drive is found returns null.
+    /// Returns first <see cref="SgaDrive"/> with name or alias matching the parameter. If no matching drive is found returns <see langword="null"/>.
     /// </summary>
     /// <param name="driveName"><see cref="SgaDrive.Name"/> or <see cref="SgaDrive.Alias"/> of the Drive.</param>
-    /// <returns><see cref="SgaDrive"/> or null if no matching drive was found.</returns>
-    /// <exception cref="ArgumentNullException">driveName is null.</exception>
+    /// <returns><see cref="SgaDrive"/> or <see langword="null"/> if no matching drive was found.</returns>
+    /// <exception cref="ArgumentNullException">The <paramref name="driveName"/> is <see langword="null"/>.</exception>
     /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public SgaDrive? GetDrive(string driveName)
     {
