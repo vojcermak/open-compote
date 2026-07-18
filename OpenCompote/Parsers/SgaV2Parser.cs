@@ -1,6 +1,4 @@
-using System.ComponentModel.Design;
-using System.IO.Compression;
-using System.Runtime.InteropServices;
+using System.Buffers.Binary;
 using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
@@ -14,6 +12,7 @@ internal class SgaV2Parser : ISgaParser
 
     private const int FILE_HEADER_SIZE = 180;
     private const int TOC_HEADER_SIZE = 24;
+    private const int FILE_METADATA_SIZE = 264;
 
     // Static length name lengths
     private const int ARCHIVE_NAME_LENGTH = 64;
@@ -22,6 +21,17 @@ internal class SgaV2Parser : ISgaParser
     // MD5 default hashes
     private const string TOC_HASH_INIT = "DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF";
     private const string FILE_HASH_INIT = "E01519D6-2DB7-4640-AF54-0A23319C56C3";
+
+    /// <summary>
+    /// Specifies whether SGA file metadata are present in the archive.
+    /// </summary>
+    /// <remarks>
+    /// This value is determined during parsing and is consistent for the entire archive. During writing is behaves like this:
+    /// - <see cref="MetadataState.Present"/> - metadata blocks are written for all files
+    /// - <see cref="MetadataState.Missing"/> - no metadata blocks are written
+    /// - <c>null</c> → treated as <see cref="MetadataState.Present"/>
+    /// </remarks>
+    private MetadataState? _metadataState = null;
 
     public void Parse(SgaArchive archive, Stream sgaStream)
     {
@@ -194,12 +204,16 @@ internal class SgaV2Parser : ISgaParser
                     // If compressed size + Data offset is bigger then the file size throw exception because there is something wrong.
                     if(fileRecord.RawDataOffset + fileRecord.CompressedSize > sgaStream.Length)
                         throw new InvalidDataException("File data offset or size is invalid.");
+                    
+                    V2FileMetadata metadata = ReadFileMetadata(fileRecord, fileName, sgaStream);
 
                     SgaFile currentFile = new SgaFile(fileName,
                                                       fileRecord.StorageType,
                                                       fileRecord.RawDataOffset,
                                                       fileRecord.CompressedSize,
                                                       fileRecord.Size,
+                                                      metadata.LastModified,
+                                                      metadata.CRC,
                                                       newDrive,
                                                       currentFolder);
                     currentFolder._contents.Add(currentFile);
@@ -307,7 +321,11 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt16(toc, f.LastFile);
         }
 
-        uint dataOffset = 264; // Add temporary Data offset buffer for the optional file info. This will be replaced later.
+        uint dataOffset = 0; // Set data offset counter to 0;
+        // If resulting archive will contain file metadata add the offset for the first file metadata
+        if(_metadataState != MetadataState.Missing)
+            dataOffset = FILE_METADATA_SIZE;
+        
         // Write Files
         foreach (var f in fileList)
         {
@@ -320,7 +338,11 @@ internal class SgaV2Parser : ISgaParser
             ParserUtils.WriteUInt32(toc, f.CompressedSize);
             ParserUtils.WriteUInt32(toc, f.Size);
 
-            dataOffset += f.CompressedSize + 264;
+            // If new archive file will contain metadata add their size as well, else only add the file size.
+            if(_metadataState != MetadataState.Missing)
+                dataOffset += f.CompressedSize + FILE_METADATA_SIZE;
+            else
+                dataOffset += f.CompressedSize;
         }
 
         // write TOC
@@ -351,12 +373,21 @@ internal class SgaV2Parser : ISgaParser
         
         toc.CopyTo(tempStream); // copy the TOC to the new archive
 
-        byte[] emptyMetaData = new byte[264];
+        Span<byte> fileMetaData = stackalloc byte[FILE_METADATA_SIZE];
 
         // Write the actual content of the files.
         foreach(var file in fileList)
         {
-            tempStream.Write(emptyMetaData);
+            // Do not write file metadata if they were not present in the original file.
+            if(_metadataState != MetadataState.Missing)
+            {   
+                System.Text.Encoding.UTF8.GetBytes(file.Name, fileMetaData[..256]);
+                BinaryPrimitives.WriteUInt32LittleEndian(fileMetaData[256..260], ParserUtils.ConvertToSgaTimestamp(file.Modified));
+                BinaryPrimitives.WriteUInt32LittleEndian(fileMetaData[260..264], file.Crc ?? 0 );
+
+                tempStream.Write(fileMetaData);
+            }
+
             using var contents = file.GetResultStream();
             contents.CopyTo(tempStream);
         }
@@ -408,5 +439,47 @@ internal class SgaV2Parser : ISgaParser
             StorageType.StreamCompress => 32,
             _ => throw new Exception("Invalid storage flag value."),
         };
+    }
+
+    /// <summary>
+    /// Retrieves file metadata for the specified file.
+    /// </summary>
+    private V2FileMetadata ReadFileMetadata(FileRecord file, string headerName, Stream sgaStream)
+    {   
+        // If whe know that archive does not contain any metadata return empty directly.
+        if(_metadataState == MetadataState.Missing)
+            return new V2FileMetadata();
+
+        long currentPosition = sgaStream.Position;
+        sgaStream.Position = file.RawDataOffset - FILE_METADATA_SIZE;
+
+        // Read file metadata into stack buffer.
+        Span<byte> buffer = stackalloc byte[FILE_METADATA_SIZE];
+        sgaStream.ReadExactly(buffer);
+
+        // Parser the file metadata into usable data.
+        string metaFileName = System.Text.Encoding.UTF8.GetString(buffer[..256]).TrimEnd('\0');
+        uint modified = BinaryPrimitives.ReadUInt32LittleEndian(buffer[256..260]);
+        uint crc = BinaryPrimitives.ReadUInt32LittleEndian(buffer[260..264]);
+
+        DateTimeOffset modifiedDate = DateTimeOffset.FromUnixTimeSeconds(modified);
+
+        sgaStream.Position = currentPosition;
+
+        // If _metadataState is not known test if the metadata are valid. if yes return metadata if not return empty.
+        if(_metadataState == null && metaFileName != headerName)
+        {
+            _metadataState = MetadataState.Missing;
+            return new V2FileMetadata();   
+        }
+
+        _metadataState = MetadataState.Present;
+        return new V2FileMetadata(metaFileName, modifiedDate, crc);
+    }
+
+    enum MetadataState
+    {
+        Present,
+        Missing
     }
 }

@@ -1,6 +1,5 @@
 using System.IO.Compression;
-using System.Reflection.PortableExecutable;
-using System.Runtime.CompilerServices;
+using System.IO.Hashing;
 using OpenCompote.SGA.CustomStreams;
 
 namespace OpenCompote.SGA;
@@ -15,6 +14,8 @@ public class SgaFile: SgaEntry
     private Stream? _fileContents;
     private bool _isOpen;
     private StorageType _storageType;
+    private DateTimeOffset? _modified;
+    private uint? _crc;
 
     /// <summary>
     /// Gets or sets the file's storage type.
@@ -63,6 +64,42 @@ public class SgaFile: SgaEntry
     /// Gets the uncompressed size in bytes, of the file in the archive.
     /// </summary>
     public uint Size {get; private set;}
+     
+    /// <summary>
+    /// Gets or sets the last write time of the file in the archive. When setting this property, the DateTime will be converted to the 32-bit unix timestamp format.
+    /// This property could be <see langword="null"/> when opening SGA V2 archive without file metadata present. 
+    /// Modified is automatically set to the current date and time when new file is created or changed file content stream is closed.  
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
+    /// <exception cref="InvalidOperationException">The archive is opened in read-only mode.</exception>
+    public DateTimeOffset? Modified {
+        get
+        {
+            ThrowIfDeleted();
+            return _modified;
+        }
+        set
+        {
+            ThrowIfDeleted();
+            if(Drive!.Archive!.Mode == SgaMode.Read)
+                throw new InvalidOperationException("Writing is not supported.");
+            _modified = value;
+        }
+    }
+
+    /// <summary>
+    /// Get the CRC(Cyclic redundant check) of the opened file. Only loaded when present in the archive. If the crc in newly open archive this property will be <see langword="null"/>.
+    /// CRC is automatically calculated for sga versions which are using CRCs. CRCs are not automatically check when file is opened, but you can check the your self by opening the file.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
+    public uint? Crc
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _crc;
+        }
+    }
 
     internal SgaFile(string name, StorageType type, SgaDrive drive, SgaFolder parent)
     {   
@@ -70,9 +107,21 @@ public class SgaFile: SgaEntry
         _name = name;
         _storageType = type;
         Parent = parent;
+        _modified = drive!.Archive!._timeProvider.GetLocalNow();
+        _crc = 0;
     }
 
-    internal SgaFile(string name, StorageType type, uint dataOffset, uint compressedSize, uint size, SgaDrive drive, SgaFolder parent)
+    internal SgaFile(
+        string name, 
+        StorageType type,
+        uint dataOffset,
+        uint compressedSize,
+        uint size,
+        DateTimeOffset? modified,
+        uint? crc,
+        SgaDrive drive,
+        SgaFolder parent
+    )
     {
         _dataOffset = dataOffset;
         _name = name;
@@ -81,6 +130,8 @@ public class SgaFile: SgaEntry
         Size = size;
         Drive = drive;
         Parent = parent;
+        _modified = modified;
+        _crc = crc;
         _isInStream = true;
     }
 
@@ -120,7 +171,7 @@ public class SgaFile: SgaEntry
         ThrowIfDeleted();
         
         if(Drive!.Archive!.Mode == SgaMode.Read)
-            throw new NotSupportedException("Deleting is not supported in this mode.");
+            throw new InvalidOperationException("Deleting is not supported in this mode.");
         
         if(!subDelete)
             Parent!._contents.Remove(this);
@@ -176,6 +227,19 @@ public class SgaFile: SgaEntry
         return decompressedStream;
     }
 
+    private uint CalculateCrc()
+    {
+        if(_fileContents == null)
+            ArgumentNullException.ThrowIfNull(_fileContents);
+
+        _fileContents.Position = 0;
+
+        var crc = new Crc32();
+        crc.Append(_fileContents);
+        
+        return crc.GetCurrentHashAsUInt32();
+    }
+
     private Stream OpenReadOnly()
     {
         ReadSubStream compressed = new ReadSubStream(Drive!.Archive!._archiveStream, _dataOffset, CompressedSize);
@@ -202,12 +266,14 @@ public class SgaFile: SgaEntry
         return new WrapperStream(_fileContents, () =>
         {
             Size = (uint)_fileContents.Length;
+            _crc = CalculateCrc();
 
             if(StorageType != StorageType.Uncompress)
                 _fileContents = CompressFileContents();
 
             CompressedSize = (uint)_fileContents.Length;
             _isOpen = false;
+            _modified = Drive!.Archive!._timeProvider.GetLocalNow();
         });
     }
 

@@ -126,4 +126,18 @@ internal static class ParserUtils
 
         return hash.GetHashAndReset();
     }
+
+    public static uint ConvertToSgaTimestamp(DateTimeOffset? value)
+    {
+        if (value is null)
+            return 0;
+
+        long seconds = value.Value.ToUnixTimeSeconds();
+
+        if (seconds < 0 || seconds > uint.MaxValue)
+            throw new InvalidDataException(
+                $"Modification time '{value}' cannot be represented in SGA (UInt32 Unix timestamp).");
+
+        return (uint)seconds;
+    }
 }

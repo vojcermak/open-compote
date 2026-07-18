@@ -25,7 +25,7 @@ public abstract class SgaEntry
         {
             ThrowIfDeleted();
             if(Drive!.Archive!.Mode == SgaMode.Read)
-                throw new NotSupportedException("Writing is not supported.");
+                throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
             _name = value;
         }
     }
@@ -69,8 +69,8 @@ public abstract class SgaEntry
     /// <summary>
     /// Deletes the entry and all its sub entries from the archive.
     /// </summary>
-    /// <exception cref="NotSupportedException">The SGA archive for this entry was open in readonly mode.</exception>
-    /// <exception cref="ObjectDisposedException">The SGA archive for this entry has been disposed.</exception>
+    /// <exception cref="InvalidOperationException">The parent <see cref="SgaArchive"/> for this entry was opened in readonly mode.</exception>
+    /// <exception cref="ObjectDisposedException">The parent <see cref="SgaArchive"/> for this entry was already closed.</exception>
     public void Delete()
     {
         Delete(false);
