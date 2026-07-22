@@ -283,8 +283,15 @@ public class SgaFile: SgaEntry
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    internal void ExtractToFile(string destination, bool overwrite = false)
+    public void ExtractToFile(string destination, bool overwrite = false)
     {
-        throw new NotImplementedException();
+        Stream fileContents = Open();
+
+        Directory.CreateDirectory(destination);
+        string filePath = System.IO.Path.Combine(destination, Name);
+
+        FileStream fs = File.Open(filePath, overwrite ? FileMode.Create : FileMode.CreateNew , FileAccess.ReadWrite, FileShare.Read);
+
+        fileContents.CopyTo(fs);
     }
 }
