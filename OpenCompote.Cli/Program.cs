@@ -13,11 +13,15 @@ using OpenCompote.SGA;
 
 if (args.Length == 0)
 {
-    Console.WriteLine("Usage: dotnet run -- <path-to-sga-file>");
+    Console.WriteLine("Usage: dotnet run -- <path-to-sga-file> [extract-folder]");
     return;
 }
 
 string sgaPath = args[0];
+
+string? outDest = null;
+if(args.Length >= 2)
+    outDest = args[1];
 
 
 Console.WriteLine("Reading {0}", sgaPath);
@@ -42,7 +46,9 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
             if (entry is SgaFile file)
             {
                 Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name} - Size: {file.Size} - Modified: {file.Modified} - CRC: {file.Crc:X8}");
-                //file.Open();
+                // if dump folder is specified export all files to there.
+                if(outDest != null)
+                    file.ExtractToFile(outDest, true);
             }
             else if (entry is SgaFolder folder)
             {

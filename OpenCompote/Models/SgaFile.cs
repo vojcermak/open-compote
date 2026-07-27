@@ -277,14 +277,29 @@ public class SgaFile: SgaEntry
         });
     }
 
-    // ------------------------ Extending functions ------------------------
-    // List of future ideas.  
+// ----------------------- Extending functions -----------------------
+
     /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
+    /// Extracts this sgaFile in the archive to a file.
     /// </summary>
-    /// <exclude />
-    internal void ExtractToFile(string destination, bool overwrite = false)
+    /// <param name="destination">The path of the folder to which will this file be exported.</param>
+    /// <param name="overwrite">if true, it overwrites an existing file; otherwise, it throws an exception when the file already exists.</param>
+    /// <exception cref="ArgumentException">Destination is <see langword="null"/> or whitespace.</exception>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this file has been disposed, or this file is deleted.</exception>
+    /// <exception cref="IOException">The entry is currently open for writing.</exception>
+    /// <exception cref="InvalidOperationException">Archive <see cref="SgaMode"/> value is invalid.</exception>
+    public void ExtractToFile(string destination, bool overwrite = false)
     {
-        throw new NotImplementedException();
+        ArgumentException.ThrowIfNullOrWhiteSpace(destination);
+
+        Directory.CreateDirectory(destination);
+        string filePath = System.IO.Path.Combine(destination, Name);
+
+        using Stream fileContents = Open();
+        using FileStream fs = File.Open(filePath,
+                                        overwrite ? FileMode.Create : FileMode.CreateNew,
+                                        FileAccess.Write);
+
+        fileContents.CopyTo(fs);
     }
 }

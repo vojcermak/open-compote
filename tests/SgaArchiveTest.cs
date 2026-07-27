@@ -1251,5 +1251,55 @@ public class SgaArchiveTest
         Assert.Throws<ObjectDisposedException>(file.Open);
         Assert.Throws<ObjectDisposedException>(file.Delete);
     }
+    
+    [Fact]
+    public void SgaFile_ExtractToFile_ThrowSExceptionWhenInputInvalid()
+    {
+        Stream archiveStream = new MemoryStream();
+        TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
+        ISgaParser parser = new MockParser("testArchive", [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = [
+                        new TestFile{
+                            Name = "testFile",
+                            StorageType = StorageType.Uncompress,
+                            Modified = timeProvider.GetLocalNow(),
+                            FileContent = "This is a file contents"
+                        },
+                    ]
+                }
+            }
+        ], [
+            new TestDrive{
+                Alias = "Drive-Alias",
+                Name = "Drive-Name",
+                RootFolder = new TestFolder{
+                    Name = "Drive-Name",
+                    Folders = [],
+                    Files = [
+                        new TestFile{
+                            Name = "testFile",
+                            StorageType = StorageType.Uncompress,
+                            Modified = timeProvider.GetLocalNow(),
+                            FileContent = "This is a file contents"
+                        },
+                    ]
+                }
+            }
+        ]);
+
+        using( var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider))
+        {
+            SgaDrive drive = archive.GetDrive("Drive-Name")!;
+            SgaFile file = (SgaFile)drive.RootFolder.Contents[0];
+
+            Assert.Throws<ArgumentException>(() => file.ExtractToFile("  "));
+        }
+    }
     #endregion
 }
