@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Security.Cryptography;
 using OpenCompote.SGA.Parsers.Structs;
 
 namespace OpenCompote.SGA.Parsers;
@@ -224,7 +225,6 @@ internal class SgaV2Parser : ISgaParser
 
     public void Write(SgaArchive archive, Stream sgaStream)
     {
-        //LogArchive(archive); //Used for debugging
         using var tempStream = new MemoryStream();
 
         List<DriveRecord> driveList = new List<DriveRecord>();
@@ -277,35 +277,40 @@ internal class SgaV2Parser : ISgaParser
             }
             driveList.Add(new DriveRecord(drive.Name, drive.Alias, firstFolder, (ushort)folderList.Count, firstFile ,(ushort)fileList.Count, 0));
         }
-
         
-        using var toc = new MemoryStream();
         using var nameBuffer = new MemoryStream();
         
         uint folderOffset = (uint)(TOC_HEADER_SIZE + driveList.Count * DRIVE_SIZE);
         uint fileOffset = folderOffset + (uint)folderList.Count * FOLDER_SIZE;
         uint nameOffset = fileOffset + (uint)fileList.Count * FILE_SIZE;
 
+        // Create TOC buffer
+        Span<byte> toc = stackalloc byte[(int)nameOffset];
+
         // Write TOC Header
-        ParserUtils.WriteUInt32(toc, TOC_HEADER_SIZE);                  // Drive offset
-        ParserUtils.WriteUInt16(toc, (ushort)driveList.Count);          // Drive count
-        ParserUtils.WriteUInt32(toc, folderOffset);                     // Folder offset
-        ParserUtils.WriteUInt16(toc, (ushort)folderList.Count);         // Folder count
-        ParserUtils.WriteUInt32(toc, fileOffset);                       // File offset
-        ParserUtils.WriteUInt16(toc, (ushort)fileList.Count);           // File count
-        ParserUtils.WriteUInt32(toc, nameOffset);                       // Name offset
-        ParserUtils.WriteUInt16(toc, (ushort)(folderList.Count + fileList.Count)); // Name count
+        BinaryPrimitives.WriteUInt32LittleEndian(toc[..4],    TOC_HEADER_SIZE);           // Drive offset
+        BinaryPrimitives.WriteUInt16LittleEndian(toc[4..6],   (ushort)driveList.Count);   // Drive count
+        BinaryPrimitives.WriteUInt32LittleEndian(toc[6..10],  folderOffset);              // Folder offset
+        BinaryPrimitives.WriteUInt16LittleEndian(toc[10..12], (ushort)folderList.Count);  // Folder count
+        BinaryPrimitives.WriteUInt32LittleEndian(toc[12..16], fileOffset);                // File offset
+        BinaryPrimitives.WriteUInt16LittleEndian(toc[16..18], (ushort)fileList.Count);    // File count
+        BinaryPrimitives.WriteUInt32LittleEndian(toc[18..22], nameOffset);                // Name offset
+        BinaryPrimitives.WriteUInt16LittleEndian(toc[22..24], (ushort)(folderList.Count + fileList.Count)); // Name count
+
+        int tocOffset = TOC_HEADER_SIZE;
 
         // Write drives
         foreach (var drive in driveList)
         {
-            ParserUtils.WriteStaticString(toc, drive.DriveName, DRIVE_NAME_LENGTH);
-            ParserUtils.WriteStaticString(toc, drive.DriveAlias, DRIVE_NAME_LENGTH);
-            ParserUtils.WriteUInt16(toc, drive.FirstFolder);
-            ParserUtils.WriteUInt16(toc, drive.LastFolder);
-            ParserUtils.WriteUInt16(toc, drive.FirstFile);
-            ParserUtils.WriteUInt16(toc, drive.LastFile);
-            ParserUtils.WriteUInt16(toc, drive.FirstFolder);
+            System.Text.Encoding.UTF8.GetBytes(drive.DriveName, toc[tocOffset..(tocOffset + 64)]);
+            System.Text.Encoding.UTF8.GetBytes(drive.DriveAlias, toc[(tocOffset + 64)..(tocOffset + 128)]);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 128)..(tocOffset + 130)], drive.FirstFolder);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 130)..(tocOffset + 132)], drive.LastFolder);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 132)..(tocOffset + 134)], drive.FirstFile);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 134)..(tocOffset + 136)], drive.LastFile);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 136)..(tocOffset + 138)], drive.FirstFolder);
+
+            tocOffset += DRIVE_SIZE;
         }
 
         // Write folders
@@ -314,11 +319,13 @@ internal class SgaV2Parser : ISgaParser
             uint folderNameOffset = (uint)nameBuffer.Position;
             ParserUtils.WriteDynamicString(nameBuffer, f.Folder.Path);
 
-            ParserUtils.WriteUInt32(toc, folderNameOffset);
-            ParserUtils.WriteUInt16(toc, f.FirstFolder);
-            ParserUtils.WriteUInt16(toc, f.LastFolder);
-            ParserUtils.WriteUInt16(toc, f.FirstFile);
-            ParserUtils.WriteUInt16(toc, f.LastFile);
+            BinaryPrimitives.WriteUInt32LittleEndian(toc[tocOffset..(tocOffset + 4)],   folderNameOffset);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 4)..(tocOffset + 6)],f.FirstFolder);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 6)..(tocOffset + 8)], f.LastFolder);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 8)..(tocOffset + 10)], f.FirstFile);
+            BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 10)..(tocOffset + 12)], f.LastFile);
+
+            tocOffset += FOLDER_SIZE;
         }
 
         uint dataOffset = 0; // Set data offset counter to 0;
@@ -332,11 +339,13 @@ internal class SgaV2Parser : ISgaParser
             uint folderNameOffset = (uint)nameBuffer.Position;
             ParserUtils.WriteDynamicString(nameBuffer, f.Name);
 
-            ParserUtils.WriteUInt32(toc, folderNameOffset);
-            ParserUtils.WriteUInt32(toc, WriteStorageType(f.StorageType));
-            ParserUtils.WriteUInt32(toc, dataOffset);
-            ParserUtils.WriteUInt32(toc, f.CompressedSize);
-            ParserUtils.WriteUInt32(toc, f.Size);
+            BinaryPrimitives.WriteUInt32LittleEndian(toc[tocOffset..(tocOffset + 4)], folderNameOffset);
+            BinaryPrimitives.WriteUInt32LittleEndian(toc[(tocOffset + 4)..(tocOffset + 8)], WriteStorageType(f.StorageType));
+            BinaryPrimitives.WriteUInt32LittleEndian(toc[(tocOffset + 8)..(tocOffset + 12)], dataOffset);
+            BinaryPrimitives.WriteUInt32LittleEndian(toc[(tocOffset + 12)..(tocOffset + 16)], f.CompressedSize);
+            BinaryPrimitives.WriteUInt32LittleEndian(toc[(tocOffset + 16)..(tocOffset + 20)], f.Size);
+
+            tocOffset += FILE_SIZE;
 
             // If new archive file will contain metadata add their size as well, else only add the file size.
             if(_metadataState != MetadataState.Missing)
@@ -345,33 +354,40 @@ internal class SgaV2Parser : ISgaParser
                 dataOffset += f.CompressedSize;
         }
 
-        // write TOC
+        uint tocSize = (uint)nameBuffer.Length + nameOffset;
+
+        // Calculate toc hash
         nameBuffer.Seek(0, SeekOrigin.Begin);
-        nameBuffer.CopyTo(toc);
-        toc.Seek(0, SeekOrigin.Begin);
+        
+        Span<byte> seed = stackalloc byte[256];
+        int seedLength = System.Text.Encoding.UTF8.GetBytes(TOC_HASH_INIT, seed);
 
-        byte[]? tocHash = ParserUtils.HashMD5(toc, toc.Length, TOC_HASH_INIT);
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
+        hash.AppendData("DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF"u8);
 
+        hash.AppendData(toc);
+        hash.AppendData(nameBuffer.ToArray());
 
-        // Start writing actual file it self.
-        ParserUtils.WriteStaticString(tempStream, "_ARCHIVE", 8); // Write magic world 
-        ParserUtils.WriteUInt32(tempStream, (uint)archive.Version); // Write archive version
-        
-        // Temporarily fill the template hash with zeroes.
-        byte[] emptyHash = new byte[16];
-        tempStream.Write(emptyHash); 
-        
-        // Write Archive name
-        ParserUtils.WriteWideStaticString(tempStream, archive.ArchiveName, ARCHIVE_NAME_LENGTH);
-        
-        //Write TOC hash
-        tempStream.Write(tocHash);
-        
-        // Write the rest of the file header
-        ParserUtils.WriteUInt32(tempStream, (uint)toc.Length); // TOC size
-        ParserUtils.WriteUInt32(tempStream, (uint)(toc.Length + FILE_HEADER_SIZE)); // Data offset
-        
-        toc.CopyTo(tempStream); // copy the TOC to the new archive
+        hash.GetHashAndReset();
+
+        // Create file header:
+        Span<byte> fileHeader = stackalloc byte[FILE_HEADER_SIZE];
+
+        "_ARCHIVE"u8.CopyTo(fileHeader);                                                    // Magic word
+        BinaryPrimitives.WriteUInt32LittleEndian(fileHeader[8..12], (uint)archive.Version); // SGA version
+
+        // File hash is skipped, because it does not exist yet.
+
+        System.Text.Encoding.Unicode.GetBytes(archive.ArchiveName, fileHeader[28..156]);    // Archive name
+        hash.GetHashAndReset(fileHeader[156..172]);                                         // TOC hash
+        BinaryPrimitives.WriteUInt32LittleEndian(fileHeader[172..176], tocSize);   // TOC size
+        BinaryPrimitives.WriteUInt32LittleEndian(fileHeader[176..180], (tocSize + FILE_HEADER_SIZE)); // Data Offset
+
+        // Write the file header to the fileStream:
+        tempStream.Write(fileHeader);
+
+        tempStream.Write(toc);
+        nameBuffer.CopyTo(tempStream);
 
         Span<byte> fileMetaData = stackalloc byte[FILE_METADATA_SIZE];
 
