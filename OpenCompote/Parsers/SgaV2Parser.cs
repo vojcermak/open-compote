@@ -225,8 +225,6 @@ internal class SgaV2Parser : ISgaParser
 
     public void Write(SgaArchive archive, Stream sgaStream)
     {
-        using var tempStream = new MemoryStream();
-
         List<DriveRecord> driveList = new List<DriveRecord>();
         List<FolderWriterRecord> folderList = new List<FolderWriterRecord>();
         List<SgaFile> fileList = new List<SgaFile>();
@@ -362,13 +360,11 @@ internal class SgaV2Parser : ISgaParser
         Span<byte> seed = stackalloc byte[256];
         int seedLength = System.Text.Encoding.UTF8.GetBytes(TOC_HASH_INIT, seed);
 
-        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
-        hash.AppendData("DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF"u8);
+        using var tocHash = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
+        tocHash.AppendData("DFC9AF62-FC1B-4180-BC27-11CCE87D3EFF"u8);
 
-        hash.AppendData(toc);
-        hash.AppendData(nameBuffer.ToArray());
-
-        hash.GetHashAndReset();
+        tocHash.AppendData(toc);
+        tocHash.AppendData(nameBuffer.ToArray());
 
         // Create file header:
         Span<byte> fileHeader = stackalloc byte[FILE_HEADER_SIZE];
@@ -379,17 +375,25 @@ internal class SgaV2Parser : ISgaParser
         // File hash is skipped, because it does not exist yet.
 
         System.Text.Encoding.Unicode.GetBytes(archive.ArchiveName, fileHeader[28..156]);    // Archive name
-        hash.GetHashAndReset(fileHeader[156..172]);                                         // TOC hash
-        BinaryPrimitives.WriteUInt32LittleEndian(fileHeader[172..176], tocSize);   // TOC size
-        BinaryPrimitives.WriteUInt32LittleEndian(fileHeader[176..180], (tocSize + FILE_HEADER_SIZE)); // Data Offset
+        tocHash.GetHashAndReset(fileHeader[156..172]);                                      // TOC hash
+        BinaryPrimitives.WriteUInt32LittleEndian(fileHeader[172..176], tocSize);            // TOC size
+        BinaryPrimitives.WriteUInt32LittleEndian(fileHeader[176..180], tocSize + FILE_HEADER_SIZE); // Data Offset
+
+        // Setup file hashing function
+        using var fileHash = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
+        fileHash.AppendData("E01519D6-2DB7-4640-AF54-0A23319C56C3"u8);
 
         // Write the file header to the fileStream:
-        tempStream.Write(fileHeader);
+        sgaStream.Write(fileHeader);
 
-        tempStream.Write(toc);
-        nameBuffer.CopyTo(tempStream);
+        // Write the TOC to both the hash function and the output stream
+        sgaStream.Write(toc);
+        fileHash.AppendData(toc);
+        nameBuffer.CopyTo(sgaStream);
+        fileHash.AppendData(nameBuffer.ToArray());
 
         Span<byte> fileMetaData = stackalloc byte[FILE_METADATA_SIZE];
+        byte[] buffer = GC.AllocateUninitializedArray<byte>(32 * 1024);
 
         // Write the actual content of the files.
         foreach(var file in fileList)
@@ -401,26 +405,16 @@ internal class SgaV2Parser : ISgaParser
                 BinaryPrimitives.WriteUInt32LittleEndian(fileMetaData[256..260], ParserUtils.ConvertToSgaTimestamp(file.Modified));
                 BinaryPrimitives.WriteUInt32LittleEndian(fileMetaData[260..264], file.Crc ?? 0 );
 
-                tempStream.Write(fileMetaData);
+                sgaStream.Write(fileMetaData);
+                fileHash.AppendData(fileMetaData);
             }
 
-            using var contents = file.GetResultStream();
-            contents.CopyTo(tempStream);
+            WriteFileContents(file, sgaStream, fileHash, buffer);
         }
-
-        // Calculate the File hash
-        tempStream.Position = FILE_HEADER_SIZE;
-        byte[]? fileHash = ParserUtils.HashMD5(tempStream, tempStream.Length-tempStream.Position, FILE_HASH_INIT);
         
         // Write the file hash
-        tempStream.Position = 12;
-        tempStream.Write(fileHash);
-
-        // Copy the new archive to the original position.
-        sgaStream.Position = 0;
-        tempStream.Position = 0;
-        tempStream.CopyTo(sgaStream);
-        sgaStream.SetLength(sgaStream.Position);
+        sgaStream.Position = 12;
+        sgaStream.Write(fileHash.GetHashAndReset());
     }
 
     private static StorageType ReadStorageType(Stream sgaStream, bool isIC)
@@ -491,6 +485,27 @@ internal class SgaV2Parser : ISgaParser
 
         _metadataState = MetadataState.Present;
         return new V2FileMetadata(metaFileName, modifiedDate, crc);
+    }
+
+    /// <summary>
+    /// Writes the file contents to the archiveStream and the fileHash
+    /// </summary>
+    private static void WriteFileContents(SgaFile file, Stream archiveStream, IncrementalHash fileHash, byte[] buffer)
+    {
+        using Stream fileContents = file.GetResultStream();
+
+        long remaining = fileContents.Length;
+
+        while (remaining > 0)
+        {
+            int readSize = (int)Math.Min(buffer.Length, remaining);
+            int bytesRead = fileContents.Read(buffer, 0, readSize);
+
+            fileHash.AppendData(buffer.AsSpan(0, bytesRead));
+            archiveStream.Write(buffer.AsSpan(0, bytesRead));
+            
+            remaining -= bytesRead;
+        }
     }
 
     enum MetadataState

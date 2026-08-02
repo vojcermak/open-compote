@@ -153,26 +153,34 @@ public class SgaArchive: IDisposable
     /// </summary>
     public void Dispose()
     {
-        if(!_isDisposed)
+        if (_isDisposed)
+            return;
+
+        try
         {
-            try
+            switch (Mode)
             {
-                switch (Mode)
-                {
-                    case SgaMode.Read:
-                        break;
-                    case SgaMode.Create:
-                    case SgaMode.Write:
-                        _parser.Write(this, _archiveStream);
-                        break;
-                }
+                case SgaMode.Read:
+                    break;
+                case SgaMode.Create:
+                    _parser.Write(this, _archiveStream); // When the stream is new i can write directly to the target stream
+                    break;
+                case SgaMode.Write:
+
+                    // When the archive is changed i need to write to a temp stream first and the move it to the target stream.
+                    // Preallocate the change stream to a reasonable default. in this case the size of the target stream.
+                    var writeStream = new MemoryStream((int)_archiveStream.Length);
+                    _parser.Write(this, writeStream);
+                    writeStream.Position = 0;
+                    writeStream.CopyTo(_archiveStream);
+                    break;
             }
-            finally
-            {
-                _isDisposed = true;
-                if (!_leaveOpen)
-                    _archiveStream.Dispose();
-            }
+        }
+        finally
+        {
+            _isDisposed = true;
+            if (!_leaveOpen)
+                _archiveStream.Dispose();
         }
     }
 
