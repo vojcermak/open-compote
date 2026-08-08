@@ -65,6 +65,18 @@ internal static class ParserUtils
         return System.Text.Encoding.ASCII.GetString(buffer.ToArray());
     }
 
+    public static string ReadDynamicString(Span<byte> stringBuffer)
+    {
+        if(stringBuffer.IsEmpty)
+            throw new InvalidDataException("String buffer is empty");
+
+        int stringSize = 0;
+        while (stringBuffer[stringSize] != 0)
+            stringSize ++;
+
+        return System.Text.Encoding.ASCII.GetString(stringBuffer[..stringSize]);
+    }
+
     public static void WriteDynamicString(Stream sgaFile, string inputString)
     {
         byte[] bytes = new byte[inputString.Length + 1];
@@ -109,6 +121,30 @@ internal static class ParserUtils
 
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
         hash.AppendData(seed[..seedLength]);
+
+        byte[] buffer = GC.AllocateUninitializedArray<byte>(32 * 1024);
+
+        long remaining = dataLength;
+
+        while (remaining > 0)
+        {
+            int readSize = (int)Math.Min(buffer.Length, remaining);
+            int bytesRead = fileStream.Read(buffer, 0, readSize);
+            hash.AppendData(buffer.AsSpan(0, bytesRead));
+            remaining -= bytesRead;
+        }
+
+        fileStream.Position = originalPosition;
+
+        return hash.GetHashAndReset();
+    }
+
+        public static byte[] HashMD5(Stream fileStream, long dataLength, ReadOnlySpan<byte> initialValue)
+    {
+        long originalPosition = fileStream.Position;
+
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
+        hash.AppendData(initialValue);
 
         byte[] buffer = GC.AllocateUninitializedArray<byte>(32 * 1024);
 
