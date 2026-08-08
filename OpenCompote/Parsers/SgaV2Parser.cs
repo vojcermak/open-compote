@@ -45,9 +45,6 @@ internal class SgaV2Parser : ISgaParser
         uint tocSize = BinaryPrimitives.ReadUInt32LittleEndian(fileHeader[172..176]);
         uint dataOffset = BinaryPrimitives.ReadUInt32LittleEndian(fileHeader[176..180]);
 
-        if(dataOffset != sgaStream.Position + tocSize)
-            throw new InvalidDataException("Data offset invalid.");
-
         byte[]? generatedFileHash = ParserUtils.HashMD5(sgaStream, sgaStream.Length-sgaStream.Position, "E01519D6-2DB7-4640-AF54-0A23319C56C3"u8);
         if(generatedFileHash == null || !fileHash.SequenceEqual(generatedFileHash))
             throw new InvalidDataException("File hash invalid.");
@@ -67,6 +64,9 @@ internal class SgaV2Parser : ISgaParser
         // Validate TOC hash
         if(byteCount != 16 || !tocHash.SequenceEqual(calculatedHash))
             throw new InvalidDataException("Toc hash invalid.");
+        
+        if(dataOffset != sgaStream.Position)
+            throw new InvalidDataException("Data offset invalid.");
 
         // Read TOC header
         uint driveOffset = BinaryPrimitives.ReadUInt32LittleEndian(toc[..4]);
@@ -191,8 +191,12 @@ internal class SgaV2Parser : ISgaParser
                 if(currentRecord.LastFile < currentRecord.FirstFile || currentRecord.LastFile > fileList.Count)
                     throw new InvalidDataException("Folder LastFile index is out of range.");
 
-                uint nameStart = currentRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
-                string folderName = ParserUtils.ReadDynamicString(toc[(int)(nameListOffset + currentRecord.NameOffset)..]);
+                int nameStart = (int)(currentRecord.NameOffset + nameListOffset);
+
+                if(nameStart >= toc.Length)
+                    throw new InvalidDataException("TOC name read after toc.");
+
+                string folderName = ParserUtils.ReadDynamicString(toc[nameStart..]);
 
                 SgaFolder currentFolder = new SgaFolder(folderName, newDrive, parent);
                 
@@ -213,8 +217,12 @@ internal class SgaV2Parser : ISgaParser
                 {
                     FileRecord fileRecord = fileList[i];
 
-                    uint fileNameOffset = fileRecord.NameOffset + FILE_HEADER_SIZE + nameListOffset;
-                    string fileName = ParserUtils.ReadDynamicString(toc[(int)(nameListOffset + fileRecord.NameOffset)..]);
+                    int fileNameOffset = (int)(nameListOffset + fileRecord.NameOffset);
+
+                    if(fileNameOffset >= toc.Length)
+                        throw new InvalidDataException("TOC name read after toc.");
+
+                    string fileName = ParserUtils.ReadDynamicString(toc[fileNameOffset..]);
 
                     // If compressed size + Data offset is bigger then the file size throw exception because there is something wrong.
                     if(fileRecord.RawDataOffset + fileRecord.CompressedSize > sgaStream.Length)
