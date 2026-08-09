@@ -13,9 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new `SgaFile` properties:
     - `Crc` - Gets the Crc-32 checksum of the file. (Only when supported by archive version.) 
     - `Modified`- Gets or sets the last write time of the file in the archive.
+- Added dependencies:
+    - System.IO.Hashing - Used for crc-32 calculation.
 
 ## Changed
-- Added missing validation and unified exceptions.
+- Added missing input validations and unified exceptions.
 - Added missing exception references in the api reference docs.
 - Reworked writer API and optimized SGA V2 Parser.
 - Reworked tests for core classes.
