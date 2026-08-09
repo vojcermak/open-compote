@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added dependencies:
     - System.IO.Hashing - Used for crc-32 calculation.
 
-## Changed
+### Changed
 - Added missing input validations and unified exceptions.
 - Added missing exception references in the api reference docs.
 - Reworked writer API and optimized SGA V2 Parser.
