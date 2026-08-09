@@ -8,18 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - [Unreleased]
 
 ### Added
-- Added the `SgaFile.ExtractToFile` method
-- Added support for Reading and writing SGA-V2 file metadata.
+- Added the `SgaFile.ExtractToFile` method.
+- Added support for Reading and writing SGA-V2 [file metadata](https://vojcermak.github.io/open-compote/schema/SGA-V2.html#file-metadata).
 - Added new `SgaFile` properties:
     - `Crc` - Gets the Crc-32 checksum of the file. (Only when supported by archive version.) 
     - `Modified`- Gets or sets the last write time of the file in the archive.
 
 ## Changed
-
-- Fixed offsets in sga-V2 schema documentation
-- Reworked tests for core classes
 - Added missing validation and unified exceptions.
-- Added missing exception references in the api reference docs
+- Added missing exception references in the api reference docs.
+- Reworked writer API and optimized SGA V2 Parser.
+- Reworked tests for core classes.
+- Fixed offsets in sga-V2 schema documentation.
 
 ## [0.1.0] - 2026-06-20
 

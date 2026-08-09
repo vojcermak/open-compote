@@ -81,9 +81,9 @@ Offsets represent the count of bytes from the start of the TOC header. (Toc star
 | ----- | ---- | ----- | ----------------- | ------------ |
 | 0     | 3    | 4     | UInt-32           | Name offset  |
 | 4     | 5    | 2     | UInt-16           | First folder |
-| 5     | 6    | 2     | UInt-16           | Last folder  |
-| 7     | 8    | 2     | UInt-16           | First file   |
-| 8     | 9    | 2     | UInt-16           | Last file    |
+| 6     | 7    | 2     | UInt-16           | Last folder  |
+| 8     | 9    | 2     | UInt-16           | First file   |
+| 10    | 11   | 2     | UInt-16           | Last file    |
 
 1. Path offset - Byte offset to the beginning of the path of this folder in the name list. 
 2. First folder - Inclusive index into the folder definition list to the first subfolder in the folder.
