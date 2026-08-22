@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.Reflection.Metadata.Ecma335;
-
 namespace OpenCompote.SGA;
 
 /// <summary>
@@ -12,8 +9,12 @@ public abstract class SgaEntry
     protected string _name = "";
 
     /// <summary>
-    /// Gets or sets the name of the entry in the SGA archive.
+    /// Gets or sets the name of the entry in the SGA archive. Entry name must be a valid sga name. For more info see <see href="/examples/naming.html">File/Folder naming restrictions</see>.
     /// </summary>
+    /// <exception cref="InvalidOperationException">The SGA archive for this folder was open in readonly mode.</exception>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed, or this entry is deleted.</exception>
+    /// <exception cref="ArgumentException">The <paramref name="value"/> is not a valid sga entry name, or entry with this name already exists in the parent folder.</exception>
+    /// <exception cref="ArgumentNullException">The <paramref name="value"/> is <see langword="null"/>.</exception>
     public string Name
     {
         get
@@ -23,10 +24,32 @@ public abstract class SgaEntry
         }
         set
         {
+            // Validate if the entry is open and writable.
             ThrowIfDeleted();
             if(Drive!.Archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
-            _name = value;
+            
+            // Validate if the new name is valid.
+            ArgumentException.ThrowIfNullOrWhiteSpace(value);
+            string trimmedName = value.Trim();
+
+            // Quick exit when the name did not changed.
+            if(trimmedName.Equals(_name, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            SgaNameValidator.ValidateEntryName(trimmedName);
+
+            // If this is not a root folder we also need to update the parent Dictionary.
+            if(Parent != null)
+            {
+                if(!Parent._entries.TryAdd(trimmedName,this))
+                    throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+
+                Parent._entries.Remove(_name);
+            }
+
+            // Set the new value.
+            _name = trimmedName;
         }
     }
 
