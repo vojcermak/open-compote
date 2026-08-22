@@ -729,11 +729,24 @@ public class SgaArchiveTest
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
             SgaFolder folder = drive.RootFolder;
+            SgaFile file = folder.AddFile("file.txt", StorageType.Uncompress);
 
             #pragma warning disable CS8625
-            Assert.Throws<ArgumentNullException>(() => folder.AddFile(null, StorageType.Uncompress));
             Assert.Throws<ArgumentOutOfRangeException>(() => folder.AddFile("Test", (StorageType)256));
+
+            Assert.Throws<ArgumentNullException>(() => folder.AddFile(null, StorageType.Uncompress));
+            Assert.Throws<ArgumentException>(() => folder.AddFile("", StorageType.Uncompress));
+            Assert.Throws<ArgumentException>(() => folder.AddFile("\t", StorageType.Uncompress));
+            Assert.Throws<ArgumentException>(() => folder.AddFile(" ", StorageType.Uncompress));
+            
+            Assert.Throws<ArgumentException>(() => folder.AddFile("file.txt.", StorageType.Uncompress));
+            Assert.Throws<ArgumentException>(() => folder.AddFile(".f:le", StorageType.Uncompress));
+            Assert.Throws<ArgumentException>(() => folder.AddFile("fi\0le", StorageType.Uncompress));
+            Assert.Throws<ArgumentException>(() => folder.AddFile("file.txt", StorageType.Uncompress));
+            Assert.Throws<ArgumentException>(() => folder.AddFile("File.txt", StorageType.Uncompress));
             #pragma warning restore CS8625
+
+            file.Delete();
         }
     }
     

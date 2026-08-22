@@ -23,7 +23,7 @@ public class SgaFolder: SgaEntry
 
     internal SgaFolder(string path, SgaDrive drive, SgaFolder? parent)
     {   
-        _entries = new Dictionary<string, SgaEntry>();
+        _entries = new Dictionary<string, SgaEntry>(StringComparer.OrdinalIgnoreCase);
         _contentCollection = _entries.Values;
         Drive = drive;
         Parent = parent;
@@ -54,23 +54,32 @@ public class SgaFolder: SgaEntry
     /// <summary>
     /// Created an empty <see cref="SgaFile"/> in the current folder.
     /// </summary>
-    /// <param name="name">The name of the new file.</param>
+    /// <param name="name">The name of the new file. Name must be a valid sga name. for more info see <see href="/examples/naming.html">File/Folder naming restrictions</see>.</param>
     /// <param name="type">The storage type of the new file.</param>
     /// <returns>New empty file.</returns>
     /// <exception cref="InvalidOperationException">The SGA archive for this folder was open in readonly mode.</exception>
     /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed, or this folder is deleted.</exception>
+    /// <exception cref="ArgumentException">The <paramref name="name"/> is not a valid name for sga file or entry with this name already exists in this folder.</exception>
+    /// <exception cref="ArgumentNullException"> Then <paramref name="name"/> is null.</exception>
     public SgaFile AddFile(string name, StorageType type)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
-        ArgumentNullException.ThrowIfNull(name);
-        if (!Enum.IsDefined(type))
-            throw new ArgumentOutOfRangeException("Invalid file storage type value.");
-
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
-        SgaFile newFile = new SgaFile(name, type, Drive, this);
-        _entries.Add(newFile.Name, newFile);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        if (!Enum.IsDefined(type))
+            throw new ArgumentOutOfRangeException("Invalid file storage type value.");
+        
+        string trimmedName = name.Trim();
+        SgaNameValidator.ValidateEntryName(trimmedName);
+
+        SgaFile newFile = new SgaFile(trimmedName, type, Drive, this);
+        
+        if(!_entries.TryAdd(newFile.Name, newFile))
+            throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+        
         return newFile;
     }
 
