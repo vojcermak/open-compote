@@ -7,13 +7,13 @@ namespace OpenCompote.SGA;
 /// </summary>
 public class SgaFolder: SgaEntry
 {
-    internal readonly List<SgaEntry> _contents;
-    private readonly ReadOnlyCollection<SgaEntry> _contentCollection;
-
+    internal readonly Dictionary<string, SgaEntry> _entries;
+    private readonly IReadOnlyCollection<SgaEntry> _contentCollection;
+    
     /// <summary>
     /// Gets the collection of entries that are currently in the current folder.
     /// </summary>
-    public ReadOnlyCollection<SgaEntry> Contents
+    public IReadOnlyCollection<SgaEntry> Contents
     {
         get {
             ThrowIfDeleted();
@@ -23,8 +23,8 @@ public class SgaFolder: SgaEntry
 
     internal SgaFolder(string path, SgaDrive drive, SgaFolder? parent)
     {   
-        _contents = new List<SgaEntry>();
-        _contentCollection = new ReadOnlyCollection<SgaEntry>(_contents);
+        _entries = new Dictionary<string, SgaEntry>();
+        _contentCollection = _entries.Values;
         Drive = drive;
         Parent = parent;
 
@@ -41,13 +41,13 @@ public class SgaFolder: SgaEntry
     public SgaFolder AddFolder(string name)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
-        ArgumentNullException.ThrowIfNull(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
         SgaFolder newFolder = new SgaFolder(Path + '\\' + name, Drive!, this);
-        _contents.Add(newFolder);
+        _entries.Add(newFolder.Name, newFolder);
         return newFolder;
     }
 
@@ -70,10 +70,46 @@ public class SgaFolder: SgaEntry
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
         SgaFile newFile = new SgaFile(name, type, Drive, this);
-        _contents.Add(newFile);
+        _entries.Add(newFile.Name, newFile);
         return newFile;
     }
 
+    public SgaEntry? GetEntry(string path)
+    {
+        ThrowIfDeleted(); // Test if the folder is deleted.
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        // Normalize separators and remove leading/trailing ones.
+        path = path.Replace('\\', '/').Trim('/');
+
+        if (string.IsNullOrEmpty(path))
+            return this;
+
+        string[] parts = path.Split(
+            '/',
+            StringSplitOptions.RemoveEmptyEntries);
+
+        SgaFolder current = this;
+        for (int i = 0; i < parts.Length; i++)
+        {
+            string part = parts[i];
+
+            if (!current._entries.TryGetValue(part, out SgaEntry? entry))
+                return null;
+
+            // Last component = requested entry.
+            if (i == parts.Length - 1)
+                return entry;
+
+            // We still have path components, so this must be a folder.
+            if (entry is not SgaFolder folder)
+                return null;
+
+            current = folder;
+        }
+        return null;
+    }
+    
     internal override void Delete(bool subDelete)
     {
         ThrowIfDeleted();
@@ -81,7 +117,7 @@ public class SgaFolder: SgaEntry
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Deleting is not supported in this mode.");
 
-        foreach (var item in _contents)
+        foreach (var item in _entries.Values)
         {
             item.Delete(true);
         }
@@ -91,12 +127,12 @@ public class SgaFolder: SgaEntry
         if(Drive.RootFolder == this)
         {
             Name = Drive.Name;
-            _contents.Clear();
+            _entries.Clear();
             return;
         }
         
         if(!subDelete)
-            Parent?._contents.Remove(this);
+            Parent?._entries.Remove(_name);
         
         Parent = null;
         Drive = null;   

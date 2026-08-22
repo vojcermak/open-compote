@@ -174,7 +174,7 @@ public class SgaFile: SgaEntry
             throw new InvalidOperationException("Deleting is not supported in this mode.");
         
         if(!subDelete)
-            Parent!._contents.Remove(this);
+            Parent!._entries.Remove(_name);
 
         Parent = null;
         Drive = null;

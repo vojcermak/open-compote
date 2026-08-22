@@ -321,7 +321,7 @@ public class SgaArchiveTest
             SgaFolder newFolder = drive.RootFolder.AddFolder("NewFolder");
 
             Assert.Single(drive.RootFolder.Contents);
-            Assert.Same(newFolder, drive.RootFolder.Contents[0]);
+            Assert.Same(newFolder, drive.RootFolder.Contents.First());
             Assert.Equal("NewFolder", newFolder.Name);
             Assert.Equal("Drive-Name\\NewFolder", newFolder.Path);
             Assert.Same(drive.RootFolder, newFolder.Parent);
@@ -417,9 +417,9 @@ public class SgaArchiveTest
             Assert.Equal("Drive-Name", folder.Path);
             Assert.Single(folder.Contents);
             
-            SgaFolder subFolder = (SgaFolder)folder.Contents[0];
+            SgaFolder? subFolder = folder.GetEntry("Subfolder") as SgaFolder;
 
-            Assert.Equal("SubFolder", subFolder.Name);
+            Assert.Equal("SubFolder", subFolder!.Name);
             Assert.Equal("Drive-Name\\SubFolder", subFolder.Path);
 
             folder.Name = "Updated";
@@ -479,11 +479,9 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder folder = (SgaFolder)drive.RootFolder.Contents[0];
-
-            // Get sub contents.
-            SgaFolder subFolder = (SgaFolder)folder.Contents[0];
-            SgaFile subFile = (SgaFile)folder.Contents[1];
+            SgaFolder folder = (SgaFolder)drive.RootFolder.GetEntry("SubFolder")!;
+            SgaFolder subFolder = (SgaFolder)drive.RootFolder.GetEntry("SubFolder/SubSubFolder")!;
+            SgaFile subFile = (SgaFile)drive.RootFolder.GetEntry("SubFolder/testFile")!;
             
             folder.Delete();
 
@@ -785,7 +783,7 @@ public class SgaArchiveTest
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
             SgaFolder folder = drive.RootFolder;
-            SgaFile file = (SgaFile)folder.Contents[0];
+            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
 
             Assert.Equal("testFile", file.Name);
             Assert.Equal("Drive-Name\\testFile", file.Path);
@@ -843,8 +841,7 @@ public class SgaArchiveTest
 
         using var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider);
         SgaDrive drive = archive.GetDrive("Drive-Name")!;
-        SgaFolder folder = drive.RootFolder;
-        SgaFile file = (SgaFile)folder.Contents[0];
+        SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
         
         byte[] content = Encoding.UTF8.GetBytes("This is a file contents");
         uint crc =  Crc32.HashToUInt32(content);
@@ -876,13 +873,13 @@ public class SgaArchiveTest
                     Folders = [],
                     Files = [
                         new TestFile{
-                            Name = "testFile",
+                            Name = "uncompressedFile",
                             StorageType = StorageType.Uncompress,
                             Modified = timeProvider.GetLocalNow(),
                             FileContent = "This is a file contents"
                         },
                         new TestFile{
-                            Name = "testFile",
+                            Name = "compressedTestFile",
                             StorageType = StorageType.StreamCompress,
                             Modified = timeProvider.GetLocalNow(),
                             FileContent = "This is a compressed file contents"
@@ -899,13 +896,13 @@ public class SgaArchiveTest
                     Folders = [],
                     Files = [
                         new TestFile{
-                            Name = "testFile",
+                            Name = "uncompressedFile",
                             StorageType = StorageType.Uncompress,
                             Modified = timeProvider.GetLocalNow(),
                             FileContent = "This is a file contents"
                         },
                         new TestFile{
-                            Name = "testFile",
+                            Name = "compressedTestFile",
                             StorageType = StorageType.StreamCompress,
                             Modified = timeProvider.GetLocalNow(),
                             FileContent = "This is a compressed file contents"
@@ -917,9 +914,8 @@ public class SgaArchiveTest
 
         using var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider);
         SgaDrive drive = archive.GetDrive("Drive-Name")!;
-        SgaFolder folder = drive.RootFolder;
-        SgaFile UncompressedFile = (SgaFile)folder.Contents[0];
-        SgaFile compressedFile = (SgaFile)folder.Contents[1];
+        SgaFile UncompressedFile = (SgaFile)drive.RootFolder.GetEntry("uncompressedFile")!;
+        SgaFile compressedFile = (SgaFile)drive.RootFolder.GetEntry("compressedTestFile")!;
         
         // Uncompressed file
         var content = "This is a file contents"u8;
@@ -999,7 +995,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile testFile = (SgaFile)drive.RootFolder.Contents[0];
+            SgaFile testFile = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
 
             Assert.Equal(StorageType.Uncompress, testFile.StorageType);
 
@@ -1060,7 +1056,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile testFile = (SgaFile)drive.RootFolder.Contents[0];
+            SgaFile testFile = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
 
             Assert.Equal(StorageType.BufferCompress, testFile.StorageType);
 
@@ -1114,7 +1110,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile file = (SgaFile)drive.RootFolder.Contents[0];
+            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
 
             file.Delete();
 
@@ -1178,7 +1174,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile file = (SgaFile)drive.RootFolder.Contents[0];
+            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
 
             Assert.Throws<InvalidOperationException>(() => drive.RootFolder.AddFile("New File", StorageType.Uncompress));
             Assert.Throws<InvalidOperationException>(() => file.Name = "changed");
@@ -1235,7 +1231,7 @@ public class SgaArchiveTest
 
         SgaArchive archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider);
         SgaDrive drive = archive.GetDrive("Drive-Name")!;
-        SgaFile file = (SgaFile)drive.RootFolder.Contents[0];
+        SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
 
         archive.Dispose();
 
@@ -1296,7 +1292,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile file = (SgaFile)drive.RootFolder.Contents[0];
+            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
 
             Assert.Throws<ArgumentException>(() => file.ExtractToFile("  "));
         }

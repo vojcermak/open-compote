@@ -53,9 +53,9 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
             {
                 Console.WriteLine(new string(' ', item.Item2 *2) + $"    Folder: {folder.Name}");
                 // Push subentries onto the stack
-                for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
+                foreach(var subEntry in folder.Contents.Reverse())
                 {
-                    stack.Push(new Tuple<SgaEntry, int>(folder.Contents[i], item.Item2 + 1));
+                    stack.Push(new Tuple<SgaEntry, int>(subEntry, item.Item2 + 1));
                 }
             }
         }

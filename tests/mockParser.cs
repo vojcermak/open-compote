@@ -47,7 +47,7 @@ public class MockParser : ISgaParser
     private SgaFolder ParseTree(TestFolder folderTemplate, SgaDrive drive, SgaFolder? parent )
     {
         SgaFolder folder = new (folderTemplate.Name, drive, parent);
-        parent?._contents.Add(folder);
+        parent?._entries.Add(folderTemplate.Name, folder);
 
         foreach( var subfolder in folderTemplate.Folders)
         {
@@ -77,7 +77,7 @@ public class MockParser : ISgaParser
             }
 
             SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, testFile.Modified, crc, drive, folder);
-            folder._contents.Add(file);
+            folder._entries.Add(testFile.Name, file);
         }
 
         return folder;

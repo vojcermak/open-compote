@@ -204,7 +204,7 @@ internal class SgaV2Parser : ISgaParser
                 if(parent == null)
                     newDrive.RootFolder = currentFolder;
                 else
-                    parent._contents.Add(currentFolder);
+                    parent._entries.Add(folderName, currentFolder);
 
                 // Loop through the sub folder of this folder and add it to the queue
                 for (ushort i = currentRecord.FirstFolder; i < currentRecord.LastFolder; i++)
@@ -239,7 +239,7 @@ internal class SgaV2Parser : ISgaParser
                                                       metadata.CRC,
                                                       newDrive,
                                                       currentFolder);
-                    currentFolder._contents.Add(currentFile);
+                    currentFolder._entries.Add(fileName, currentFile);
                 }
             }
         }
