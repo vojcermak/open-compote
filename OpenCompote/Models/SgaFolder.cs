@@ -46,9 +46,7 @@ public class SgaFolder: SgaEntry
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        string trimmedName = name.Trim();
-        SgaNameValidator.ValidateEntryName(trimmedName);
+        string trimmedName = SgaNameValidator.ValidateEntryName(name);
         
         SgaFolder newFolder = new SgaFolder(Path + '\\' + trimmedName, Drive!, this);
         
@@ -78,9 +76,7 @@ public class SgaFolder: SgaEntry
         if (!Enum.IsDefined(type))
             throw new ArgumentOutOfRangeException("Invalid file storage type value.");
         
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        string trimmedName = name.Trim();
-        SgaNameValidator.ValidateEntryName(trimmedName);
+        string trimmedName = SgaNameValidator.ValidateEntryName(name);
 
         SgaFile newFile = new SgaFile(trimmedName, type, Drive, this);
         

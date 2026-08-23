@@ -29,7 +29,9 @@ public class SgaDrive
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
-            _alias = value;
+
+            string trimmedName = SgaNameValidator.ValidateDriveName(value);
+            _alias = trimmedName;
         }
     }
 
@@ -50,7 +52,9 @@ public class SgaDrive
             ThrowIfDeleted();
             if(Archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
-            _name = value;
+
+            string trimmedName = SgaNameValidator.ValidateDriveName(value);
+            _name = trimmedName;
         }
     }
 

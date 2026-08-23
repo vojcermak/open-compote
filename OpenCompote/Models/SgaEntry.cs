@@ -30,14 +30,11 @@ public abstract class SgaEntry
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
             
             // Validate if the new name is valid.
-            ArgumentException.ThrowIfNullOrWhiteSpace(value);
-            string trimmedName = value.Trim();
+            string trimmedName = SgaNameValidator.ValidateEntryName(value);
 
             // Quick exit when the name did not changed.
             if(trimmedName.Equals(_name, StringComparison.OrdinalIgnoreCase))
                 return;
-
-            SgaNameValidator.ValidateEntryName(trimmedName);
 
             // If this is not a root folder we also need to update the parent Dictionary.
             if(Parent != null)

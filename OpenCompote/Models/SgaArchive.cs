@@ -113,13 +113,13 @@ public class SgaArchive: IDisposable
     public SgaDrive AddDrive(string alias, string name)
     {
         ThrowIfDisposed();
-        ArgumentNullException.ThrowIfNull(alias);
-        ArgumentNullException.ThrowIfNull(name);
-
         if(Mode == SgaMode.Read)
             throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
+        
+        string trimmedAlias = SgaNameValidator.ValidateDriveName(alias);
+        string trimmedName = SgaNameValidator.ValidateEntryName(name);
 
-        SgaDrive newDrive = new(alias, name, this);
+        SgaDrive newDrive = new(trimmedAlias, trimmedName, this);
         _drives.Add(newDrive);
         return newDrive;
     }

@@ -13,21 +13,30 @@ internal class SgaNameValidator
         (char)31
     ];
 
-    public static void ValidateEntryName(string name)
+    public static string ValidateEntryName(string name)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
 
-        if (name == "." || name == "..")
-            throw new ArgumentException($"'{name}' is not valid sga name.", nameof(name));
+        string trimmedName = name.Trim();
 
-        if (name.IndexOfAny(InvalidCharacters) >= 0)
+        if (trimmedName == "." || trimmedName == "..")
+            throw new ArgumentException($"'{trimmedName}' is not valid sga name.", nameof(name));
+
+        if (trimmedName.IndexOfAny(InvalidCharacters) >= 0)
             throw new ArgumentException(
-                $"'{name}' contains characters that are not valid for sga entry name.",
+                $"'{trimmedName}' contains characters that are not valid for sga entry name.",
                 nameof(name));
 
         // Windows does not allow filenames or directory names to end
         // with a space or period.
-        if (name.EndsWith('.'))
+        if (trimmedName.EndsWith('.'))
             throw new ArgumentException($"Sga entry name cannot end with a period.", nameof(name));
+
+        return name;
+    }
+
+    public static string ValidateDriveName(string name)
+    {
+        return ValidateEntryName(name)[..64];
     }
 }
