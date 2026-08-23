@@ -169,14 +169,15 @@ internal class SgaV2Parser : ISgaParser
             SgaDrive newDrive = new SgaDrive(driveRecord.DriveAlias, driveRecord.DriveName, archive);
             archive._drives.Add(newDrive);
 
-            Queue<Tuple<FolderRecord, SgaFolder?>> stack = new ();
-            stack.Enqueue(new (folderList[driveRecord.RootFolder], null));
+            Queue<Tuple<FolderRecord, SgaFolder?, bool>> stack = new ();
+            stack.Enqueue(new (folderList[driveRecord.RootFolder], null, true));
 
             while(stack.Count > 0)
             {
                 var item = stack.Dequeue();
                 FolderRecord currentRecord = item.Item1;
                 SgaFolder? parent = item.Item2;
+                bool isRoot = item.Item3;
 
                 // Basic validation of the Folder/File records in the current record.
                 if(currentRecord.FirstFolder > folderList.Count)
@@ -198,18 +199,21 @@ internal class SgaV2Parser : ISgaParser
 
                 string folderName = ParserUtils.ReadDynamicString(toc[nameStart..]);
 
-                SgaFolder currentFolder = new SgaFolder(folderName, newDrive, parent);
-                
-                // If parent is null that means the currentFolder is a root folder. Else is the parent set as the parent folder of the current folder.
-                if(parent == null)
-                    newDrive.RootFolder = currentFolder;
-                else
-                    parent._entries.Add(folderName, currentFolder);
+                SgaFolder? currentFolder = null;
+                if (!isRoot)
+                {
+                    currentFolder = new SgaFolder(folderName, newDrive, parent);
+                    
+                    if(parent == null)
+                        newDrive._entries.Add(folderName, currentFolder);
+                    else
+                        parent._entries.Add(folderName, currentFolder);
+                }
 
                 // Loop through the sub folder of this folder and add it to the queue
                 for (ushort i = currentRecord.FirstFolder; i < currentRecord.LastFolder; i++)
                 {
-                    stack.Enqueue(new(folderList[i], currentFolder));
+                    stack.Enqueue(new(folderList[i], currentFolder, false));
                 }
 
                 // Loop through the files in this folder and create them.
@@ -239,7 +243,10 @@ internal class SgaV2Parser : ISgaParser
                                                       metadata.CRC,
                                                       newDrive,
                                                       currentFolder);
-                    currentFolder._entries.Add(fileName, currentFile);
+                    if(currentFolder == null)
+                        newDrive._entries.Add(fileName, currentFile);
+                    else
+                        currentFolder._entries.Add(fileName, currentFile);
                 }
             }
         }
@@ -258,19 +265,21 @@ internal class SgaV2Parser : ISgaParser
             ushort firstFolder = (ushort)folderList.Count;
             ushort firstFile = (ushort)fileList.Count;
 
-            if (drive.RootFolder != null)
-            {
-                FolderWriterRecord folderTest = new FolderWriterRecord(drive.RootFolder);
-                stack.Push(folderTest);
-                folderList.Add(folderTest);
-            }
+            FolderWriterRecord folderTest = new FolderWriterRecord(null, drive);
+            stack.Push(folderTest);
+            folderList.Add(folderTest);
 
             while (stack.Count > 0)
             {
                 var f = stack.Pop();
                 f.FirstFolder = (ushort)folderList.Count;
                 f.FirstFile = (ushort)fileList.Count;
-                var Contents = f.Folder.Contents;
+                
+                IReadOnlyCollection<SgaEntry> Contents;
+                if(f.Drive != null)
+                    Contents = f.Drive.Contents;
+                else
+                    Contents = f.Folder!.Contents;
 
                 // Add files of this folder (collect now but add their names later)
                 foreach (var e in Contents)
@@ -283,7 +292,7 @@ internal class SgaV2Parser : ISgaParser
 
                     if (e is SgaFolder childFolder)
                     {
-                        FolderWriterRecord child = new FolderWriterRecord(childFolder);
+                        FolderWriterRecord child = new FolderWriterRecord(childFolder, null);
                         folderList.Add(child);
                     }
                 }
@@ -337,7 +346,7 @@ internal class SgaV2Parser : ISgaParser
         foreach (var f in folderList)
         {
             uint folderNameOffset = (uint)nameBuffer.Position;
-            ParserUtils.WriteDynamicString(nameBuffer, f.Folder.Path);
+            ParserUtils.WriteDynamicString(nameBuffer, f.Folder != null ? f.Folder.Path : "");
 
             BinaryPrimitives.WriteUInt32LittleEndian(toc[tocOffset..(tocOffset + 4)],   folderNameOffset);
             BinaryPrimitives.WriteUInt16LittleEndian(toc[(tocOffset + 4)..(tocOffset + 6)],f.FirstFolder);

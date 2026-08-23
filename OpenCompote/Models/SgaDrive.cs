@@ -9,6 +9,8 @@ public class SgaDrive
 {
     private string _alias;
     private string _name;
+    internal readonly Dictionary<string, SgaEntry> _entries;
+    private readonly IReadOnlyCollection<SgaEntry> _contentCollection;
     
     /// <summary>
     /// Gets or sets the alias of the drive.
@@ -53,23 +55,70 @@ public class SgaDrive
     }
 
     /// <summary>
+    /// Gets the collection of entries that are currently in the current folder.
+    /// </summary>
+    public IReadOnlyCollection<SgaEntry> Contents
+    {
+        get {
+            ThrowIfDeleted();
+            return _contentCollection;
+        }
+    }
+
+    /// <summary>
     /// Gets the SGA archive that the drive belongs to.
     /// </summary>
     /// <remarks>This property is <see langword="null"/> when this drive is deleted.</remarks>
     public SgaArchive? Archive {get; private set;}
-
-    /// <summary>
-    /// Gets the RootFolder of this drive.
-    /// </summary>
-    public SgaFolder RootFolder {get; internal set;}
 
     internal SgaDrive(string alias, string name, SgaArchive archive)
     {
         _alias = alias;
         _name = name;
         Archive = archive;
-        RootFolder = new SgaFolder(name, this, null);
+        _entries = new Dictionary<string, SgaEntry>(StringComparer.OrdinalIgnoreCase);
+        _contentCollection = _entries.Values;
     }
+
+    public SgaFolder AddFolder(string name)
+    {
+        ThrowIfDeleted(); // Test if this folder was deleted.
+        if(Archive!.Mode == SgaMode.Read)
+            throw new InvalidOperationException("Writing is not supported in this mode.");
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        string trimmedName = name.Trim();
+        SgaNameValidator.ValidateEntryName(trimmedName);
+        
+        SgaFolder newFolder = new SgaFolder(trimmedName, this, null);
+        
+        if(!_entries.TryAdd(trimmedName, newFolder))
+            throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+        
+        return newFolder;
+    }
+
+    public SgaFile AddFile(string name, StorageType type)
+    {
+        ThrowIfDeleted(); // Test if this folder was deleted.
+        if(Archive!.Mode == SgaMode.Read)
+            throw new InvalidOperationException("Writing is not supported in this mode.");
+
+        if (!Enum.IsDefined(type))
+            throw new ArgumentOutOfRangeException("Invalid file storage type value.");
+        
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        string trimmedName = name.Trim();
+        SgaNameValidator.ValidateEntryName(trimmedName);
+
+        SgaFile newFile = new SgaFile(trimmedName, type, this, null);
+        
+        if(!_entries.TryAdd(newFile.Name, newFile))
+            throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+        
+        return newFile;
+    }
+
 
     /// <summary>
     /// Deletes the drive and all its contents from the archive.
@@ -91,7 +140,12 @@ public class SgaDrive
         Archive.ThrowIfDisposed();
 
         Archive._drives.Remove(this);
-        RootFolder.Delete();
+        
+        foreach(var item in _contentCollection)
+        {
+            item.Delete();
+        }
+
         Archive = null;
     }
 

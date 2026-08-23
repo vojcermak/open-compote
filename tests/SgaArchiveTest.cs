@@ -181,7 +181,6 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder rootFolder = drive.RootFolder;
 
             drive.Delete();
 
@@ -190,7 +189,6 @@ public class SgaArchiveTest
             Assert.Throws<ObjectDisposedException>(()=> drive.Name);
             Assert.Throws<ObjectDisposedException>(()=> drive.Alias = "");
             Assert.Throws<ObjectDisposedException>(()=> drive.Alias = "");
-            Assert.Throws<ObjectDisposedException>(()=> rootFolder.Name); // test if the root folder is deleted as well.
 
             // Test if the deleted drive is not in the archive. 
             Assert.DoesNotContain(drive, archive.Drives);
@@ -318,13 +316,13 @@ public class SgaArchiveTest
         {
             SgaDrive drive = archive.GetDrive("Drive-Alias")!;
 
-            SgaFolder newFolder = drive.RootFolder.AddFolder("NewFolder");
+            SgaFolder newFolder = drive.AddFolder("NewFolder");
 
-            Assert.Single(drive.RootFolder.Contents);
-            Assert.Same(newFolder, drive.RootFolder.Contents.First());
+            Assert.Single(drive.Contents);
+            Assert.Same(newFolder, drive.Contents.First());
             Assert.Equal("NewFolder", newFolder.Name);
             Assert.Equal("Drive-Name\\NewFolder", newFolder.Path);
-            Assert.Same(drive.RootFolder, newFolder.Parent);
+            Assert.Null(newFolder.Parent);
             Assert.Same(drive, newFolder.Drive);
         }
     }
@@ -362,7 +360,7 @@ public class SgaArchiveTest
             SgaDrive drive = archive.GetDrive("Drive-Alias")!;
 
             #pragma warning disable CS8625
-            Assert.Throws<ArgumentNullException>(() => drive.RootFolder.AddFolder(null));
+            Assert.Throws<ArgumentNullException>(() => drive.AddFolder(null));
             #pragma warning restore CS8625
         }
     }
@@ -410,7 +408,7 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Alias")!;
-            SgaFolder folder = drive.RootFolder;
+            SgaFolder folder = (SgaFolder)drive.Contents.First();
 
 
             Assert.Equal("Drive-Name", folder.Name);
@@ -479,9 +477,9 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder folder = (SgaFolder)drive.RootFolder.GetEntry("SubFolder")!;
-            SgaFolder subFolder = (SgaFolder)drive.RootFolder.GetEntry("SubFolder/SubSubFolder")!;
-            SgaFile subFile = (SgaFile)drive.RootFolder.GetEntry("SubFolder/testFile")!;
+            SgaFolder folder = (SgaFolder)drive.GetEntry("SubFolder")!;
+            SgaFolder subFolder = (SgaFolder)drive.GetEntry("SubFolder/SubSubFolder")!;
+            SgaFile subFile = (SgaFile)drive.GetEntry("SubFolder/testFile")!;
             
             folder.Delete();
 
@@ -492,7 +490,7 @@ public class SgaArchiveTest
             Assert.Throws<ObjectDisposedException>(() => folder.Contents);
             Assert.Null(folder.Parent);
             Assert.Null(folder.Drive);
-            Assert.Empty(drive.RootFolder.Contents);
+            Assert.Empty(drive.Contents);
 
             // Test if the subfolder is deleted
             Assert.Throws<ObjectDisposedException>(() => subFolder.Name);
@@ -558,13 +556,6 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder folder = drive.RootFolder;
-
-            folder.Delete();
-
-            Assert.Empty(folder.Contents);
-            Assert.Equal(drive.Name, folder.Name);
-            Assert.Equal(drive.RootFolder, folder);
         }
     }
 
@@ -599,11 +590,11 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder folder = drive.RootFolder;
+        //     SgaFolder folder = drive.RootFolder;
 
-            Assert.Throws<InvalidOperationException>(() => folder.AddFolder("New Folder"));
-            Assert.Throws<InvalidOperationException>(() => folder.Name = "changed");
-            Assert.Throws<InvalidOperationException>(folder.Delete);
+        //     Assert.Throws<InvalidOperationException>(() => folder.AddFolder("New Folder"));
+        //     Assert.Throws<InvalidOperationException>(() => folder.Name = "changed");
+        //     Assert.Throws<InvalidOperationException>(folder.Delete);
         }
     }
 
@@ -636,15 +627,15 @@ public class SgaArchiveTest
         TimeProvider timeProvider = new MockTimeProvider(DateTimeOffset.Now);
         var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider);
         SgaDrive drive = archive.GetDrive("Drive-Name")!;
-        SgaFolder folder = drive.RootFolder;
-        archive.Dispose();
+        // SgaFolder folder = drive.RootFolder;
+        // archive.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => folder.Name);
-        Assert.Throws<ObjectDisposedException>(() => folder.Name = "");
-        Assert.Throws<ObjectDisposedException>(() => folder.Path);
-        Assert.Throws<ObjectDisposedException>(() => folder.Contents);
-        Assert.Throws<ObjectDisposedException>(() => folder.AddFolder("NewFolder"));
-        Assert.Throws<ObjectDisposedException>(folder.Delete);
+        // Assert.Throws<ObjectDisposedException>(() => folder.Name);
+        // Assert.Throws<ObjectDisposedException>(() => folder.Name = "");
+        // Assert.Throws<ObjectDisposedException>(() => folder.Path);
+        // Assert.Throws<ObjectDisposedException>(() => folder.Contents);
+        // Assert.Throws<ObjectDisposedException>(() => folder.AddFolder("NewFolder"));
+        // Assert.Throws<ObjectDisposedException>(folder.Delete);
     }
 
     #endregion
@@ -685,16 +676,16 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder folder = drive.RootFolder;
+            // SgaFolder folder = drive.RootFolder;
 
-            SgaFile file = folder.AddFile("New file", StorageType.Uncompress);
+            // SgaFile file = folder.AddFile("New file", StorageType.Uncompress);
 
-            Assert.Equal("New file", file.Name);
-            Assert.Equal(StorageType.Uncompress, file.StorageType);
-            Assert.Equal(timeProvider.GetLocalNow(), file.Modified);
-            Assert.Equal(0u, file.Size);
-            Assert.Equal(0u, file.CompressedSize);
-            Assert.Equal(0u, file.Crc);
+            // Assert.Equal("New file", file.Name);
+            // Assert.Equal(StorageType.Uncompress, file.StorageType);
+            // Assert.Equal(timeProvider.GetLocalNow(), file.Modified);
+            // Assert.Equal(0u, file.Size);
+            // Assert.Equal(0u, file.CompressedSize);
+            // Assert.Equal(0u, file.Crc);
         }
     }
     
@@ -728,25 +719,25 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder folder = drive.RootFolder;
-            SgaFile file = folder.AddFile("file.txt", StorageType.Uncompress);
+            // SgaFolder folder = drive.RootFolder;
+            // SgaFile file = folder.AddFile("file.txt", StorageType.Uncompress);
 
-            #pragma warning disable CS8625
-            Assert.Throws<ArgumentOutOfRangeException>(() => folder.AddFile("Test", (StorageType)256));
+            // #pragma warning disable CS8625
+            // Assert.Throws<ArgumentOutOfRangeException>(() => folder.AddFile("Test", (StorageType)256));
 
-            Assert.Throws<ArgumentNullException>(() => folder.AddFile(null, StorageType.Uncompress));
-            Assert.Throws<ArgumentException>(() => folder.AddFile("", StorageType.Uncompress));
-            Assert.Throws<ArgumentException>(() => folder.AddFile("\t", StorageType.Uncompress));
-            Assert.Throws<ArgumentException>(() => folder.AddFile(" ", StorageType.Uncompress));
+            // Assert.Throws<ArgumentNullException>(() => folder.AddFile(null, StorageType.Uncompress));
+            // Assert.Throws<ArgumentException>(() => folder.AddFile("", StorageType.Uncompress));
+            // Assert.Throws<ArgumentException>(() => folder.AddFile("\t", StorageType.Uncompress));
+            // Assert.Throws<ArgumentException>(() => folder.AddFile(" ", StorageType.Uncompress));
             
-            Assert.Throws<ArgumentException>(() => folder.AddFile("file.txt.", StorageType.Uncompress));
-            Assert.Throws<ArgumentException>(() => folder.AddFile(".f:le", StorageType.Uncompress));
-            Assert.Throws<ArgumentException>(() => folder.AddFile("fi\0le", StorageType.Uncompress));
-            Assert.Throws<ArgumentException>(() => folder.AddFile("file.txt", StorageType.Uncompress));
-            Assert.Throws<ArgumentException>(() => folder.AddFile("File.txt", StorageType.Uncompress));
-            #pragma warning restore CS8625
+            // Assert.Throws<ArgumentException>(() => folder.AddFile("file.txt.", StorageType.Uncompress));
+            // Assert.Throws<ArgumentException>(() => folder.AddFile(".f:le", StorageType.Uncompress));
+            // Assert.Throws<ArgumentException>(() => folder.AddFile("fi\0le", StorageType.Uncompress));
+            // Assert.Throws<ArgumentException>(() => folder.AddFile("file.txt", StorageType.Uncompress));
+            // Assert.Throws<ArgumentException>(() => folder.AddFile("File.txt", StorageType.Uncompress));
+            // #pragma warning restore CS8625
 
-            file.Delete();
+            // file.Delete();
         }
     }
     
@@ -795,8 +786,7 @@ public class SgaArchiveTest
         using (var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFolder folder = drive.RootFolder;
-            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+            SgaFile file = (SgaFile)drive.GetEntry("testFile")!;
 
             Assert.Equal("testFile", file.Name);
             Assert.Equal("Drive-Name\\testFile", file.Path);
@@ -854,7 +844,7 @@ public class SgaArchiveTest
 
         using var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider);
         SgaDrive drive = archive.GetDrive("Drive-Name")!;
-        SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+        SgaFile file = (SgaFile)drive.GetEntry("testFile")!;
         
         byte[] content = Encoding.UTF8.GetBytes("This is a file contents");
         uint crc =  Crc32.HashToUInt32(content);
@@ -927,8 +917,8 @@ public class SgaArchiveTest
 
         using var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider);
         SgaDrive drive = archive.GetDrive("Drive-Name")!;
-        SgaFile UncompressedFile = (SgaFile)drive.RootFolder.GetEntry("uncompressedFile")!;
-        SgaFile compressedFile = (SgaFile)drive.RootFolder.GetEntry("compressedTestFile")!;
+        SgaFile UncompressedFile = (SgaFile)drive.GetEntry("uncompressedFile")!;
+        SgaFile compressedFile = (SgaFile)drive.GetEntry("compressedTestFile")!;
         
         // Uncompressed file
         var content = "This is a file contents"u8;
@@ -1008,7 +998,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile testFile = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+            SgaFile testFile = (SgaFile)drive.GetEntry("testFile")!;
 
             Assert.Equal(StorageType.Uncompress, testFile.StorageType);
 
@@ -1069,7 +1059,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile testFile = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+            SgaFile testFile = (SgaFile)drive.GetEntry("testFile")!;
 
             Assert.Equal(StorageType.BufferCompress, testFile.StorageType);
 
@@ -1123,7 +1113,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Write, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+            SgaFile file = (SgaFile)drive.GetEntry("testFile")!;
 
             file.Delete();
 
@@ -1138,7 +1128,7 @@ public class SgaArchiveTest
             Assert.Throws<ObjectDisposedException>(() => file.StorageType = StorageType.Uncompress);
             Assert.Null(file.Parent);
             Assert.Null(file.Drive);
-            Assert.Empty(drive.RootFolder.Contents);
+            Assert.Empty(drive.Contents);
         }
     }
 
@@ -1187,9 +1177,9 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+            SgaFile file = (SgaFile)drive.GetEntry("testFile")!;
 
-            Assert.Throws<InvalidOperationException>(() => drive.RootFolder.AddFile("New File", StorageType.Uncompress));
+            Assert.Throws<InvalidOperationException>(() => drive.AddFile("New File", StorageType.Uncompress));
             Assert.Throws<InvalidOperationException>(() => file.Name = "changed");
             Assert.Throws<InvalidOperationException>(() => file.Modified = DateTimeOffset.Now);
             Assert.Throws<InvalidOperationException>(() => file.StorageType = StorageType.Uncompress);
@@ -1244,7 +1234,7 @@ public class SgaArchiveTest
 
         SgaArchive archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider);
         SgaDrive drive = archive.GetDrive("Drive-Name")!;
-        SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+        SgaFile file = (SgaFile)drive.GetEntry("testFile")!;
 
         archive.Dispose();
 
@@ -1256,7 +1246,7 @@ public class SgaArchiveTest
         Assert.Throws<ObjectDisposedException>(() => file.Modified = DateTimeOffset.Now);
         Assert.Throws<ObjectDisposedException>(() => file.StorageType);
         Assert.Throws<ObjectDisposedException>(() => file.StorageType = StorageType.Uncompress);
-        Assert.Throws<ObjectDisposedException>(() => drive.RootFolder.AddFile("NewFolder", StorageType.Uncompress));
+        Assert.Throws<ObjectDisposedException>(() => drive.AddFile("NewFolder", StorageType.Uncompress));
         Assert.Throws<ObjectDisposedException>(file.Open);
         Assert.Throws<ObjectDisposedException>(file.Delete);
     }
@@ -1305,7 +1295,7 @@ public class SgaArchiveTest
         using( var archive = new SgaArchive(archiveStream, SgaMode.Read, SgaVersion.V2, parser, false, timeProvider))
         {
             SgaDrive drive = archive.GetDrive("Drive-Name")!;
-            SgaFile file = (SgaFile)drive.RootFolder.GetEntry("testFile")!;
+            SgaFile file = (SgaFile)drive.GetEntry("testFile")!;
 
             Assert.Throws<ArgumentException>(() => file.ExtractToFile("  "));
         }

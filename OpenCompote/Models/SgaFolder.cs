@@ -137,15 +137,6 @@ public class SgaFolder: SgaEntry
         {
             item.Delete(true);
         }
-
-        // Do not delete the root folder. SGA expects the root folder to exists.
-        // So i only delete contents and set the name to the default one.
-        if(Drive.RootFolder == this)
-        {
-            Name = Drive.Name;
-            _entries.Clear();
-            return;
-        }
         
         if(!subDelete)
             Parent?._entries.Remove(_name);

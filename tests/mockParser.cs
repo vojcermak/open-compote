@@ -31,7 +31,7 @@ public class MockParser : ISgaParser
             var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, archive);
             archive._drives.Add(newDrive);
 
-            newDrive.RootFolder = ParseTree(testDrive.RootFolder, newDrive, null);
+            ParseTree(testDrive.RootFolder, newDrive, null);
         }
     }
 
@@ -44,13 +44,16 @@ public class MockParser : ISgaParser
         }
     }
 
-    private SgaFolder ParseTree(TestFolder folderTemplate, SgaDrive drive, SgaFolder? parent )
+    private void ParseTree(TestFolder folderTemplate, SgaDrive drive, SgaFolder? parent )
     {
-        SgaFolder folder = new (folderTemplate.Name, drive, parent);
-        parent?._entries.Add(folderTemplate.Name, folder);
-
-        foreach( var subfolder in folderTemplate.Folders)
+        // add all files to the structure.
+        foreach(var subfolder in folderTemplate.Folders)
         {
+            SgaFolder folder = new (subfolder.Name, drive, parent);
+            if(parent == null)
+                drive._entries.Add(folderTemplate.Name, folder);
+            else
+                parent._entries.Add(folderTemplate.Name, folder);
             ParseTree(subfolder, drive, folder);
         }
 
@@ -76,22 +79,42 @@ public class MockParser : ISgaParser
                 compressedSize = (uint)_testStream.Length - dataOffset;
             }
 
-            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, testFile.Modified, crc, drive, folder);
-            folder._entries.Add(testFile.Name, file);
+            SgaFile file = new (testFile.Name, testFile.StorageType, dataOffset, compressedSize, size, testFile.Modified, crc, drive, parent);
+            if(parent == null)
+                drive._entries.Add(testFile.Name, file);
+            else
+                parent._entries.Add(testFile.Name, file);
         }
-
-        return folder;
     }
 
     public static void Assert_Drive(TestDrive expectedDrive, SgaDrive actualDrive, SgaArchive parentArchive)
     {
         Assert.Equal(expectedDrive.Alias, actualDrive.Alias);
         Assert.Equal(expectedDrive.Name, actualDrive.Name);
-
-        Assert.NotNull(actualDrive.RootFolder);
         Assert.Same(parentArchive, actualDrive.Archive);
 
-        Assert_Folder(expectedDrive.RootFolder, actualDrive.RootFolder, null, actualDrive);
+        // Folders
+        var actualFolders = actualDrive.Contents.OfType<SgaFolder>().OrderBy(f => f.Name).ToList();
+        var expectedFolders = expectedDrive.RootFolder.Folders.OrderBy(f => f.Name).ToList();
+
+        Assert.Equal(expectedFolders.Count, actualFolders.Count);
+
+        for (int i = 0; i < actualFolders.Count; i++)
+        {
+            Assert_Folder(expectedFolders[i], actualFolders[i], null, actualDrive);
+        }
+
+        // Files
+        var actualFiles = actualDrive.Contents.OfType<SgaFile>().OrderBy(f => f.Name).ToList();
+        var expectedFiles = expectedDrive.RootFolder.Files.OrderBy(f => f.Name).ToList();
+
+        Assert.Equal(expectedFiles.Count, actualFiles.Count);
+
+        for (int i = 0; i < actualFiles.Count; i++)
+        {
+            Assert_File(expectedFiles[i], actualFiles[i], null, actualDrive);
+        }
+
     }
 
     public static void Assert_Folder(TestFolder expectedFolder, SgaFolder actualFolder, SgaFolder? expectedParent, SgaDrive expectedDrive )
@@ -123,7 +146,7 @@ public class MockParser : ISgaParser
         }
     }
 
-    public static void Assert_File(TestFile expectedFile, SgaFile actualFile, SgaFolder expectedParent, SgaDrive expectedDrive)
+    public static void Assert_File(TestFile expectedFile, SgaFile actualFile, SgaFolder? expectedParent, SgaDrive expectedDrive)
     {
         byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedFile.FileContent);
         uint expectedSize = (uint)expectedBytes.Length;

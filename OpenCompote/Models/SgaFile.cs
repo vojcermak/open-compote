@@ -101,7 +101,7 @@ public class SgaFile: SgaEntry
         }
     }
 
-    internal SgaFile(string name, StorageType type, SgaDrive drive, SgaFolder parent)
+    internal SgaFile(string name, StorageType type, SgaDrive drive, SgaFolder? parent)
     {   
         Drive = drive;
         _name = name;
@@ -120,7 +120,7 @@ public class SgaFile: SgaEntry
         DateTimeOffset? modified,
         uint? crc,
         SgaDrive drive,
-        SgaFolder parent
+        SgaFolder? parent
     )
     {
         _dataOffset = dataOffset;

@@ -1,5 +1,18 @@
 # Paths and Names
 
+## Path queries
+
+`DATA:\sound\vehicles\british\uk_aec_mkiii_armoured_car\uk_aec_mkiii_engine_braking.bsc`
+
+On Folder level you can do only call GetEntry(`folder\file.txt`)
+On drive level you can call GetEntry(`folder\folder\file.txt`)
+
+Getting up the tree is not allowed. so things like GetEntry("..\other\folder\file") will return empty, because entry with name `..` does not exists.
+
+On Archive level you can call GetEntry(`Drive:folder\folder\file.txt`)
+
+Root folder will be removed from the tree and incorporated into the drives.
+
 ## File/Folder naming restrictions
 Open compote enforces this set of rules for sga folder and file names to allow easy export of files and folders on both windows and linux. The rules are:
 
@@ -29,3 +42,6 @@ Open compote enforces this set of rules for sga folder and file names to allow e
     Leading and trailing whitespace(spaces, tabs, newlines,...) are trimmed during the entry creation.
 
 > These rules are enforced only when creating new sga Files or Folders. If an existing SGA archive contains files or folder with names which does not follow these rules it can open them, but exporting them could fail.
+
+## Drive name and Alias restrictions
+Drive names and aliases have the same restrictions as the file/folder names. But on top of them there is also a length restriction. Both Drive alias and name must be max 64 characters long.

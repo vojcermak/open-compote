@@ -35,7 +35,9 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
         Console.WriteLine("    Drive alias: {0}", drive.Alias);
 
         Stack<Tuple<SgaEntry, int>> stack = new Stack<Tuple<SgaEntry, int>>();
-        stack.Push(new Tuple<SgaEntry, int>(drive.RootFolder,0));
+
+        foreach(var item in drive.Contents)
+            stack.Push(new Tuple<SgaEntry, int>(item,0));
 
         while(stack.Count > 0)
         {
