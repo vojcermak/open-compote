@@ -15,7 +15,7 @@ internal class SgaNameValidator
 
     public static string ValidateEntryName(string name)
     {
-        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         string trimmedName = name.Trim();
 
@@ -32,11 +32,12 @@ internal class SgaNameValidator
         if (trimmedName.EndsWith('.'))
             throw new ArgumentException($"Sga entry name cannot end with a period.", nameof(name));
 
-        return name;
+        return trimmedName;
     }
 
     public static string ValidateDriveName(string name)
     {
-        return ValidateEntryName(name)[..64];
+        string trimmedName = ValidateEntryName(name);
+        return  trimmedName.Length <= 64 ? trimmedName : trimmedName[..64];
     }
 }
