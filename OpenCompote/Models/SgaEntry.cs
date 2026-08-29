@@ -58,7 +58,7 @@ public abstract class SgaEntry
         get
         {
             ThrowIfDeleted();
-            var pathParts = new List<string>();
+            List<string> pathParts = [];
             
             SgaEntry? current = this;
             while (current != null)
@@ -69,6 +69,8 @@ public abstract class SgaEntry
                 current = current.Parent;
             }
             
+            pathParts.Add(Drive!.Name.ToUpper() + ":");
+
             pathParts.Reverse();
             return string.Join("\\", pathParts);
         }

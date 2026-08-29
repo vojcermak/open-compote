@@ -161,8 +161,44 @@ public class SgaDrive
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>  
     /// <exclude />
-    internal SgaEntry GetEntry(string entryName)
+    internal SgaEntry? GetEntry(string path)
     {
-        throw new NotImplementedException();
+        ThrowIfDeleted(); // Test if the folder is deleted.
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        // Normalize separators and remove leading/trailing ones.
+        path = path.Replace('\\', '/').Trim('/');
+
+        string[] parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        if (!_entries.TryGetValue(parts[0], out SgaEntry? firstEntry))
+            return null;
+        
+        if (parts.Length == 1)
+            return firstEntry;
+
+        if (firstEntry is not SgaFolder firstFolder)
+            return null;
+
+
+        SgaFolder current = firstFolder;
+        for (int i = 0; i < parts.Length; i++)
+        {
+            string part = parts[i];
+
+            if (!current._entries.TryGetValue(part, out SgaEntry? entry))
+                return null;
+
+            // Last component = requested entry.
+            if (i == parts.Length - 1)
+                return entry;
+
+            // We still have path components, so this must be a folder.
+            if (entry is not SgaFolder folder)
+                return null;
+
+            current = folder;
+        }
+        return null;
     }
 }

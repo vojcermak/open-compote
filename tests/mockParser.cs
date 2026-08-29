@@ -31,7 +31,7 @@ public class MockParser : ISgaParser
             var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, archive);
             archive._drives.Add(newDrive);
 
-            ParseTree(testDrive.RootFolder, newDrive, null);
+            ParseTree(testDrive.Folders, testDrive.Files, newDrive, null);
         }
     }
 
@@ -44,20 +44,20 @@ public class MockParser : ISgaParser
         }
     }
 
-    private void ParseTree(TestFolder folderTemplate, SgaDrive drive, SgaFolder? parent )
+    private void ParseTree(List<TestFolder> folders, List<TestFile> files, SgaDrive drive, SgaFolder? parent )
     {
         // add all files to the structure.
-        foreach(var subfolder in folderTemplate.Folders)
+        foreach(var subfolder in folders)
         {
             SgaFolder folder = new (subfolder.Name, drive, parent);
             if(parent == null)
-                drive._entries.Add(folderTemplate.Name, folder);
+                drive._entries.Add(subfolder.Name, folder);
             else
-                parent._entries.Add(folderTemplate.Name, folder);
-            ParseTree(subfolder, drive, folder);
+                parent._entries.Add(subfolder.Name, folder);
+            ParseTree(subfolder.Folders, subfolder.Files, drive, folder);
         }
 
-        foreach( var testFile in folderTemplate.Files)
+        foreach( var testFile in files)
         {
             uint dataOffset = (uint)_testStream!.Position;
             byte[] inputBytes = Encoding.UTF8.GetBytes(testFile.FileContent);
@@ -95,7 +95,7 @@ public class MockParser : ISgaParser
 
         // Folders
         var actualFolders = actualDrive.Contents.OfType<SgaFolder>().OrderBy(f => f.Name).ToList();
-        var expectedFolders = expectedDrive.RootFolder.Folders.OrderBy(f => f.Name).ToList();
+        var expectedFolders = expectedDrive.Folders.OrderBy(f => f.Name).ToList();
 
         Assert.Equal(expectedFolders.Count, actualFolders.Count);
 
@@ -106,7 +106,7 @@ public class MockParser : ISgaParser
 
         // Files
         var actualFiles = actualDrive.Contents.OfType<SgaFile>().OrderBy(f => f.Name).ToList();
-        var expectedFiles = expectedDrive.RootFolder.Files.OrderBy(f => f.Name).ToList();
+        var expectedFiles = expectedDrive.Files.OrderBy(f => f.Name).ToList();
 
         Assert.Equal(expectedFiles.Count, actualFiles.Count);
 
@@ -192,26 +192,35 @@ public class MockParser : ISgaParser
         Assert.Equal(crc, actualFile.Crc ?? 0);
         Assert.Equal(expectedFile.FileContent, actualContents);
     }
+
+    public static readonly DateTimeOffset FixedTime = new(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+
+    public static SgaArchive CreateArchive(SgaMode mode, MockParser mockParser)
+    {
+        var stream = new MemoryStream();
+        return new SgaArchive(stream,mode,SgaVersion.V2,mockParser, timeProvider: new MockTimeProvider(FixedTime));
+    }
 }
 
 public class TestDrive
 {
     public required string Name {get; set;}
     public required string Alias {get; set;}
-    public required TestFolder RootFolder {get; set;}
+    public List<TestFolder> Folders {get; set;} = [];
+    public List<TestFile> Files {get; set;} = [];
 }
 
 public class TestFolder
 {
     public required string Name {get; set;}
-    public required List<TestFolder> Folders {get; set;}
-    public required List<TestFile> Files {get; set;}
+    public List<TestFolder> Folders {get; set;} = [];
+    public List<TestFile> Files {get; set;} = [];
 }
 
 public class TestFile
 {
     public required string Name {get; set;}
-    public required StorageType StorageType {get; set;}
+    public StorageType StorageType {get; set;} = StorageType.Uncompress;
     public DateTimeOffset Modified {get; set;}
-    public required string FileContent {get; set;}
+    public string FileContent {get; set;} = "";
 }
