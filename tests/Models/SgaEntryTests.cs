@@ -1,7 +1,4 @@
-using OpenCompote.SGA.Parsers;
-using OpenCompote.SGA.Tests;
-
-namespace OpenCompote.SGA.Tests.models;
+namespace OpenCompote.SGA.Tests.Models;
 
 public class SgaEntryTests
 {

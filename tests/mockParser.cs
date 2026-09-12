@@ -14,6 +14,14 @@ public class MockParser : ISgaParser
 
     private Stream? _testStream;
 
+    public static readonly DateTimeOffset FixedTime = new(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+
+    public static SgaArchive CreateArchive(SgaMode mode, MockParser mockParser)
+    {
+        var stream = new MemoryStream();
+        return new SgaArchive(stream,mode,SgaVersion.V2,mockParser, timeProvider: new MockTimeProvider(FixedTime));
+    }
+
     public MockParser(string archiveName ,List<TestDrive> initialTree, List<TestDrive> expectedTree)
     {
         _archiveName = archiveName;
@@ -192,14 +200,6 @@ public class MockParser : ISgaParser
         Assert.Equal(crc, actualFile.Crc ?? 0);
         Assert.Equal(expectedFile.FileContent, actualContents);
     }
-
-    public static readonly DateTimeOffset FixedTime = new(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
-
-    public static SgaArchive CreateArchive(SgaMode mode, MockParser mockParser)
-    {
-        var stream = new MemoryStream();
-        return new SgaArchive(stream,mode,SgaVersion.V2,mockParser, timeProvider: new MockTimeProvider(FixedTime));
-    }
 }
 
 public class TestDrive
@@ -221,6 +221,6 @@ public class TestFile
 {
     public required string Name {get; set;}
     public StorageType StorageType {get; set;} = StorageType.Uncompress;
-    public DateTimeOffset Modified {get; set;}
+    public DateTimeOffset Modified {get; set;} = MockParser.FixedTime;
     public string FileContent {get; set;} = "";
 }
