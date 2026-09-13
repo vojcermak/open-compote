@@ -66,7 +66,7 @@ public class SgaDriveTests
     // ==================== AddFolder Tests ====================
 
 	[Fact]
-	public void Drive_AddFolderAndFile_AddEntriesToDrive()
+	public void Folder_AddFolder_CreatesSubfolderWithCorrectPath()
 	{
 		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
 			new TestDrive { Alias = "alias", Name = "Drive" }
@@ -75,28 +75,28 @@ public class SgaDriveTests
 			{
 				Alias = "alias",
 				Name = "Drive",
-				Folders = [new TestFolder { Name = "Folder" }],
-				Files = [new TestFile { Name = "file.txt", StorageType = StorageType.StreamCompress }]
+				Folders = [new TestFolder { Name = "Folder" }]
 			}
 		]));
 
 		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
 		var folder = drive.AddFolder("Folder");
-		var file = drive.AddFile("file.txt", StorageType.StreamCompress);
 
-		Assert.Same(drive, folder.Drive);
-		Assert.Same(drive, file.Drive);
-		Assert.Equal("DRIVE:\\Folder", folder.Path);
-		Assert.Equal("DRIVE:\\file.txt", file.Path);
-		Assert.Contains(folder, drive.Contents);
-		Assert.Contains(file, drive.Contents);
+		Assert.NotNull(folder);
+        Assert.Equal("Folder", folder.Name);
+        Assert.Equal("Folder", folder.Path);
+        Assert.Null(folder.Parent);
+        Assert.Single(drive.Contents);
+        Assert.IsType<SgaFolder>(drive.Contents.Single());
+        Assert.Equal(folder, drive.Contents.Single());
 	}
 
 	[Theory]
 	[InlineData(null, typeof(ArgumentNullException))]
-	[InlineData("", typeof(ArgumentException))]
-	[InlineData("Folder", typeof(ArgumentException))]
-	public void Drive_AddFolder_RejectsInvalidOrDuplicateNames(string? name, Type exception)
+    [InlineData("", typeof(ArgumentException))]
+    [InlineData("folder", typeof(ArgumentException))]
+    [InlineData(" folder ", typeof(ArgumentException))]
+	public void Drive_AddFolder_RejectsInvalidNames(string? name, Type exception)
 	{
 		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
 			new TestDrive
@@ -121,12 +121,40 @@ public class SgaDriveTests
 
     // ==================== AddFile Tests ====================
 
+    [Fact]
+	public void Folder_AddFile_CreatesFileWithCorrectPath()
+    {
+        using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive { Alias = "alias", Name = "Drive" }
+        ], [
+            new TestDrive{
+                Alias = "alias",
+                Name = "Drive",
+                Files = [new TestFile { Name = "Folder" }]
+            }
+        ]));
+
+        var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        var file = drive.AddFile("Folder", StorageType.Uncompress);
+
+        Assert.NotNull(file);
+        Assert.Equal("test.txt", file.Name);
+        Assert.Equal("test.txt", file.Path);
+        Assert.Null(file.Parent);
+        Assert.Same(drive, file.Drive);
+        Assert.Single(drive.Contents);
+        Assert.IsType<SgaFile>(drive.Contents.Single());
+        Assert.Same(file, drive.Contents.Single());
+    }
+
 	[Theory]
 	[InlineData(null, StorageType.Uncompress, typeof(ArgumentNullException))]
-	[InlineData("", StorageType.Uncompress, typeof(ArgumentException))]
-	[InlineData("file.txt", StorageType.Uncompress, typeof(ArgumentException))]
-	[InlineData("new.txt", (StorageType)69, typeof(ArgumentOutOfRangeException))]
-	public void Drive_AddFile_RejectsInvalidOrDuplicateNames(string? name, StorageType type, Type exception)
+    [InlineData("", StorageType.Uncompress, typeof(ArgumentException))]
+    [InlineData("file.txt", StorageType.Uncompress, typeof(ArgumentException))]
+    [InlineData(" File.txt ", StorageType.Uncompress, typeof(ArgumentException))]
+    [InlineData("newFile.txt", null, typeof(ArgumentOutOfRangeException))]
+    [InlineData("newFile.txt", (StorageType)69, typeof(ArgumentOutOfRangeException))]
+	public void Drive_AddFile_RejectsInvalidOrDuplicateNames(string? name, StorageType? type, Type exception)
 	{
 		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
 			new TestDrive
@@ -146,7 +174,7 @@ public class SgaDriveTests
 
 		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
 
-		Assert.Throws(exception, () => drive.AddFile(name!, type));
+		Assert.Throws(exception, () => drive.AddFile(name!, (StorageType)type!));
 	}
 
     // ==================== Delete Tests ====================
@@ -170,34 +198,81 @@ public class SgaDriveTests
 
 		Assert.Empty(archive.Drives);
 		Assert.Null(drive.Archive);
+        Assert.Throws<ObjectDisposedException>(() => drive.Name);
+        Assert.Throws<ObjectDisposedException>(() => drive.Alias);
 		Assert.Throws<ObjectDisposedException>(() => drive.Contents);
-		drive.Delete();
+        Assert.Throws<ObjectDisposedException>(() => drive.AddFolder("newFile"));
+        Assert.Throws<ObjectDisposedException>(() => drive.AddFile("newFile", StorageType.Uncompress));
+        Assert.Throws<ObjectDisposedException>(() => drive.Delete());
+        Assert.Throws<ObjectDisposedException>(() => drive.GetEntry("Folder"));
 	}
 
 
     // ==================== GetEntry Tests ====================
 
-	[Fact]
-	public void Drive_GetEntry_FindsEntriesByNormalizedPath()
+	[Theory]
+    [InlineData("subfolder", typeof(SgaFolder), "subfolder")]            //Get direct child folder
+    [InlineData("file.txt", typeof(SgaFile), "file.txt"),]               //Get direct child file
+    [InlineData("subfolder/folder1", typeof(SgaFolder), "folder1")]      //Get nested folder
+    [InlineData("subfolder/file2.txt", typeof(SgaFile), "file2.txt")]    //Get nested file
+    [InlineData("nonexistingFile", null)]                                //Get nonexisting entry
+    [InlineData("subfolder/noFile.txt", null)]                           //Get nonexisting nested entry
+    [InlineData("\\subfolder\\file2.txt", typeof(SgaFile), "file2.txt")] //Get sub file with wrong separators
+    [InlineData("./subfolder", null)]                                    //Get the current folder using ./ folder
+	public void Drive_GetEntry_FindsExistingEntry(string path, Type? OutputType, string expectedName = "")
 	{
 		using var archive = MockParser.CreateArchive(SgaMode.Read, new("archive", [
 			new TestDrive
 			{
 				Alias = "alias",
 				Name = "Drive",
-				Folders = [new TestFolder
-				{
-					Name = "Folder",
-					Files = [new TestFile { Name = "file.txt" }]
-				}]
+				Folders = [new TestFolder { 
+                    Name = "subfolder",
+                    Files = [new TestFile { Name = "file2.txt" }],
+                    Folders = [new TestFolder { Name = "folder1"}] 
+                }],
+                Files = [new TestFile { Name = "file.txt" }]
 			}
 		], []));
 
 		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
 
-		Assert.Same(drive.GetEntry("Folder"), drive.GetEntry("/Folder/"));
-		Assert.IsType<SgaFile>(drive.GetEntry("Folder\\file.txt"));
-		Assert.Null(drive.GetEntry("Folder/missing.txt"));
-		Assert.Null(drive.GetEntry("file.txt/more"));
+        var result = drive.GetEntry(path);
+
+        if (OutputType == null)
+            Assert.Null(result);
+        else
+        {
+            Assert.IsType(OutputType, result);
+            Assert.Equal(expectedName, result.Name);
+        }
 	}
+
+    [Theory]
+    [InlineData("", typeof(ArgumentException))]       // Empty string is not allowed
+    [InlineData(" ", typeof(ArgumentException))]      // Empty string is not allowed
+    [InlineData(null, typeof(ArgumentNullException))] // Null string is not allowed
+    [InlineData("/", typeof(ArgumentException))]      // Empty string is not allowed
+    [InlineData(" / ", typeof(ArgumentException))]    // Empty string is not allowed
+    public void Drive_GetEntry_InvalidInputThrowsException(string? path, Type exceptionType)
+    {
+        using var archive = MockParser.CreateArchive(SgaMode.Read, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Folders = [
+                    new TestFolder { 
+                        Name = "subfolder",
+                        Files = [new TestFile { Name = "file2.txt" }],
+                        Folders = [new TestFolder { Name = "folder1"}] 
+                    }
+                ],
+                Files = [new TestFile { Name = "file.txt" }]
+            }
+        ], []));
+
+        var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        Assert.Throws(exceptionType, () => drive.GetEntry(path!));
+    }
 }
