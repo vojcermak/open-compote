@@ -161,7 +161,7 @@ public class SgaDrive
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>  
     /// <exclude />
-    internal SgaEntry? GetEntry(string path)
+    public SgaEntry? GetEntry(string path)
     {
         ThrowIfDeleted(); // Test if the folder is deleted.
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
