@@ -1,5 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
-
 namespace OpenCompote.SGA.Tests.Models;
 
 public class SgaFileTests
@@ -140,7 +138,7 @@ public class SgaFileTests
     [InlineData(StorageType.Uncompress)]
 	[InlineData(StorageType.StreamCompress)]
 	[InlineData(StorageType.BufferCompress)]
-	public void File_Open_ReadsContent(StorageType storageType)
+	public void File_Open_ReadOnlyContent(StorageType storageType)
 	{
         string contents = "This is a file contents.";
 		using var archive = MockParser.CreateArchive(SgaMode.Read, new("archive", [
@@ -159,34 +157,105 @@ public class SgaFileTests
 		using var reader = new StreamReader(stream);
 
 		Assert.Equal(contents, reader.ReadToEnd());
+		Assert.False(stream.CanWrite);
+	}
+
+	[Theory]
+    [InlineData(StorageType.Uncompress)]
+	[InlineData(StorageType.StreamCompress)]
+	[InlineData(StorageType.BufferCompress)]
+	public void File_Open_ReadWriteContents(StorageType storageType)
+	{
+        string contents = "This is a file contents.";
+		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt", StorageType = storageType, FileContent = contents}]
+            }
+        ], [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt", StorageType = storageType, FileContent = contents}]
+            }
+        ]));
+
+        var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        var file = Assert.IsType<SgaFile>(drive.Contents.Single());
+
+		using var stream = file.Open();
+		using var reader = new StreamReader(stream);
+
+		Assert.Equal(contents, reader.ReadToEnd());
+		Assert.True(stream.CanWrite);
 	}
 
 	[Fact]
 	public void File_OpenWrite_UpdatesMetadataWhenClosed()
 	{
-		var fixture = CreateArchive(SgaMode.Write, StorageType.Uncompress, "updated content");
-		using var archive = fixture.Archive;
+		string contents = "This is a new content.";
+		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt"}]
+            }
+        ], [
+			new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt", FileContent = contents}]
+            }
+		]));
 
-		using (var stream = fixture.File.Open())
+		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        var file = Assert.IsType<SgaFile>(drive.Contents.Single());
+
+		using (var stream = file.Open())
 		using (var writer = new StreamWriter(stream))
 		{
-			writer.Write("updated content");
+			writer.Write(contents);
 		}
 
-		Assert.Equal((uint)15, fixture.File.Size);
-		Assert.Equal((uint)15, fixture.File.CompressedSize);
-		Assert.NotNull(fixture.File.Crc);
-		Assert.Equal(MockParser.FixedTime, fixture.File.Modified);
+		Assert.Equal((uint)22, file.Size);
+		Assert.Equal((uint)22, file.CompressedSize);
+		Assert.NotNull(file.Crc);
+		Assert.Equal(MockParser.FixedTime, file.Modified);
 	}
 
 	[Fact]
 	public void File_OpenWrite_RejectsMultipleOpenStreams()
 	{
-		var fixture = CreateArchive(SgaMode.Write, StorageType.Uncompress, "content");
-		using var archive = fixture.Archive;
-		using var firstStream = fixture.File.Open();
+		string contents = "This is a new content.";
+		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt"}]
+            }
+        ], [
+			new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt", FileContent = contents}]
+            }
+		]));
 
-		Assert.Throws<IOException>(() => fixture.File.Open());
+		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        var file = Assert.IsType<SgaFile>(drive.Contents.Single());
+
+		using var stream = file.Open();
+
+		Assert.Throws<IOException>(() => file.Open());
+		Assert.Throws<IOException>(() => file.Delete());
+		Assert.Throws<IOException>(() => file.StorageType = StorageType.StreamCompress);
 	}
 
     // ==================== ExtractToFile Tests ====================
@@ -194,15 +263,26 @@ public class SgaFileTests
 	[Fact]
 	public void File_ExtractToFile_WritesDecompressedContent()
 	{
-		var fixture = CreateArchive(SgaMode.Read, StorageType.StreamCompress, "extract me");
-		using var archive = fixture.Archive;
+		string contents = "This is a file contents.";
+		using var archive = MockParser.CreateArchive(SgaMode.Read, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt", FileContent = contents}]
+            }
+        ], []));
+
+		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        var file = Assert.IsType<SgaFile>(drive.Contents.Single());
+
 		string destination = Path.Combine(Path.GetTempPath(), $"open-compote-{Guid.NewGuid():N}");
 
 		try
 		{
-			fixture.File.ExtractToFile(destination);
+			file.ExtractToFile(destination);
 
-			Assert.Equal("extract me", File.ReadAllText(Path.Combine(destination, "file.txt")));
+			Assert.Equal(contents, File.ReadAllText(Path.Combine(destination, "file.txt")));
 		}
 		finally
 		{
@@ -214,16 +294,27 @@ public class SgaFileTests
 	[Fact]
 	public void File_ExtractToFile_ThrowsWhenDestinationFileExistsWithoutOverwrite()
 	{
-		var fixture = CreateArchive(SgaMode.Read, StorageType.Uncompress, "content");
-		using var archive = fixture.Archive;
+		string contents = "This is a file contents.";
+		using var archive = MockParser.CreateArchive(SgaMode.Read, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {Name = "file1.txt", FileContent = contents}]
+            }
+        ], []));
+
 		string destination = Path.Combine(Path.GetTempPath(), $"open-compote-{Guid.NewGuid():N}");
+
+		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        var file = Assert.IsType<SgaFile>(drive.Contents.Single());
 
 		try
 		{
 			Directory.CreateDirectory(destination);
 			File.WriteAllText(Path.Combine(destination, "file.txt"), "old content");
 
-			Assert.Throws<IOException>(() => fixture.File.ExtractToFile(destination));
+			Assert.Throws<IOException>(() => file.ExtractToFile(destination));
 		}
 		finally
 		{
@@ -235,75 +326,93 @@ public class SgaFileTests
     // ==================== Delete Tests ====================
 
 	[Fact]
-	public void File_Delete_RemovesFileAndInvalidatesIt()
+	public void File_Delete_FromFolderRemovesFileAndInvalidatesIt()
 	{
-		var fixture = CreateArchive(
-			SgaMode.Write,
-			StorageType.Uncompress,
-			"content",
-			StorageType.Uncompress,
-			expectedFileCount: 0);
-		using var archive = fixture.Archive;
-		var folder = Assert.IsType<SgaFolder>(fixture.File.Parent);
+		string contents = "This is a small file contents.";
+		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+				Folders = [
+					new TestFolder {
+						Name = "folder",
+						Files = [
+							new TestFile {
+								Name = "file1.txt",
+								FileContent = contents
+							}
+						]
+					}
+				],
+            }
+        ], [
+			new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+				Folders = [new TestFolder {Name = "folder"}]
+            }
+		]));
 
-		fixture.File.Delete();
+        var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+		var folder = Assert.IsType<SgaFolder>(drive.Contents.Single());
+        var file = Assert.IsType<SgaFile>(folder.Contents.Single());
+
+		file.Delete();
 
 		Assert.Empty(folder.Contents);
-		Assert.Null(fixture.File.Parent);
-		Assert.Null(fixture.File.Drive);
-		Assert.Throws<ObjectDisposedException>(() => fixture.File.Name);
-		Assert.Throws<ObjectDisposedException>(() => fixture.File.Open());
+		Assert.Null(file.Parent);
+		Assert.Null(file.Drive);
+		Assert.Throws<ObjectDisposedException>(() => file.Name);
+		Assert.Throws<ObjectDisposedException>(() => file.Path);
+		Assert.Throws<ObjectDisposedException>(() => file.StorageType);
+		Assert.Throws<ObjectDisposedException>(() => file.Size);
+		Assert.Throws<ObjectDisposedException>(() => file.CompressedSize);
+		Assert.Throws<ObjectDisposedException>(() => file.Modified);
+		Assert.Throws<ObjectDisposedException>(() => file.Crc);
+		Assert.Throws<ObjectDisposedException>(() => file.Open());
+		Assert.Throws<ObjectDisposedException>(() => file.Delete());
 	}
 
-	private static (SgaArchive Archive, SgaFile File) CreateArchive(
-		SgaMode mode,
-		StorageType storageType,
-		string content,
-		StorageType? expectedStorageType = null,
-		int expectedFileCount = 1)
+		[Fact]
+	public void File_Delete_FromDriveRemovesFileAndInvalidatesIt()
 	{
-		List<TestFile> expectedFiles = expectedFileCount == 0
-			? []
-			: [new TestFile
-			{
-				Name = "file.txt",
-				StorageType = expectedStorageType ?? storageType,
-				Modified = MockParser.FixedTime,
-				FileContent = content
-			}];
-
-		var archive = MockParser.CreateArchive(mode, new("archive", [
-			new TestDrive
-			{
-				Name = "Drive",
-				Alias = "alias",
-				Folders = [new TestFolder
-				{
-					Name = "Folder",
-					Files = [new TestFile
-					{
-						Name = "file.txt",
-						StorageType = storageType,
-						Modified = MockParser.FixedTime,
-						FileContent = content
-					}]
+		string contents = "This is a small file contents.";
+		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias",
+                Files = [new TestFile {
+					Name = "file1.txt",
+					FileContent = contents
 				}]
-			}
-		], [new TestDrive
-		{
-			Name = "Drive",
-			Alias = "alias",
-			Folders = [new TestFolder
-			{
-				Name = "Folder",
-				Files = expectedFiles
-			}]
-		}]));
+            }
+        ], [
+			new TestDrive
+            {
+                Name = "Drive",
+                Alias = "alias"
+            }
+		]));
 
-		var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
-		var folder = Assert.IsType<SgaFolder>(drive.Contents.Single());
-		var file = Assert.IsType<SgaFile>(folder.Contents.Single());
-		return (archive, file);
+        var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+        var file = Assert.IsType<SgaFile>(drive.Contents.Single());
+
+		file.Delete();
+
+		Assert.Empty(drive.Contents);
+		Assert.Null(file.Parent);
+		Assert.Null(file.Drive);
+		Assert.Throws<ObjectDisposedException>(() => file.Name);
+		Assert.Throws<ObjectDisposedException>(() => file.Path);
+		Assert.Throws<ObjectDisposedException>(() => file.StorageType);
+		Assert.Throws<ObjectDisposedException>(() => file.Size);
+		Assert.Throws<ObjectDisposedException>(() => file.CompressedSize);
+		Assert.Throws<ObjectDisposedException>(() => file.Modified);
+		Assert.Throws<ObjectDisposedException>(() => file.Crc);
+		Assert.Throws<ObjectDisposedException>(() => file.Open());
+		Assert.Throws<ObjectDisposedException>(() => file.Delete());
 	}
 }
-
