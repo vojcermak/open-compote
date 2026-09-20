@@ -13,7 +13,7 @@ public class SgaArchive: IDisposable
     private bool _isDisposed;
     private readonly bool _leaveOpen;
     private readonly ISgaParser _parser;
-
+    private readonly SgaMode _mode;
     internal string _archiveName;
     internal readonly Stream _archiveStream;
     internal readonly List<SgaDrive> _drives;
@@ -22,12 +22,26 @@ public class SgaArchive: IDisposable
     /// <summary>
     /// Gets the Mode in which the archive was opened.
     /// </summary>
-    public SgaMode Mode {get;}
+    public SgaMode Mode
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _mode;
+        }
+    }
     
     /// <summary>
     /// Gets the version of the SGA archive.
     /// </summary>
-    public SgaVersion Version {get;}
+    public SgaVersion Version
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return field;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the name of the SGA archive.
@@ -44,7 +58,7 @@ public class SgaArchive: IDisposable
         set
         {
             ThrowIfDisposed();
-            if(Mode == SgaMode.Read)
+            if(_mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
             _archiveName = value;
         }
@@ -61,9 +75,6 @@ public class SgaArchive: IDisposable
             return _driveCollection;
         }
     }
-
-    /// <exclude />
-    internal int BlockSize {get; set;}
 
     /// <summary>
     /// Initializes new instance of SgaArchive on the given empty stream in the specific mode, using specific SGA version, specifying whether to leave the stream open. 
@@ -89,7 +100,7 @@ public class SgaArchive: IDisposable
         _archiveStream = stream;
         _parser = parser;
         _timeProvider = timeProvider ?? TimeProvider.System;
-        Mode = mode;
+        _mode = mode;
         _archiveName = "";
         _isDisposed = false;
         _leaveOpen = leaveOpen;
@@ -113,7 +124,7 @@ public class SgaArchive: IDisposable
     public SgaDrive AddDrive(string alias, string name)
     {
         ThrowIfDisposed();
-        if(Mode == SgaMode.Read)
+        if(_mode == SgaMode.Read)
             throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
         
         string trimmedAlias = SgaNameValidator.ValidateDriveName(alias);
@@ -158,7 +169,7 @@ public class SgaArchive: IDisposable
 
         try
         {
-            switch (Mode)
+            switch (_mode)
             {
                 case SgaMode.Read:
                     break;

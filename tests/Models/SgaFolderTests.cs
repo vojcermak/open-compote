@@ -114,6 +114,8 @@ public class SgaFolderTests
         var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
         var folder = Assert.IsType<SgaFolder>(drive.Contents.Single());
 
+        archive.Dispose();
+
         Assert.Throws<ObjectDisposedException>(() => folder.Contents);
         Assert.Throws<ObjectDisposedException>(() => folder.AddFolder("SubFolder"));
         Assert.Throws<ObjectDisposedException>(() => folder.AddFile("file1.txt", StorageType.Uncompress));
@@ -144,7 +146,7 @@ public class SgaFolderTests
             }
         ]));
 
-        var drive = Assert.IsType<SgaFolder>(archive.GetDrive("Drive"));
+        var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
         var parent = Assert.IsType<SgaFolder>(drive.Contents.Single());
         Assert.Empty(parent.Contents);
 
@@ -152,7 +154,7 @@ public class SgaFolderTests
 
         Assert.NotNull(subfolder);
         Assert.Equal("SubFolder", subfolder.Name);
-        Assert.Equal("Parent\\SubFolder", subfolder.Path);
+        Assert.Equal("DRIVE:\\Parent\\SubFolder", subfolder.Path);
         Assert.Same(parent, subfolder.Parent);
         Assert.Single(parent.Contents);
         Assert.IsType<SgaFolder>(parent.Contents.Single());
@@ -226,7 +228,7 @@ public class SgaFolderTests
 
         Assert.NotNull(file);
         Assert.Equal("test.txt", file.Name);
-        Assert.Equal("Folder\\test.txt", file.Path);
+        Assert.Equal("DRIVE:\\Folder\\test.txt", file.Path);
         Assert.Same(folder, file.Parent);
         Assert.Same(drive, file.Drive);
         Assert.Single(folder.Contents);
@@ -239,7 +241,7 @@ public class SgaFolderTests
     [InlineData("", StorageType.Uncompress, typeof(ArgumentException))]
     [InlineData("file.txt", StorageType.Uncompress, typeof(ArgumentException))]
     [InlineData(" File.txt ", StorageType.Uncompress, typeof(ArgumentException))]
-    [InlineData("newFile.txt", null, typeof(ArgumentOutOfRangeException))]
+    [InlineData("newFile.txt", null, typeof(InvalidOperationException))]
     [InlineData("newFile.txt", (StorageType)69, typeof(ArgumentOutOfRangeException))]
     public void Folder_AddFile_ThrowsOnDuplicateName(string? newName, StorageType? type, Type exception)
     {

@@ -43,7 +43,7 @@ public class SgaFolder: SgaEntry
     public SgaFolder AddFolder(string name)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
-        if(Drive!.Archive!.Mode == SgaMode.Read)
+        if(Drive!.Archive.Mode == SgaMode.Read)
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
         string trimmedName = SgaNameValidator.ValidateEntryName(name);
@@ -70,7 +70,7 @@ public class SgaFolder: SgaEntry
     public SgaFile AddFile(string name, StorageType type)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
-        if(Drive!.Archive!.Mode == SgaMode.Read)
+        if(Drive!.Archive.Mode == SgaMode.Read)
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
         if (!Enum.IsDefined(type))
@@ -92,10 +92,9 @@ public class SgaFolder: SgaEntry
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         // Normalize separators and remove leading/trailing ones.
-        path = path.Replace('\\', '/').Trim('/');
+        path = path.Replace('\\', '/').Trim().Trim('/');
 
-        if (string.IsNullOrEmpty(path))
-            return this;
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         string[] parts = path.Split(
             '/',
@@ -126,16 +125,22 @@ public class SgaFolder: SgaEntry
     {
         ThrowIfDeleted();
 
-        if(Drive!.Archive!.Mode == SgaMode.Read)
+        if(Drive!.Archive.Mode == SgaMode.Read)
             throw new InvalidOperationException("Deleting is not supported in this mode.");
 
         foreach (var item in _entries.Values)
         {
             item.Delete(true);
         }
-        
-        if(!subDelete)
-            Parent?._entries.Remove(_name);
+
+        if (!subDelete)
+        {
+            // if the folder is in subFolder remove it from the parent, if is not remove it from drive.
+            if(Parent != null)
+                Parent._entries.Remove(_name);
+            else
+                Drive._entries.Remove(_name);
+        }
         
         Parent = null;
         Drive = null;   

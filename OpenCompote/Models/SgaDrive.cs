@@ -9,6 +9,7 @@ public class SgaDrive
 {
     private string _alias;
     private string _name;
+    private SgaArchive? _archive;
     internal readonly Dictionary<string, SgaEntry> _entries;
     private readonly IReadOnlyCollection<SgaEntry> _contentCollection;
     
@@ -27,7 +28,7 @@ public class SgaDrive
         set
         {
             ThrowIfDeleted();
-            if(Archive!.Mode == SgaMode.Read)
+            if(_archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
 
             string trimmedName = SgaNameValidator.ValidateDriveName(value);
@@ -50,7 +51,7 @@ public class SgaDrive
         set
         {
             ThrowIfDeleted();
-            if(Archive!.Mode == SgaMode.Read)
+            if(_archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
 
             string trimmedName = SgaNameValidator.ValidateDriveName(value);
@@ -73,13 +74,20 @@ public class SgaDrive
     /// Gets the SGA archive that the drive belongs to.
     /// </summary>
     /// <remarks>This property is <see langword="null"/> when this drive is deleted.</remarks>
-    public SgaArchive? Archive {get; private set;}
+    public SgaArchive Archive
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _archive!;
+        }
+    }
 
     internal SgaDrive(string alias, string name, SgaArchive archive)
     {
         _alias = alias;
         _name = name;
-        Archive = archive;
+        _archive = archive;
         _entries = new Dictionary<string, SgaEntry>(StringComparer.OrdinalIgnoreCase);
         _contentCollection = _entries.Values;
     }
@@ -87,7 +95,7 @@ public class SgaDrive
     public SgaFolder AddFolder(string name)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
-        if(Archive!.Mode == SgaMode.Read)
+        if(_archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
         string trimmedName = SgaNameValidator.ValidateEntryName(name);
@@ -103,7 +111,7 @@ public class SgaDrive
     public SgaFile AddFile(string name, StorageType type)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
-        if(Archive!.Mode == SgaMode.Read)
+        if(_archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Writing is not supported in this mode.");
 
         if (!Enum.IsDefined(type))
@@ -131,28 +139,25 @@ public class SgaDrive
     /// </remarks>
     public void Delete()
     {
-        if(Archive == null)
-            return;
+        ThrowIfDeleted();
 
-        if(Archive.Mode == SgaMode.Read)
+        if(_archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Cannot delete from an archive opened in read-only mode.");
 
-        Archive.ThrowIfDisposed();
-
-        Archive._drives.Remove(this);
+        _archive._drives.Remove(this);
         
         foreach(var item in _contentCollection)
         {
             item.Delete();
         }
 
-        Archive = null;
+        _archive = null;
     }
 
     private void ThrowIfDeleted()
     {
-        ObjectDisposedException.ThrowIf(Archive == null, this);
-        Archive.ThrowIfDisposed();
+        ObjectDisposedException.ThrowIf(_archive == null, this);
+        _archive.ThrowIfDisposed();
     }
 
     // ------------------------ Extending functions ------------------------
@@ -167,7 +172,9 @@ public class SgaDrive
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         // Normalize separators and remove leading/trailing ones.
-        path = path.Replace('\\', '/').Trim('/');
+        path = path.Replace('\\', '/').Trim().Trim('/');
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
         string[] parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
@@ -182,7 +189,7 @@ public class SgaDrive
 
 
         SgaFolder current = firstFolder;
-        for (int i = 0; i < parts.Length; i++)
+        for (int i = 1; i < parts.Length; i++)
         {
             string part = parts[i];
 

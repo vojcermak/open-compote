@@ -84,7 +84,7 @@ public class SgaDriveTests
 
 		Assert.NotNull(folder);
         Assert.Equal("Folder", folder.Name);
-        Assert.Equal("Folder", folder.Path);
+        Assert.Equal("DRIVE:\\Folder", folder.Path);
         Assert.Null(folder.Parent);
         Assert.Single(drive.Contents);
         Assert.IsType<SgaFolder>(drive.Contents.Single());
@@ -130,16 +130,16 @@ public class SgaDriveTests
             new TestDrive{
                 Alias = "alias",
                 Name = "Drive",
-                Files = [new TestFile { Name = "Folder" }]
+                Files = [new TestFile { Name = "newFile.txt" }]
             }
         ]));
 
         var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
-        var file = drive.AddFile("Folder", StorageType.Uncompress);
+        var file = drive.AddFile("newFile.txt", StorageType.Uncompress);
 
         Assert.NotNull(file);
-        Assert.Equal("test.txt", file.Name);
-        Assert.Equal("test.txt", file.Path);
+        Assert.Equal("newFile.txt", file.Name);
+        Assert.Equal("DRIVE:\\newFile.txt", file.Path);
         Assert.Null(file.Parent);
         Assert.Same(drive, file.Drive);
         Assert.Single(drive.Contents);
@@ -152,7 +152,7 @@ public class SgaDriveTests
     [InlineData("", StorageType.Uncompress, typeof(ArgumentException))]
     [InlineData("file.txt", StorageType.Uncompress, typeof(ArgumentException))]
     [InlineData(" File.txt ", StorageType.Uncompress, typeof(ArgumentException))]
-    [InlineData("newFile.txt", null, typeof(ArgumentOutOfRangeException))]
+    [InlineData("newFile.txt", null, typeof(InvalidOperationException))]
     [InlineData("newFile.txt", (StorageType)69, typeof(ArgumentOutOfRangeException))]
 	public void Drive_AddFile_RejectsInvalidOrDuplicateNames(string? name, StorageType? type, Type exception)
 	{
@@ -197,7 +197,7 @@ public class SgaDriveTests
 		drive.Delete();
 
 		Assert.Empty(archive.Drives);
-		Assert.Null(drive.Archive);
+		Assert.Throws<ObjectDisposedException>(() => drive.Archive);
         Assert.Throws<ObjectDisposedException>(() => drive.Name);
         Assert.Throws<ObjectDisposedException>(() => drive.Alias);
 		Assert.Throws<ObjectDisposedException>(() => drive.Contents);

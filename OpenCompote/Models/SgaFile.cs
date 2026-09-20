@@ -34,7 +34,7 @@ public class SgaFile: SgaEntry
         set
         {
             ThrowIfDeleted();
-            if(Drive!.Archive!.Mode == SgaMode.Read)
+            if(Drive!.Archive.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Writing is not supported.");
             if(_isOpen)
                 throw new IOException("Cannot change Storage type when file is open.");
@@ -99,7 +99,7 @@ public class SgaFile: SgaEntry
         set
         {
             ThrowIfDeleted();
-            if(Drive!.Archive!.Mode == SgaMode.Read)
+            if(Drive!.Archive.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Writing is not supported.");
             _modified = value;
         }
@@ -164,7 +164,7 @@ public class SgaFile: SgaEntry
     {   
         ThrowIfDeleted();
 
-        switch (Drive!.Archive!.Mode)
+        switch (Drive!.Archive.Mode)
         {
             case SgaMode.Read:
                 return OpenReadOnly();
@@ -179,7 +179,7 @@ public class SgaFile: SgaEntry
     internal Stream GetResultStream()
     {
         if(_isInStream && _fileContents == null)
-            return new ReadSubStream(Drive!.Archive!._archiveStream, _dataOffset, CompressedSize);
+            return new ReadSubStream(Drive!.Archive._archiveStream, _dataOffset, CompressedSize);
             
         return _fileContents!;    
     }
@@ -188,7 +188,7 @@ public class SgaFile: SgaEntry
     {
         ThrowIfDeleted();
         
-        if(Drive!.Archive!.Mode == SgaMode.Read)
+        if(Drive!.Archive.Mode == SgaMode.Read)
             throw new InvalidOperationException("Deleting is not supported in this mode.");
         if(_isOpen)
             throw new IOException("Open file cannot be deleted.");
