@@ -80,7 +80,7 @@ public class SgaEntryTests
             Alias = "alias",
             Name = "Drive",
             Folders = [
-                new TestFolder{Name = "First",},
+                new TestFolder{Name = "First"},
                 new TestFolder{Name = "Second"}
             ]
         }], [

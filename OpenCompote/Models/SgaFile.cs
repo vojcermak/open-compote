@@ -14,6 +14,8 @@ public class SgaFile: SgaEntry
     private Stream? _fileContents;
     private bool _isOpen;
     private StorageType _storageType;
+    private uint _size;
+    private uint _compressedSize;
     private DateTimeOffset? _modified;
     private uint? _crc;
 
@@ -35,7 +37,9 @@ public class SgaFile: SgaEntry
             if(Drive!.Archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Writing is not supported.");
             if(_isOpen)
-                throw new InvalidOperationException("Cannot change Storage type when file is open.");
+                throw new IOException("Cannot change Storage type when file is open.");
+            if(!Enum.IsDefined(value))
+                throw new ArgumentOutOfRangeException(nameof(value));
             if(_storageType == value)
                 return;
 
@@ -50,7 +54,7 @@ public class SgaFile: SgaEntry
                 _fileContents = CompressFileContents();
             }
 
-            CompressedSize = (uint)_fileContents!.Length;
+            _compressedSize = (uint)_fileContents!.Length;
             _storageType = value;
         }
     }
@@ -58,12 +62,26 @@ public class SgaFile: SgaEntry
     /// <summary>
     /// Gets the compressed size in bytes, of the file in the archive.
     /// </summary>
-    public uint CompressedSize {get; private set;}
+    public uint CompressedSize
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _compressedSize;
+        }
+    }
 
     /// <summary>
     /// Gets the uncompressed size in bytes, of the file in the archive.
     /// </summary>
-    public uint Size {get; private set;}
+    public uint Size
+    {
+        get
+        {
+            ThrowIfDeleted();
+            return _size;
+        }
+    }
      
     /// <summary>
     /// Gets or sets the last write time of the file in the archive. When setting this property, the DateTime will be converted to the 32-bit unix timestamp format.
@@ -126,8 +144,8 @@ public class SgaFile: SgaEntry
         _dataOffset = dataOffset;
         _name = name;
         _storageType = type;
-        CompressedSize = compressedSize;
-        Size = size;
+        _compressedSize = compressedSize;
+        _size = size;
         Drive = drive;
         Parent = parent;
         _modified = modified;
@@ -172,9 +190,17 @@ public class SgaFile: SgaEntry
         
         if(Drive!.Archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Deleting is not supported in this mode.");
-        
-        if(!subDelete)
-            Parent!._entries.Remove(_name);
+        if(_isOpen)
+            throw new IOException("Open file cannot be deleted.");
+
+        if (!subDelete)
+        {
+            // The filed could either in a parent folder or in a drive, so wee need to remove it from the correct parent. 
+            if(Parent != null)
+                Parent!._entries.Remove(_name);
+            else
+                Drive._entries.Remove(_name);
+        }
 
         Parent = null;
         Drive = null;
@@ -265,13 +291,13 @@ public class SgaFile: SgaEntry
 
         return new WrapperStream(_fileContents, () =>
         {
-            Size = (uint)_fileContents.Length;
+            _size = (uint)_fileContents.Length;
             _crc = CalculateCrc();
 
             if(StorageType != StorageType.Uncompress)
                 _fileContents = CompressFileContents();
 
-            CompressedSize = (uint)_fileContents.Length;
+            _compressedSize = (uint)_fileContents.Length;
             _isOpen = false;
             _modified = Drive!.Archive!._timeProvider.GetLocalNow();
         });

@@ -11,13 +11,7 @@ public class SgaFileTests
             {
                 Name = "Drive",
                 Alias = "alias",
-                Folders = [
-                    new TestFolder
-                    {
-                        Name = "Folder",
-                        Files = [new TestFile {Name = "file1.txt"}]
-                    }
-                ]
+                Files = [new TestFile {Name = "file1.txt"}]
             }
         ], []));
 
@@ -37,22 +31,18 @@ public class SgaFileTests
             {
                 Name = "Drive",
                 Alias = "alias",
-                Folders = [
-                    new TestFolder
-                    {
-                        Name = "Folder",
-                        Files = [new TestFile {Name = "file1.txt"}]
-                    }
-                ]
+                Files = [new TestFile {Name = "file1.txt"}]
             }
         ], []));
 
         var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
         var file = Assert.IsType<SgaFile>(drive.Contents.Single());
 
+		archive.Dispose();
+
         Assert.Throws<ObjectDisposedException>(() => file.StorageType);
-        Assert.Throws<ObjectDisposedException>(() => file.CompressedSize);
         Assert.Throws<ObjectDisposedException>(() => file.Size);
+        Assert.Throws<ObjectDisposedException>(() => file.CompressedSize);
         Assert.Throws<ObjectDisposedException>(() => file.Modified);
         Assert.Throws<ObjectDisposedException>(() => file.Crc);
         Assert.Throws<ObjectDisposedException>(file.Open);
@@ -237,7 +227,7 @@ public class SgaFileTests
             {
                 Name = "Drive",
                 Alias = "alias",
-                Files = [new TestFile {Name = "file1.txt"}]
+                Files = [new TestFile {Name = "file1.txt", FileContent = contents}]
             }
         ], [
 			new TestDrive
@@ -254,8 +244,8 @@ public class SgaFileTests
 		using var stream = file.Open();
 
 		Assert.Throws<IOException>(() => file.Open());
-		Assert.Throws<IOException>(() => file.Delete());
 		Assert.Throws<IOException>(() => file.StorageType = StorageType.StreamCompress);
+		Assert.Throws<IOException>(() => file.Delete());
 	}
 
     // ==================== ExtractToFile Tests ====================
@@ -282,7 +272,7 @@ public class SgaFileTests
 		{
 			file.ExtractToFile(destination);
 
-			Assert.Equal(contents, File.ReadAllText(Path.Combine(destination, "file.txt")));
+			Assert.Equal(contents, File.ReadAllText(Path.Combine(destination, file.Name)));
 		}
 		finally
 		{
@@ -312,7 +302,7 @@ public class SgaFileTests
 		try
 		{
 			Directory.CreateDirectory(destination);
-			File.WriteAllText(Path.Combine(destination, "file.txt"), "old content");
+			File.WriteAllText(Path.Combine(destination, file.Name), "old content");
 
 			Assert.Throws<IOException>(() => file.ExtractToFile(destination));
 		}

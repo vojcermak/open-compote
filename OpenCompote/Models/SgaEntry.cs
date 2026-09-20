@@ -36,13 +36,20 @@ public abstract class SgaEntry
             if(trimmedName.Equals(_name, StringComparison.OrdinalIgnoreCase))
                 return;
 
-            // If this is not a root folder we also need to update the parent Dictionary.
+            // When this entry is in subFolder, update the parent. Else update the drive.
             if(Parent != null)
             {
                 if(!Parent._entries.TryAdd(trimmedName,this))
                     throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
 
                 Parent._entries.Remove(_name);
+            }
+            else
+            {
+                if(!Drive._entries.TryAdd(trimmedName,this))
+                    throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+
+                Drive._entries.Remove(_name);
             }
 
             // Set the new value.
