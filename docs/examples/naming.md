@@ -11,8 +11,6 @@ Getting up the tree is not allowed. so things like GetEntry("..\other\folder\fil
 
 On Archive level you can call GetEntry(`Drive:folder\folder\file.txt`)
 
-Root folder will be removed from the tree and incorporated into the drives.
-
 ## File/Folder naming restrictions
 Open compote enforces this set of rules for sga folder and file names to allow easy export of files and folders on both windows and linux. The rules are:
 

@@ -147,16 +147,36 @@ public class SgaArchive: IDisposable
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(driveName);
 
-        return _drives.FirstOrDefault((drive)=>{return drive.Name == driveName || drive.Alias == driveName;});
+        return _drives.FirstOrDefault((drive) => { return drive.Name.Equals(driveName, StringComparison.OrdinalIgnoreCase) || drive.Alias.Equals(driveName, StringComparison.OrdinalIgnoreCase); });
     }
 
     /// <summary>
     /// NOT IMPLEMENTED! DO NOT USE
     /// </summary>
     /// <exclude />
-    internal SgaEntry GetEntry(string entryName)
+    internal SgaEntry? GetEntry(string path)
     {
-        throw new NotImplementedException();
+        ThrowIfDisposed(); // Test if the folder is deleted.
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        // Normalize separators and remove leading/trailing ones.
+        path = path.Replace('\\', '/').Trim();
+        
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        
+        int x = path.IndexOf(":/");
+        if(x <= 0)
+            throw new ArgumentException("Path does not contain any drive name.");
+
+        string archiveName = path[..x];
+        string archivePath = path[(x+2)..];
+
+        SgaDrive? selectedDrive = GetDrive(archiveName);
+
+        if(selectedDrive == null || archivePath == "")
+            return null;
+
+        return selectedDrive.GetEntry(archivePath);
     }
 
     /// <summary>
