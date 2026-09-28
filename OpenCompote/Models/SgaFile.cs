@@ -23,7 +23,9 @@ public class SgaFile: SgaEntry
     /// Gets or sets the file's storage type.
     /// </summary>
     /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
-    /// <exception cref="InvalidOperationException">The archive is opened in read-only mode or the file is currently open."</exception>
+    /// <exception cref="InvalidOperationException">The archive is opened in read-only mode.</exception>
+    /// <exception cref="IOException">The entry is currently open for writing and storage type cannot be changed.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The new value is not a valid option for StorageType.</exception>
     public StorageType StorageType
     {
         get
@@ -62,6 +64,7 @@ public class SgaFile: SgaEntry
     /// <summary>
     /// Gets the compressed size in bytes, of the file in the archive.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">This file was deleted or the parent archive has been disposed.</exception>
     public uint CompressedSize
     {
         get
@@ -74,6 +77,7 @@ public class SgaFile: SgaEntry
     /// <summary>
     /// Gets the uncompressed size in bytes, of the file in the archive.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">This file was deleted or the parent archive has been disposed.</exception>
     public uint Size
     {
         get
@@ -109,7 +113,7 @@ public class SgaFile: SgaEntry
     /// Get the CRC(Cyclic redundant check) of the opened file. Only loaded when present in the archive. If the crc in newly open archive this property will be <see langword="null"/>.
     /// CRC is automatically calculated for sga versions which are using CRCs. CRCs are not automatically check when file is opened, but you can check the your self by opening the file.
     /// </summary>
-    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
+    /// <exception cref="ObjectDisposedException">This file was deleted or the parent archive has been disposed.</exception>
     public uint? Crc
     {
         get

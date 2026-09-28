@@ -58,8 +58,9 @@ public abstract class SgaEntry
     }
 
     /// <summary>
-    /// Gets the relative path of the entry in the SGA drive.
+    /// Gets the fully qualified path of the entry in the SGA drive.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed, or this entry is deleted.</exception>
     public string Path
     {
         get
@@ -84,7 +85,7 @@ public abstract class SgaEntry
     }
 
     /// <summary>
-    /// Gets the parent drive of this entry.
+    /// Gets the parent folder of this entry or <see langword="null"/> if entry is directly inside a drive or the entry is deleted.
     /// </summary>
     public SgaFolder? Parent {get; internal set;}
 
@@ -99,7 +100,11 @@ public abstract class SgaEntry
     /// Deletes the entry and all its sub entries from the archive.
     /// </summary>
     /// <exception cref="InvalidOperationException">The parent <see cref="SgaArchive"/> for this entry was opened in readonly mode.</exception>
-    /// <exception cref="ObjectDisposedException">The parent <see cref="SgaArchive"/> for this entry was already closed.</exception>
+    /// <exception cref="ObjectDisposedException">The parent <see cref="SgaArchive"/> for this entry was already closed or current entry is already deleted.</exception>
+    /// <exception cref="IOException">
+    /// If current entry is <see cref="SgaFile"/> then this file is currently open for editing and cannot be deleted or 
+    /// if current entry is <see cref="SgaFolder"/> then this folder contains one or more opened files.
+    /// </exception>
     public void Delete()
     {
         Delete(false);

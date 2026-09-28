@@ -29,7 +29,7 @@ SgaEntry? entry = archive.GetEntry(@"DATA:\sound\vehicles\british\uk_aec_mkiii_a
 SgaEntry? sameEntry = archive.GetEntry(entry!.Path);
 ```
 
-### Drive-level lookup
+### Drive level
 
 `GetEntry` on an `SgaDrive` is used to get specific entry with a path relative to that drive's root. Do not include the drive name or alias.
 
@@ -38,7 +38,7 @@ SgaEntry? entry = dataDrive.GetEntry(@"sound\vehicles\british\uk_aec_mkiii_armou
 ```
 > Relative paths are only relative to the select drive and folder and supports getting child entries only. `.` and `..` are not navigation components, so they cannot be used to refer to the current or a parent folder.
 
-### Folder-level lookup
+### Folder level
 
 `GetEntry` on an `SgaFolder` is used to get specific entry with a path relative to that folder. The path can name a direct child or continue through child folders.
 

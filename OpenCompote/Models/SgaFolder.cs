@@ -11,6 +11,7 @@ public class SgaFolder: SgaEntry
     /// <summary>
     /// Gets the collection of entries that are currently in the current folder.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">This folder was deleted or the parent archive has been disposed.</exception>
     public IReadOnlyCollection<SgaEntry> Contents
     {
         get {
@@ -66,7 +67,7 @@ public class SgaFolder: SgaEntry
     /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed, or this folder is deleted.</exception>
     /// <exception cref="ArgumentException">The <paramref name="name"/> is not a valid sga file name, or entry with this name already exists in this folder.</exception>
     /// <exception cref="ArgumentNullException">The <paramref name="name"/> is <see langword="null"/>.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">The <paramref name="type"/> is <see langword="null"/> or invalid.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The <paramref name="type"/> is invalid.</exception>
     public SgaFile AddFile(string name, StorageType type)
     {
         ThrowIfDeleted(); // Test if this folder was deleted.
@@ -86,6 +87,13 @@ public class SgaFolder: SgaEntry
         return newFile;
     }
 
+    /// <summary>
+    /// Finds an existing entry inside of this folder by its relative path or <see langword="null"/> when an entry for selected path did not exist.
+    /// </summary>
+    /// <param name="path">Relative path to the entry.</param>
+    /// <returns>Found sgaEntry or null when entry with <paramref name="path"/> does not exist.</returns>
+    /// <exception cref="ObjectDisposedException">This folder is deleted or the archive is disposed.</exception>
+    /// <exception cref="ArgumentException">Requested path is empty.</exception>
     public SgaEntry? GetEntry(string path)
     {
         ThrowIfDeleted(); // Test if the folder is deleted.
