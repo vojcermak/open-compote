@@ -14,7 +14,7 @@ public class SgaDrive
     private readonly IReadOnlyCollection<SgaEntry> _contentCollection;
     
     /// <summary>
-    /// Gets or sets the alias of the drive.
+    /// Gets or sets the alias of the drive. Alias must be 64 characters long or shorter. Longer input will be trimmed to 64 characters. Alias can be an empty string.
     /// </summary>
     /// <exception cref="InvalidOperationException">Setter throws this exception when the parent archive was opened in read-only mode.</exception>
     /// <exception cref="ObjectDisposedException">The parent archive was already closed.</exception>
@@ -31,15 +31,16 @@ public class SgaDrive
             if(_archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
 
-            string trimmedName = SgaNameValidator.ValidateDriveName(value);
-            _alias = trimmedName;
+            _alias = SgaNameValidator.TrimDriveName(value);
         }
     }
 
     /// <summary>
-    /// Gets or sets the name of the drive.
+    /// Gets or sets the name of the drive. Name must contain only valid characters and must be 64 characters long or shorter.
+    /// Longer names are trimmed to 64 characters.
     /// </summary>
     /// <exception cref="InvalidOperationException">Setter throws this exception when the parent archive was opened in read-only mode.</exception>
+    /// <exception cref="ArgumentException">Setter throws this exception when the new name is not valid drive name.</exception>
     /// <exception cref="ObjectDisposedException">The parent archive was already closed.</exception>
     public string Name
     {
@@ -54,7 +55,19 @@ public class SgaDrive
             if(_archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
 
-            string trimmedName = SgaNameValidator.ValidateDriveName(value);
+            string validName = SgaNameValidator.ValidateEntryName(value);
+            string trimmedName = SgaNameValidator.TrimDriveName(validName);
+
+            // Quick exit when the name did not changed.
+            if(trimmedName.Equals(_name, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // try adding the new value. If the name already exists throw an exception.
+            if(!Archive._drives.TryAdd(trimmedName,this))
+                    throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+
+            // If the new name does not exists remove the old name and changed the drive name to the new value.
+            Archive._drives.Remove(_name);
             _name = trimmedName;
         }
     }
@@ -144,7 +157,7 @@ public class SgaDrive
         if(_archive!.Mode == SgaMode.Read)
             throw new InvalidOperationException("Cannot delete from an archive opened in read-only mode.");
 
-        _archive._drives.Remove(this);
+        _archive._drives.Remove(Name);
         
         foreach(var item in _contentCollection)
         {

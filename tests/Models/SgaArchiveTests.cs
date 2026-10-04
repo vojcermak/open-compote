@@ -67,30 +67,34 @@ public class SgaArchiveTests
 	public void Archive_AddDrive_AddsDriveWithNormalizedNames()
 	{
 		using var archive = MockParser.CreateArchive(SgaMode.Create, new("archive", [], [
-			new TestDrive { Alias = "alias", Name = "Drive" }
+			new TestDrive { Alias = " alias ", Name = "Drive" }
 		]));
 
 		var drive = archive.AddDrive(" alias ", " Drive ");
 
 		Assert.Single(archive.Drives);
-		Assert.Same(drive, archive.Drives[0]);
-		Assert.Equal("alias", drive.Alias);
+		Assert.Same(drive, archive.Drives.Single());
+		Assert.Equal(" alias ", drive.Alias);
 		Assert.Equal("Drive", drive.Name);
 		Assert.Same(archive, drive.Archive);
 		Assert.Empty(drive.Contents);
 	}
 
 	[Theory]
-	[InlineData(null, "Drive", typeof(ArgumentNullException))]
 	[InlineData("alias", null, typeof(ArgumentNullException))]
-	[InlineData("", "Drive", typeof(ArgumentException))]
 	[InlineData("alias", "", typeof(ArgumentException))]
+	[InlineData("", "ExistingDrive", typeof(ArgumentException))]
+	[InlineData("", "existingdrive", typeof(ArgumentException))]
 	public void Archive_AddDrive_RejectsInvalidNames(string? alias, string? name, Type exception)
 	{
-		using var archive = MockParser.CreateArchive(SgaMode.Create, new("archive", [], []));
+		using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+			new TestDrive{Name = "ExistingDrive", Alias = ""}
+		], [
+			new TestDrive{Name = "ExistingDrive", Alias = ""}
+		]));
 
 		Assert.Throws(exception, () => archive.AddDrive(alias!, name!));
-		Assert.Empty(archive.Drives);
+		Assert.Single(archive.Drives);
 	}
 
     // ==================== GetDrive Tests ====================
@@ -122,16 +126,21 @@ public class SgaArchiveTests
     [InlineData("Drive:/subfolder", typeof(SgaFolder), "subfolder")]              //Get direct child folder
     [InlineData("drive:/file.txt", typeof(SgaFile), "file.txt"),]                 //Get direct child file
     [InlineData("DRIVE:/subfolder/folder1", typeof(SgaFolder), "folder1")]        //Get nested folder
-    [InlineData("FIRST_DRIVE:/subfolder/file2.txt", typeof(SgaFile), "file2.txt")]//Get nested file
+    [InlineData("DRIVE:/subfolder/file2.txt", typeof(SgaFile), "file2.txt")]      //Get nested file
     [InlineData("DRIVE:/nonexistingFile", null)]                                  //Get nonexisting entry
     [InlineData("DRIVE:/subfolder/noFile.txt", null)]                             //Get nonexisting nested entry
     [InlineData("DRIVE:\\subfolder\\file2.txt", typeof(SgaFile), "file2.txt")]    //Get sub file with wrong separators
     [InlineData("alias:/subfolder", null)]                                        //Get the child of an empty drive
     [InlineData("Attr:/subfolder", null)]                                         //Get a child from nonexistent drive
     [InlineData("Drive:/", null)]                                                 //Get the drive instead of an entry
+	[InlineData("FIRST_DRIVE:/subfolder/file2.txt", null)]                        //Get the entry with drive alias
 	public void Drive_GetEntry_FindsExistingEntry(string path, Type? OutputType, string expectedName = "")
 	{
 		using var archive = MockParser.CreateArchive(SgaMode.Read, new("archive", [
+			new TestDrive{
+                Alias = "Drive",
+                Name = "alias"
+            },
 			new TestDrive
 			{
 				Alias = "FIRST_DRIVE",
@@ -142,11 +151,7 @@ public class SgaArchiveTests
                     Folders = [new TestFolder { Name = "folder1"}] 
                 }],
                 Files = [new TestFile { Name = "file.txt" }]
-			},
-            new TestDrive{
-                Alias = "Drive",
-                Name = "alias"
-            }
+			}
 		], []));
 
         var result = archive.GetEntry(path);

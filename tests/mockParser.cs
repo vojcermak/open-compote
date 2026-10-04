@@ -37,7 +37,7 @@ public class MockParser : ISgaParser
         foreach(var testDrive in _drives)
         {
             var newDrive = new SgaDrive(testDrive.Alias, testDrive.Name, archive);
-            archive._drives.Add(newDrive);
+            archive._drives.Add(testDrive.Name, newDrive);
 
             ParseTree(testDrive.Folders, testDrive.Files, newDrive, null);
         }
@@ -48,7 +48,7 @@ public class MockParser : ISgaParser
         Assert.Equal(_expectedTree.Count, archive.Drives.Count);
         
         for (int i = 0; i < archive.Drives.Count; i++){
-            Assert_Drive(_expectedTree[i], archive.Drives[i], archive);
+            Assert_Drive(_expectedTree[i], archive._drives[_expectedTree[i].Name], archive);
         }
     }
 

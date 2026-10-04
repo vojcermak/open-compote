@@ -9,14 +9,14 @@ namespace OpenCompote.SGA;
 /// </summary>
 public class SgaArchive: IDisposable
 {
-    private readonly ReadOnlyCollection<SgaDrive> _driveCollection;
+    internal readonly Dictionary<string, SgaDrive> _drives;
+    private readonly IReadOnlyCollection<SgaDrive> _driveCollection;
     private bool _isDisposed;
     private readonly bool _leaveOpen;
     private readonly ISgaParser _parser;
     private readonly SgaMode _mode;
     internal string _archiveName;
     internal readonly Stream _archiveStream;
-    internal readonly List<SgaDrive> _drives;
     internal readonly TimeProvider _timeProvider;
 
     /// <summary>
@@ -65,10 +65,10 @@ public class SgaArchive: IDisposable
     }
 
     /// <summary>
-    /// Gets the list of SGA Drives currently in the archive.
+    /// Gets the collection of SGA Drives currently in the archive.
     /// </summary>
     /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
-    public ReadOnlyCollection<SgaDrive> Drives
+    public IReadOnlyCollection<SgaDrive> Drives
     {
         get {
             ThrowIfDisposed();
@@ -104,8 +104,8 @@ public class SgaArchive: IDisposable
         _archiveName = "";
         _isDisposed = false;
         _leaveOpen = leaveOpen;
-        _drives = new List<SgaDrive>();
-        _driveCollection = new ReadOnlyCollection<SgaDrive>(_drives);
+        _drives = new Dictionary<string, SgaDrive>(StringComparer.OrdinalIgnoreCase);
+        _driveCollection = _drives.Values;
         Version = version;
 
         if(mode != SgaMode.Create)
@@ -127,11 +127,14 @@ public class SgaArchive: IDisposable
         if(_mode == SgaMode.Read)
             throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
         
-        string trimmedAlias = SgaNameValidator.ValidateDriveName(alias);
-        string trimmedName = SgaNameValidator.ValidateEntryName(name);
+        ArgumentNullException.ThrowIfNull(alias);
+
+        string trimmedAlias = SgaNameValidator.TrimDriveName(alias);
+        string validName = SgaNameValidator.ValidateEntryName(name);
+        string trimmedName = SgaNameValidator.TrimDriveName(validName);
 
         SgaDrive newDrive = new(trimmedAlias, trimmedName, this);
-        _drives.Add(newDrive);
+        _drives.Add(trimmedName, newDrive);
         return newDrive;
     }
     
@@ -147,7 +150,7 @@ public class SgaArchive: IDisposable
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(driveName);
 
-        return _drives.FirstOrDefault((drive) => { return drive.Name.Equals(driveName, StringComparison.OrdinalIgnoreCase) || drive.Alias.Equals(driveName, StringComparison.OrdinalIgnoreCase); });
+        return _drives.FirstOrDefault((keyPair) => { return keyPair.Key.Equals(driveName, StringComparison.OrdinalIgnoreCase) || keyPair.Value.Alias.Equals(driveName, StringComparison.OrdinalIgnoreCase); }).Value;
     }
 
     /// <summary>
@@ -168,15 +171,16 @@ public class SgaArchive: IDisposable
         if(x <= 0)
             throw new ArgumentException("Path does not contain any drive name.");
 
-        string archiveName = path[..x];
-        string archivePath = path[(x+2)..];
+        string driveName = path[..x];
+        string entryPath = path[(x+2)..];
 
-        SgaDrive? selectedDrive = GetDrive(archiveName);
-
-        if(selectedDrive == null || archivePath == "")
+        if (!_drives.TryGetValue(driveName, out SgaDrive? selectedDrive))
             return null;
 
-        return selectedDrive.GetEntry(archivePath);
+        if(selectedDrive == null || entryPath == "")
+            return null;
+
+        return selectedDrive.GetEntry(entryPath);
     }
 
     /// <summary>

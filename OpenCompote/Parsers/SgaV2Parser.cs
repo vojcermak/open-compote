@@ -167,7 +167,7 @@ internal class SgaV2Parser : ISgaParser
                 throw new InvalidDataException("Drive RootFolder index is out of range.");
 
             SgaDrive newDrive = new SgaDrive(driveRecord.DriveAlias, driveRecord.DriveName, archive);
-            archive._drives.Add(newDrive);
+            archive._drives.Add(driveRecord.DriveName, newDrive);
 
             Queue<Tuple<FolderRecord, SgaFolder?, bool>> stack = new ();
             stack.Enqueue(new (folderList[driveRecord.RootFolder], null, true));
@@ -259,7 +259,7 @@ internal class SgaV2Parser : ISgaParser
         List<SgaFile> fileList = new List<SgaFile>();
 
         // Traverse drives and append their folder trees
-        foreach (var drive in archive._drives)
+        foreach (var drive in archive.Drives)
         {
             var stack = new Stack<FolderWriterRecord>();
             ushort firstFolder = (ushort)folderList.Count;

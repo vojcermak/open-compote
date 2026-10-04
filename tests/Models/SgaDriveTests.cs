@@ -63,6 +63,26 @@ public class SgaDriveTests
 		Assert.Single(drive.Contents.OfType<SgaFile>());
 	}
 
+	[Theory]
+    [InlineData(null, typeof(ArgumentNullException))]
+    [InlineData("", typeof(ArgumentException))]
+	public void Drive_RenameToInvalidThrowException(string? newName, Type exception)
+	{
+        using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+        new TestDrive {
+            Alias = "alias",
+            Name = "Drive",
+        }], [
+        new TestDrive {
+           Alias = "alias",
+            Name = "Drive",
+        }]));
+
+        SgaDrive drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
+
+		Assert.Throws(exception,() => drive.Name = newName!);
+	}
+
     // ==================== AddFolder Tests ====================
 
 	[Fact]

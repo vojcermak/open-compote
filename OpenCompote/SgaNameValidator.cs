@@ -35,9 +35,8 @@ internal class SgaNameValidator
         return trimmedName;
     }
 
-    public static string ValidateDriveName(string name)
+    public static string TrimDriveName(string name)
     {
-        string trimmedName = ValidateEntryName(name);
-        return  trimmedName.Length <= 64 ? trimmedName : trimmedName[..64];
+        return name.Length <= 64 ? name : name[..64];
     }
 }

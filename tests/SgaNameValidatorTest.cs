@@ -59,21 +59,21 @@ public class SgaNameValidatorTest
     }
 
     [Fact]
-    public void ValidateDriveName_ReturnsNameUnchanged_WhenNameIsAtMost64Characters()
+    public void TrimDriveName_ReturnsNameUnchanged_WhenNameIsAtMost64Characters()
     {
         const string name = "Drive name";
 
-        string result = SgaNameValidator.ValidateDriveName(name);
+        string result = SgaNameValidator.TrimDriveName(name);
 
         Assert.Equal(name, result);
     }
 
     [Fact]
-    public void ValidateDriveName_TruncatesNameTo64Characters()
+    public void TrimDriveName_TruncatesNameTo64Characters()
     {
         string name = new('a', 65);
 
-        string result = SgaNameValidator.ValidateDriveName(name);
+        string result = SgaNameValidator.TrimDriveName(name);
 
         Assert.Equal(64, result.Length);
         Assert.Equal(name[..64], result);
