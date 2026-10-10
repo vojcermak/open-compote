@@ -35,7 +35,9 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
         Console.WriteLine("    Drive alias: {0}", drive.Alias);
 
         Stack<Tuple<SgaEntry, int>> stack = new Stack<Tuple<SgaEntry, int>>();
-        stack.Push(new Tuple<SgaEntry, int>(drive.RootFolder,0));
+
+        foreach(var item in drive.Contents)
+            stack.Push(new Tuple<SgaEntry, int>(item,0));
 
         while(stack.Count > 0)
         {
@@ -53,9 +55,9 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
             {
                 Console.WriteLine(new string(' ', item.Item2 *2) + $"    Folder: {folder.Name}");
                 // Push subentries onto the stack
-                for (int i = folder.Contents.Count - 1; i >= 0; i--) // reverse to maintain order
+                foreach(var subEntry in folder.Contents.Reverse())
                 {
-                    stack.Push(new Tuple<SgaEntry, int>(folder.Contents[i], item.Item2 + 1));
+                    stack.Push(new Tuple<SgaEntry, int>(subEntry, item.Item2 + 1));
                 }
             }
         }

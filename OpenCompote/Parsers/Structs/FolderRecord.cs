@@ -14,9 +14,10 @@ internal readonly struct FolderRecord(
     public ushort LastFile { get; } = lastFile;
 }
 
-internal class FolderWriterRecord(SgaFolder folder)
+internal class FolderWriterRecord(SgaFolder? folder, SgaDrive? drive)
 {
-    public SgaFolder Folder { get; set; } = folder;
+    public SgaFolder? Folder { get; set; } = folder;
+    public SgaDrive? Drive {get; set;} = drive;
     public ushort FirstFolder {get; set;}
     public ushort LastFolder {get; set;}
     public ushort FirstFile {get; set;}
