@@ -113,7 +113,7 @@ public class SgaArchive: IDisposable
     }
     
     /// <summary>
-    /// Creates new <see cref="SgaDrive"/> in the archive with the specific <paramref name="alias"/> and <paramref name="name"/>. New drive also contains a new empty RootFolder with the same name as the drive.
+    /// Creates new <see cref="SgaDrive"/> in the archive with the specified <paramref name="alias"/> and <paramref name="name"/>.
     /// </summary>
     /// <param name="alias">Alias of the new drive.</param>
     /// <param name="name">Name of the new drive.</param>
@@ -154,10 +154,13 @@ public class SgaArchive: IDisposable
     }
 
     /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
+    /// Gets an existing entry inside of this archive by its absolute path or <see langword="null"/> when an entry with specified path does not exist.
     /// </summary>
-    /// <exclude />
-    internal SgaEntry? GetEntry(string path)
+    /// <param name="path">Absolute path of the entry.</param>
+    /// <returns>Existing <see cref="SgaEntry"/> or <see langword="null"/> when entry with <paramref name="path"/> does not exist.</returns>
+    /// <exception cref="ObjectDisposedException">The SGA archive has been disposed.</exception>
+    /// <exception cref="ArgumentException">The <paramref name="path"/> was empty or <see langword="null"/>.</exception>
+    public SgaEntry? GetEntry(string path)
     {
         ThrowIfDisposed(); // Test if the folder is deleted.
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
