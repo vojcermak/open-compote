@@ -77,4 +77,4 @@ Open compote enforces this set of rules for sga folder and file names to allow e
 > These rules are enforced only when creating/changing sga Files or Folders through the public API. If an existing SGA archive contains files or folder with names which does not follow these rules it can open them, but exporting them could fail.
 
 ## Drive name and Alias restrictions
-Drive names have the same restrictions as the file/folder names. The alias does not have this restriction. But on top of the character restrictions there is also a length restriction. Both Drive Name and Alias must be max 64 characters long. Both the Name and Alias setters and CreateDrive function does trim the provided string to 64 characters when is longer.
+Drive names have the same restrictions as the file/folder names. The alias does not have this restriction. But on top of the character restrictions there is also a length restriction. Both Drive Name and Alias must be max 64 characters long. Both the Name and Alias setters and `SgaArchive.AddDrive` function does truncate the provided string to 64 characters when is longer.

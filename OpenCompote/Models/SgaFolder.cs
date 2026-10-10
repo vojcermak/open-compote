@@ -93,7 +93,8 @@ public class SgaFolder: SgaEntry
     /// <param name="path">Relative path to the entry.</param>
     /// <returns>Found sgaEntry or null when entry with <paramref name="path"/> does not exist.</returns>
     /// <exception cref="ObjectDisposedException">This folder is deleted or the archive is disposed.</exception>
-    /// <exception cref="ArgumentException">Requested path is empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="path"/> is empty string or will be after trimming separators and whitespaces.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="path"/> is <see langword="null"/>.</exception>
     public SgaEntry? GetEntry(string path)
     {
         ThrowIfDeleted(); // Test if the folder is deleted.

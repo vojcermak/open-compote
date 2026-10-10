@@ -22,7 +22,7 @@ public class SgaFile: SgaEntry
     /// <summary>
     /// Gets or sets the file's storage type.
     /// </summary>
-    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
+    /// <exception cref="ObjectDisposedException">This file was deleted or the parent archive has been disposed.</exception>
     /// <exception cref="InvalidOperationException">The archive is opened in read-only mode.</exception>
     /// <exception cref="IOException">The entry is currently open for writing and storage type cannot be changed.</exception>
     /// <exception cref="ArgumentOutOfRangeException">The new value is not a valid option for StorageType.</exception>
@@ -92,7 +92,7 @@ public class SgaFile: SgaEntry
     /// This property could be <see langword="null"/> when opening SGA V2 archive without file metadata present. 
     /// Modified is automatically set to the current date and time when new file is created or changed file content stream is closed.  
     /// </summary>
-    /// <exception cref="ObjectDisposedException">The archive for this file has been disposed.</exception>
+    /// <exception cref="ObjectDisposedException">This file was deleted or the parent archive has been disposed.</exception>
     /// <exception cref="InvalidOperationException">The archive is opened in read-only mode.</exception>
     public DateTimeOffset? Modified {
         get
@@ -160,7 +160,14 @@ public class SgaFile: SgaEntry
     /// <summary>
     /// Opens the file and gets the file contents.
     /// </summary>
-    /// <returns>A stream with the file contents.</returns>
+    /// <returns>
+    /// Read only <see cref="Stream"/> when the parent archive is open in <see cref="SgaMode.Read"/> mode or writable <see cref="Stream"/> when the parent archive 
+    /// is open in <see cref="SgaMode.Create"/> or <see cref="SgaMode.Write"/> mode, with the file contents.
+    /// </returns>
+    /// <remarks>
+    /// In <see cref="SgaMode.Create"/> or <see cref="SgaMode.Write"/> mode the updates to <see cref="Size"/>, <see cref="CompressedSize"/>, 
+    /// <see cref="Crc"/> and <see cref="Modified"/> properties are done only when the returned Stream is disposed.
+    /// </remarks>
     /// <exception cref="ObjectDisposedException">The SGA archive for this file has been disposed, or this file is deleted.</exception>
     /// <exception cref="IOException">The entry is currently open for writing.</exception>
     /// <exception cref="InvalidOperationException">Archive <see cref="SgaMode"/> value is invalid.</exception>

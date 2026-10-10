@@ -171,7 +171,8 @@ public class SgaDrive
     /// <param name="path">Relative path to the entry.</param>
     /// <returns>Existing <see cref="SgaEntry"/> or <see langword="null"/> when entry with <paramref name="path"/> does not exist.</returns>
     /// <exception cref="ObjectDisposedException">The parent SGA archive has been disposed, or drive is deleted.</exception>
-    /// <exception cref="ArgumentException">Requested path is empty.</exception>
+    /// <exception cref="ArgumentException"><paramref name="path"/> is empty string or will be after trimming separators and whitespaces.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="path"/> is <see langword="null"/>.</exception>
     public SgaEntry? GetEntry(string path)
     {
         ThrowIfDeleted(); // Test if the folder is deleted.
@@ -220,7 +221,7 @@ public class SgaDrive
     /// <exception cref="InvalidOperationException">The parent <see cref="SgaArchive"/> was open in readonly mode.</exception>
     /// <exception cref="ObjectDisposedException">The parent <see cref="SgaArchive"/> has already been closed, or this drive is deleted.</exception>
     /// <remarks> 
-    ///     Deleting already deleted drive again throws the <see cref="InvalidOperationException"/>.
+    ///     Deleting already deleted drive again throws the <see cref="ObjectDisposedException"/>.
     /// </remarks>
     public void Delete()
     {

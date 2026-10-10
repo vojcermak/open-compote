@@ -22,6 +22,7 @@ public class SgaArchive: IDisposable
     /// <summary>
     /// Gets the Mode in which the archive was opened.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public SgaMode Mode
     {
         get
@@ -34,6 +35,7 @@ public class SgaArchive: IDisposable
     /// <summary>
     /// Gets the version of the SGA archive.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">The archive was already closed.</exception>
     public SgaVersion Version
     {
         get
@@ -159,7 +161,8 @@ public class SgaArchive: IDisposable
     /// <param name="path">Absolute path of the entry.</param>
     /// <returns>Existing <see cref="SgaEntry"/> or <see langword="null"/> when entry with <paramref name="path"/> does not exist.</returns>
     /// <exception cref="ObjectDisposedException">The SGA archive has been disposed.</exception>
-    /// <exception cref="ArgumentException">The <paramref name="path"/> was empty or <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="path"/> is empty string or will be after trimming separators and whitespaces.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="path"/> is <see langword="null"/>.</exception>
     public SgaEntry? GetEntry(string path)
     {
         ThrowIfDisposed(); // Test if the folder is deleted.
