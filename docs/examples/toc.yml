@@ -1,3 +1,5 @@
 items:
   - name: Quick start
     href: quickstart.md
+  - name: Names and Paths
+    href: naming.md

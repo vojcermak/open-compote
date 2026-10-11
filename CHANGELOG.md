@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Added path-based entry lookup through `SgaArchive.GetEntry`, `SgaDrive.GetEntry`, and `SgaFolder.GetEntry` methods.
+- Added documentation and examples for entry paths, path lookup, and file/folder naming restrictions.
+
+### Changed
+- Drives now expose their root entries directly instead of using a separate root folder.
+- Drives and folder are now index by case-insensitive names instead number indexes, enforcing unique names and enabling direct lookup.
+- Enforced validation and trim for entry names tu enable cross-platform filesystem compatibility.
+- Reworked the testing framework to work with the new indexing and divided the model tests to separate folders.
+
+### Breaking changes
+- The ability to get objects from `SgaArchive.Drives` and `SgaFolder.Contents` properties by numbered indexes is removed.
+- the `SgaDrive.RooFolder` was removed and replaces by the ability to access its contents directly by `SgaDrive.Contents`.
+
 ## [0.2.0] - 2026-08-09
 
 ### Added

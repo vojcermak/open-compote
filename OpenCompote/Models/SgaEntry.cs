@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.Reflection.Metadata.Ecma335;
-
 namespace OpenCompote.SGA;
 
 /// <summary>
@@ -12,8 +9,12 @@ public abstract class SgaEntry
     protected string _name = "";
 
     /// <summary>
-    /// Gets or sets the name of the entry in the SGA archive.
+    /// Gets or sets the name of the entry in the SGA archive. Entry name must be a valid sga name. For more info see <see href="/examples/naming.html">File/Folder naming restrictions</see>.
     /// </summary>
+    /// <exception cref="InvalidOperationException">The SGA archive for this folder was open in readonly mode.</exception>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed, or this entry is deleted.</exception>
+    /// <exception cref="ArgumentException">The <paramref name="value"/> is not a valid sga entry name, or entry with this name already exists in the parent folder.</exception>
+    /// <exception cref="ArgumentNullException">The <paramref name="value"/> is <see langword="null"/>.</exception>
     public string Name
     {
         get
@@ -23,22 +24,49 @@ public abstract class SgaEntry
         }
         set
         {
+            // Validate if the entry is open and writable.
             ThrowIfDeleted();
             if(Drive!.Archive!.Mode == SgaMode.Read)
                 throw new InvalidOperationException("Cannot write to an archive opened in read-only mode.");
-            _name = value;
+            
+            // Validate if the new name is valid.
+            string trimmedName = SgaNameValidator.ValidateEntryName(value);
+
+            // Quick exit when the name did not changed.
+            if(trimmedName.Equals(_name, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // When this entry is in subFolder, update the parent. Else update the drive.
+            if(Parent != null)
+            {
+                if(!Parent._entries.TryAdd(trimmedName,this))
+                    throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+
+                Parent._entries.Remove(_name);
+            }
+            else
+            {
+                if(!Drive._entries.TryAdd(trimmedName,this))
+                    throw new ArgumentException($"Sga entry named '{trimmedName}' already exists.");
+
+                Drive._entries.Remove(_name);
+            }
+
+            // Set the new value.
+            _name = trimmedName;
         }
     }
 
     /// <summary>
-    /// Gets the relative path of the entry in the SGA drive.
+    /// Gets the fully qualified path of the entry in the SGA drive.
     /// </summary>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed, or this entry is deleted.</exception>
     public string Path
     {
         get
         {
             ThrowIfDeleted();
-            var pathParts = new List<string>();
+            List<string> pathParts = [];
             
             SgaEntry? current = this;
             while (current != null)
@@ -49,13 +77,15 @@ public abstract class SgaEntry
                 current = current.Parent;
             }
             
+            pathParts.Add(Drive!.Name.ToUpper() + ":");
+
             pathParts.Reverse();
             return string.Join("\\", pathParts);
         }
     }
 
     /// <summary>
-    /// Gets the parent drive of this entry.
+    /// Gets the parent folder of this entry or <see langword="null"/> if entry is directly inside a drive or the entry is deleted.
     /// </summary>
     public SgaFolder? Parent {get; internal set;}
 
@@ -70,7 +100,11 @@ public abstract class SgaEntry
     /// Deletes the entry and all its sub entries from the archive.
     /// </summary>
     /// <exception cref="InvalidOperationException">The parent <see cref="SgaArchive"/> for this entry was opened in readonly mode.</exception>
-    /// <exception cref="ObjectDisposedException">The parent <see cref="SgaArchive"/> for this entry was already closed.</exception>
+    /// <exception cref="ObjectDisposedException">The parent <see cref="SgaArchive"/> for this entry was already closed or current entry is already deleted.</exception>
+    /// <exception cref="IOException">
+    /// If current entry is <see cref="SgaFile"/> then this file is currently open for editing and cannot be deleted or 
+    /// if current entry is <see cref="SgaFolder"/> then this folder contains one or more opened files.
+    /// </exception>
     public void Delete()
     {
         Delete(false);
