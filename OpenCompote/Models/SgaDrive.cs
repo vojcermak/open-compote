@@ -245,4 +245,26 @@ public class SgaDrive
         ObjectDisposedException.ThrowIf(_archive == null, this);
         _archive.ThrowIfDisposed();
     }
+
+    // ------------------------ Extending functions ------------------------
+
+    /// <summary>
+    /// Creates a new SgaFile and fill it with the contents of the file with <paramref name="filePath"/>.
+    /// </summary>
+    /// <param name="filePath">File path to the file we want to import.</param>
+    /// <param name="type">Storage type that we want to use.</param>
+    /// <returns>New sgaFile with contents</returns>
+    public SgaFile ImportFromFile(string filePath, StorageType type)
+    {
+        string fileName = Path.GetFileName(filePath);
+        using FileStream openedFile = File.OpenRead(filePath);
+
+        SgaFile newFile = AddFile(fileName, type);
+        
+        using (Stream openedSgaFile = newFile.Open())
+            openedFile.CopyTo(openedSgaFile);
+        
+        newFile.Modified = File.GetLastWriteTimeUtc(filePath);    
+        return newFile;
+    }
 }
