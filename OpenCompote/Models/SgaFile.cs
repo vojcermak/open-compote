@@ -88,10 +88,16 @@ public class SgaFile: SgaEntry
     }
      
     /// <summary>
-    /// Gets or sets the last write time of the file in the archive. When setting this property, the DateTime will be converted to the 32-bit unix timestamp format.
-    /// This property could be <see langword="null"/> when opening SGA V2 archive without file metadata present. 
-    /// Modified is automatically set to the current date and time when new file is created or changed file content stream is closed.  
+    /// Gets or sets the last write time of the file in the archive.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This property could be <see langword="null"/> when opening SGA V2 archive without file metadata present.
+    /// </para>
+    /// <para>
+    /// Modified is automatically set when you creates a new file and then every time changed file stream is disposed. 
+    /// </para>
+    /// </remarks>
     /// <exception cref="ObjectDisposedException">This file was deleted or the parent archive has been disposed.</exception>
     /// <exception cref="InvalidOperationException">The archive is opened in read-only mode.</exception>
     public DateTimeOffset? Modified {
@@ -300,7 +306,7 @@ public class SgaFile: SgaEntry
         _fileContents ??= new MemoryStream();
         _isOpen = true;
 
-        return new WrapperStream(_fileContents, () =>
+        return new WrapperStream(_fileContents, (hasChange) =>
         {
             _size = (uint)_fileContents.Length;
             _crc = CalculateCrc();
@@ -310,7 +316,10 @@ public class SgaFile: SgaEntry
 
             _compressedSize = (uint)_fileContents.Length;
             _isOpen = false;
-            _modified = Drive!.Archive!._timeProvider.GetLocalNow();
+
+            // Only change the modified time when the contents was modified.
+            if(hasChange)
+                _modified = Drive!.Archive!._timeProvider.GetLocalNow();
         });
     }
 

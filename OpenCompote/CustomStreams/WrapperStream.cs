@@ -9,7 +9,8 @@ internal sealed class WrapperStream : Stream
     private readonly Stream _baseStream;
     private readonly bool _closeBaseStream;
     private bool _isDisposed;
-    private readonly Action? _onDispose;
+    private bool _hasChanged;
+    private readonly Action<bool>? _onDispose;
 
     public override bool CanRead => !_isDisposed && _baseStream.CanRead;
 
@@ -41,7 +42,7 @@ internal sealed class WrapperStream : Stream
         } 
     }
 
-    public WrapperStream(Stream baseStream, Action? onDispose, bool closeStream = false)
+    public WrapperStream(Stream baseStream, Action<bool>? onDispose, bool closeStream = false)
     {
         _baseStream = baseStream;
         _closeBaseStream = closeStream;
@@ -79,6 +80,7 @@ internal sealed class WrapperStream : Stream
         ThrowIfCantSeek();
         ThrowIfCantWrite();
 
+        _hasChanged = true;
         _baseStream.SetLength(value);
     }
 
@@ -87,6 +89,7 @@ internal sealed class WrapperStream : Stream
         ThrowIfDisposed();
         ThrowIfCantWrite();
 
+        _hasChanged = true;
         _baseStream.Write(buffer, offset, count);
     }
 
@@ -94,7 +97,7 @@ internal sealed class WrapperStream : Stream
     {
         if (disposing && !_isDisposed)
         {
-            _onDispose?.Invoke();
+            _onDispose?.Invoke(_hasChanged);
 
             if (_closeBaseStream)
                 _baseStream.Dispose();
