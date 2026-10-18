@@ -347,5 +347,9 @@ public class SgaFile: SgaEntry
                                         FileAccess.Write);
 
         fileContents.CopyTo(fs);
+
+        // if the Modified time exists set it to the exported file.
+        if(Modified != null)
+            File.SetLastWriteTime(filePath, Modified.Value.DateTime);
     }
 }
