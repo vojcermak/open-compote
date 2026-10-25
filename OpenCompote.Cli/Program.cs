@@ -48,8 +48,6 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
             {
                 Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name} - Size: {file.Size} - Modified: {file.Modified} - CRC: {file.Crc:X8}");
                 // if dump folder is specified export all files to there.
-                if(outDest != null)
-                    file.ExtractToFile(outDest, true);
             }
             else if (entry is SgaFolder folder)
             {
@@ -62,4 +60,11 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
             }
         }
     }
+
+    if(outDest != null)
+    {
+        SgaFolder artFolder = (SgaFolder)archive.GetEntry("DATA:/art")!;
+        artFolder.ExtractToDirectory(outDest);
+    }
+
 }
