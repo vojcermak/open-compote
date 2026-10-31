@@ -210,4 +210,35 @@ public class SgaFolder: SgaEntry
                 folder.ExtractToDirectory(folderPath, overwrite);
         }
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="dirPath"></param>
+    /// <param name="defaultType"></param>
+    /// <remarks>
+    /// <para> Symbolic links and Reparse Points are skipped.</para>
+    /// <para> Unix pipes causes the application to wait for data.</para>
+    /// </remarks>
+    public void ImportFromDirectory(string dirPath, StorageType defaultType)
+    {
+        ThrowIfDeleted();
+        ArgumentException.ThrowIfNullOrWhiteSpace(dirPath);
+
+        string? folderName = System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(dirPath));
+        SgaFolder newFolder = AddFolder(folderName);
+
+        foreach(string entry in Directory.EnumerateFileSystemEntries(dirPath))
+        {
+            FileAttributes attributes = File.GetAttributes(entry);
+
+            // If entry has directory flag recursively call this function and insert all sub entries
+            if(attributes.HasFlag(FileAttributes.Directory))
+                newFolder.ImportFromDirectory(entry, defaultType);
+            
+            // if entry is not ReparsePoint(sim-link) then it is probably file and will be imported as a new file in the new folder.
+            else if(!attributes.HasFlag(FileAttributes.ReparsePoint))        
+                newFolder.ImportFromFile(entry, defaultType);
+        }
+    }
 }
