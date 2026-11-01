@@ -212,15 +212,27 @@ public class SgaFolder: SgaEntry
     }
 
     /// <summary>
-    /// 
+    /// Imports the specified directory and its contents into this folder as a new subfolder.
+    /// Subdirectories are imported recursively, and imported files use <paramref name="defaultType"/> as their storage type.
     /// </summary>
-    /// <param name="dirPath"></param>
-    /// <param name="defaultType"></param>
+    /// <param name="dirPath">The path to the directory to import.</param>
+    /// <param name="defaultType">The default storage type for imported files.</param>
+    /// <returns>New <see cref="SgaFolder"/> containing the imported directory contents.</returns>
     /// <remarks>
-    /// <para> Symbolic links and Reparse Points are skipped.</para>
-    /// <para> Unix pipes causes the application to wait for data.</para>
+    /// <para>Subdirectories are imported recursively, and all imported files use <paramref name="defaultType"/>.</para>
+    /// <para>Symbolic links and other <see cref="FileAttributes.ReparsePoint"/> are skipped. Special filesystem
+    /// entries, such as named pipes, may fail to import or lock up while being read.</para>
+    /// <para>If an error occurs during import, entries already added to the archive are
+    /// not rolled back.</para>
     /// </remarks>
-    public void ImportFromDirectory(string dirPath, StorageType defaultType)
+    /// <exception cref="ArgumentException"><paramref name="dirPath"/> is empty or whitespace, or the directory name is invalid
+    /// or conflicts with an existing entry.
+    /// </exception>
+    /// <exception cref="ArgumentNullException"><paramref name="dirPath"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">This folder is deleted or its parent archive was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The archive is open in read-only mode.</exception>
+    /// <exception cref="IOException">The directory or one of its files could not be accessed or imported.</exception>
+    public SgaFolder ImportFromDirectory(string dirPath, StorageType defaultType)
     {
         ThrowIfDeleted();
         ArgumentException.ThrowIfNullOrWhiteSpace(dirPath);
@@ -231,14 +243,18 @@ public class SgaFolder: SgaEntry
         foreach(string entry in Directory.EnumerateFileSystemEntries(dirPath))
         {
             FileAttributes attributes = File.GetAttributes(entry);
+            
+            // if entry is ReparsePoint(sim-link) skip it.
+            if(attributes.HasFlag(FileAttributes.ReparsePoint))
+                continue;
 
-            // If entry has directory flag recursively call this function and insert all sub entries
+            // If entry has directory flag recursively call this function and insert all sub entries.
             if(attributes.HasFlag(FileAttributes.Directory))
                 newFolder.ImportFromDirectory(entry, defaultType);
             
-            // if entry is not ReparsePoint(sim-link) then it is probably file and will be imported as a new file in the new folder.
-            else if(!attributes.HasFlag(FileAttributes.ReparsePoint))        
-                newFolder.ImportFromFile(entry, defaultType);
+            newFolder.ImportFromFile(entry, defaultType);
         }
+
+        return newFolder;
     }
 }
