@@ -229,4 +229,92 @@ public class SgaArchive: IDisposable
     {
         ObjectDisposedException.ThrowIf(_isDisposed, this);
     }
+
+    // ------------------------ Extending functions ------------------------
+
+    /// <summary>
+    /// Extracts All archive contents to a directory specified by <paramref name="destinationFolder"/>.
+    /// </summary>
+    /// <param name="destinationFolder">The path to the directory to which the archive will be exported.</param>
+    /// <param name="overwrite">If the value is true, it overwrites existing files. Else, it throws an exception if a file with the same name already exists.</param>
+    /// <remarks>
+    /// When exporting drives the drive name is used as the name of the exported directory.
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="destinationFolder"/> is invalid path, empty or whitespace.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="destinationFolder"/> is <see langword="null"/> </exception>
+    /// <exception cref="ObjectDisposedException">Archive is disposed.</exception>
+    /// <exception cref="IOException">
+    /// One of the <see cref="SgaFile"/> in the archive is currently open for writing and cannot be exported. 
+    /// 
+    /// -OR-
+    /// 
+    /// Other IOException occurs, for more potential exceptions see <see cref="Directory.CreateDirectory(string)"/> and <see cref="File.Open(string, FileMode)"/> methods.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">Archive <see cref="SgaMode"/> value is invalid.</exception>
+    public void ExtractToDirectory(string destinationFolder, bool overwrite = false)
+    {
+        ThrowIfDisposed();
+        ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
+
+        string folderPath = Path.Combine(destinationFolder, ArchiveName);
+        Directory.CreateDirectory(folderPath);
+
+        foreach(var drive in Drives)
+            drive.ExtractToDirectory(destinationFolder, overwrite);
+    }
+
+    /// <summary>
+    /// Imports the specified directory and its contents into this archive as a new drive.
+    /// Subdirectories are imported recursively as folders and files inside the new drive. 
+    /// Imported files will use <paramref name="defaultType"/> as their storage type.
+    /// </summary>
+    /// <param name="dirPath">The path to the directory to import.</param>
+    /// <param name="defaultType">The default storage type for imported files.</param>
+    /// <returns>New <see cref="SgaDrive"/> containing the imported directory contents.</returns>
+    /// <remarks>
+    /// <para>
+    /// Both the <see cref="SgaDrive.Name"/> and <see cref="SgaDrive.Alias"/> of the new drive are set to the name of the 
+    /// <paramref name="dirPath"/> folder.
+    /// </para>
+    /// <para>Subdirectories are imported recursively, and all imported files use <paramref name="defaultType"/>.</para>
+    /// <para>Symbolic links and other <see cref="FileAttributes.ReparsePoint"/> are skipped. Special filesystem
+    /// entries, such as named pipes, may fail to import or lock up while being read.</para>
+    /// <para>If an error occurs during import, entries already added to the archive are
+    /// not rolled back.</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="dirPath"/> is empty or whitespace, or the directory name is invalid
+    /// or conflicts with an existing entry.
+    /// </exception>
+    /// <exception cref="ArgumentNullException"><paramref name="dirPath"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">This archive is disposed.</exception>
+    /// <exception cref="InvalidOperationException">This archive is open in read-only mode.</exception>
+    /// <exception cref="IOException">The directory or one of its entries could not be accessed or imported.</exception>
+    public SgaDrive ImportDriveFromDirectory(string dirPath, StorageType defaultType)
+    {
+        ThrowIfDisposed();
+        ArgumentException.ThrowIfNullOrWhiteSpace(dirPath);
+
+        // The dirPath could be a relative path so we need to cert is to an absolute.
+        string absolutePath = Path.GetFullPath(dirPath);
+
+        string? folderName = Path.GetFileName(Path.TrimEndingDirectorySeparator(absolutePath));
+        SgaDrive newDrive = AddDrive(folderName, folderName);
+
+        foreach(string entry in Directory.EnumerateFileSystemEntries(absolutePath))
+        {
+            FileAttributes attributes = File.GetAttributes(entry);
+            
+            // if entry is ReparsePoint(sim-link) skip it.
+            if(attributes.HasFlag(FileAttributes.ReparsePoint))
+                continue;
+
+            // If entry has directory flag recursively call this function and insert all sub entries.
+            if(attributes.HasFlag(FileAttributes.Directory))
+                newDrive.ImportFromDirectory(entry, defaultType);
+            else
+                newDrive.ImportFromFile(entry, defaultType);
+        }
+
+        return newDrive;
+    }
 }

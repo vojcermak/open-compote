@@ -289,16 +289,16 @@ public class SgaDrive
         ThrowIfDeleted();
         ArgumentException.ThrowIfNullOrWhiteSpace(parentFolder);
 
-        string folderPath = Path.Combine(parentFolder, Name);
-        Directory.CreateDirectory(folderPath);
+        string DrivePath = Path.Combine(parentFolder, Name);
+        Directory.CreateDirectory(DrivePath);
 
         foreach(var entry in Contents)
         {
             if(entry is SgaFile file)
-                file.ExtractToFile(folderPath, overwrite);
+                file.ExtractToFile(DrivePath, overwrite);
 
             if(entry is SgaFolder folder)
-                folder.ExtractToDirectory(folderPath, overwrite);
+                folder.ExtractToDirectory(DrivePath, overwrite);
         }
     }
 
@@ -328,10 +328,13 @@ public class SgaDrive
         ThrowIfDeleted();
         ArgumentException.ThrowIfNullOrWhiteSpace(dirPath);
 
-        string? folderName = Path.GetFileName(Path.TrimEndingDirectorySeparator(dirPath));
+        // The dirPath could be a relative path so we need to cert is to an absolute.
+        string absolutePath = Path.GetFullPath(dirPath);
+
+        string? folderName = Path.GetFileName(Path.TrimEndingDirectorySeparator(absolutePath));
         SgaFolder newFolder = AddFolder(folderName);
 
-        foreach(string entry in Directory.EnumerateFileSystemEntries(dirPath))
+        foreach(string entry in Directory.EnumerateFileSystemEntries(absolutePath))
         {
             FileAttributes attributes = File.GetAttributes(entry);
             
@@ -342,8 +345,8 @@ public class SgaDrive
             // If entry has directory flag recursively call this function and insert all sub entries.
             if(attributes.HasFlag(FileAttributes.Directory))
                 newFolder.ImportFromDirectory(entry, defaultType);
-            
-            newFolder.ImportFromFile(entry, defaultType);
+            else
+                newFolder.ImportFromFile(entry, defaultType);
         }
 
         return newFolder;

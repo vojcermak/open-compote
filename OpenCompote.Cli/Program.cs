@@ -62,9 +62,5 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
     }
 
     if(outDest != null)
-    {
-        SgaFolder artFolder = (SgaFolder)archive.GetEntry("DATA:/art")!;
-        artFolder.ExtractToDirectory(outDest);
-    }
-
+        archive.ExtractToDirectory(outDest);
 }
