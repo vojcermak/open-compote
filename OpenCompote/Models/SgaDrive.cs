@@ -267,4 +267,85 @@ public class SgaDrive
         newFile.Modified = File.GetLastWriteTimeUtc(filePath);    
         return newFile;
     }
+
+    /// <summary>
+    /// Extracts this SgaDrive and its contents to a subdirectory named after the folder in the <paramref name="parentFolder"/>.
+    /// </summary>
+    /// <param name="parentFolder">The path to the parent directory to which SgaDrive will be exported.</param>
+    /// <param name="overwrite">If the value is true, it overwrites existing files. Else, it throws an exception if a file with the same name already exists.</param>
+    /// <exception cref="ArgumentException"><paramref name="parentFolder"/> is invalid path, empty or whitespace.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="parentFolder"/> is <see langword="null"/> </exception>
+    /// <exception cref="ObjectDisposedException">The SGA archive for this folder has been disposed, or this folder is deleted.</exception>
+    /// <exception cref="IOException">
+    /// One of the <see cref="SgaFile"/> in this folder is currently open for writing and cannot be exported. 
+    /// 
+    /// -OR-
+    /// 
+    /// Other IOException occurs, for more potential exceptions see <see cref="Directory.CreateDirectory(string)"/> and <see cref="File.Open(string, FileMode)"/> methods.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">Archive <see cref="SgaMode"/> value is invalid.</exception>
+    public void ExtractToDirectory(string parentFolder, bool overwrite = false)
+    {
+        ThrowIfDeleted();
+        ArgumentException.ThrowIfNullOrWhiteSpace(parentFolder);
+
+        string folderPath = Path.Combine(parentFolder, Name);
+        Directory.CreateDirectory(folderPath);
+
+        foreach(var entry in Contents)
+        {
+            if(entry is SgaFile file)
+                file.ExtractToFile(folderPath, overwrite);
+
+            if(entry is SgaFolder folder)
+                folder.ExtractToDirectory(folderPath, overwrite);
+        }
+    }
+
+    /// <summary>
+    /// Imports the specified directory and its contents into this drive as a new subfolder.
+    /// Subdirectories are imported recursively, and imported files use <paramref name="defaultType"/> as their storage type.
+    /// </summary>
+    /// <param name="dirPath">The path to the directory to import.</param>
+    /// <param name="defaultType">The default storage type for imported files.</param>
+    /// <returns>New <see cref="SgaFolder"/> containing the imported directory contents.</returns>
+    /// <remarks>
+    /// <para>Subdirectories are imported recursively, and all imported files use <paramref name="defaultType"/>.</para>
+    /// <para>Symbolic links and other <see cref="FileAttributes.ReparsePoint"/> are skipped. Special filesystem
+    /// entries, such as named pipes, may fail to import or lock up while being read.</para>
+    /// <para>If an error occurs during import, entries already added to the archive are
+    /// not rolled back.</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="dirPath"/> is empty or whitespace, or the directory name is invalid
+    /// or conflicts with an existing entry.
+    /// </exception>
+    /// <exception cref="ArgumentNullException"><paramref name="dirPath"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">This folder is deleted or its parent archive was disposed.</exception>
+    /// <exception cref="InvalidOperationException">The archive is open in read-only mode.</exception>
+    /// <exception cref="IOException">The directory or one of its files could not be accessed or imported.</exception>
+    public SgaFolder ImportFromDirectory(string dirPath, StorageType defaultType)
+    {
+        ThrowIfDeleted();
+        ArgumentException.ThrowIfNullOrWhiteSpace(dirPath);
+
+        string? folderName = Path.GetFileName(Path.TrimEndingDirectorySeparator(dirPath));
+        SgaFolder newFolder = AddFolder(folderName);
+
+        foreach(string entry in Directory.EnumerateFileSystemEntries(dirPath))
+        {
+            FileAttributes attributes = File.GetAttributes(entry);
+            
+            // if entry is ReparsePoint(sim-link) skip it.
+            if(attributes.HasFlag(FileAttributes.ReparsePoint))
+                continue;
+
+            // If entry has directory flag recursively call this function and insert all sub entries.
+            if(attributes.HasFlag(FileAttributes.Directory))
+                newFolder.ImportFromDirectory(entry, defaultType);
+            
+            newFolder.ImportFromFile(entry, defaultType);
+        }
+
+        return newFolder;
+    }
 }
