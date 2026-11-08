@@ -8,52 +8,6 @@ namespace OpenCompote.SGA;
 public class SgaArchiveFile
 {
     /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
-    /// </summary>
-    /// <exclude />
-    internal static void CreateFromDirectory(string sourceDirectoryName,
-                                           string destinationArchiveFileName,
-                                           int version,
-                                           bool rootDirAsDrive = false,
-                                           int defaultCompressionLevel = 0,
-                                           int defaultEncryptionType = 0)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
-    /// </summary>
-    /// <exclude />
-    internal static void CreateFromDirectory(string sourceDirectoryName,
-                                           Stream destination,
-                                           int version,
-                                           bool rootDirAsDrive = false,
-                                           int defaultCompressionLevel = 0,
-                                           int defaultEncryptionType = 0)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
-    /// </summary>
-    /// <exclude />
-    internal static void ExtractToDirectory(string sourceFileName, string destinationDirectoryName)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
-    /// </summary>
-    /// <exclude />
-    internal static void ExtractToDirectory(Stream source, string destinationDirectoryName)
-    {
-        throw new NotImplementedException();
-    }
-
-    /// <summary>
     /// Opens a SGA Archive at the specific source path, in the specified mode.
     /// </summary>
     /// <param name="sourceFileName">The path to the SGA archive to open, specified as a relative or absolute path. Relative path is relative to the current working directory.</param>
@@ -161,5 +115,58 @@ public class SgaArchiveFile
         ISgaParser parser = SgaParserFactory.Create(version);
 
         return new SgaArchive(existingStream, SgaMode.Create, version, parser, leaveOpen);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="sourceFileName"></param>
+    /// <param name="destinationDirectoryName"></param>
+    /// <param name="overwrite"></param>
+    public static void ExtractToDirectory(string sourceFileName, string destinationDirectoryName, bool overwrite = false)
+    {
+        using SgaArchive archive = Open(sourceFileName, SgaMode.Read);
+        archive.ExtractToDirectory(destinationDirectoryName, overwrite);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="existingStream"></param>
+    /// <param name="destinationDirectoryName"></param>
+    /// <param name="leaveOpen"></param>
+    /// <param name="overwrite"></param>
+    public static void ExtractToDirectory(Stream existingStream, string destinationDirectoryName, bool leaveOpen = false, bool overwrite = false)
+    {
+        using SgaArchive archive = Open(existingStream, SgaMode.Read, leaveOpen);
+        archive.ExtractToDirectory(destinationDirectoryName, overwrite);
+    }
+
+    /// <summary>
+    /// NOT IMPLEMENTED! DO NOT USE
+    /// </summary>
+    /// <exclude />
+    internal static void CreateFromDirectory(string sourceDirectoryName,
+                                           string destinationArchiveFileName,
+                                           int version,
+                                           bool rootDirAsDrive = false,
+                                           int defaultCompressionLevel = 0,
+                                           int defaultEncryptionType = 0)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// NOT IMPLEMENTED! DO NOT USE
+    /// </summary>
+    /// <exclude />
+    internal static void CreateFromDirectory(string sourceDirectoryName,
+                                           Stream destination,
+                                           int version,
+                                           bool rootDirAsDrive = false,
+                                           int defaultCompressionLevel = 0,
+                                           int defaultEncryptionType = 0)
+    {
+        throw new NotImplementedException();
     }
 }
