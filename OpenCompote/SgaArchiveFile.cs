@@ -118,11 +118,20 @@ public class SgaArchiveFile
     }
 
     /// <summary>
-    /// 
+    /// Extracts all the files in the specified sga archive to a directory on the file system.
     /// </summary>
-    /// <param name="sourceFileName"></param>
-    /// <param name="destinationDirectoryName"></param>
-    /// <param name="overwrite"></param>
+    /// <param name="sourceFileName">The path on the file system to the archive that is to be extracted.</param>
+    /// <param name="destinationDirectoryName">
+    /// The path to the destination directory to which the archive will be exported.
+    /// If the directory is missing it creates it.
+    /// </param>
+    /// <param name="overwrite"><see langword="true"/> to overwrite files; <see langword="false"/> otherwise.</param>
+    /// <exception cref="ArgumentNullException">
+    ///  The <paramref name="sourceFileName"/> or <paramref name="destinationDirectoryName"/> parameter is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    ///  The <paramref name="sourceFileName"/> or <paramref name="destinationDirectoryName"/> is empty string or invalid path./>.
+    /// </exception>
     public static void ExtractToDirectory(string sourceFileName, string destinationDirectoryName, bool overwrite = false)
     {
         using SgaArchive archive = Open(sourceFileName, SgaMode.Read);
@@ -130,12 +139,23 @@ public class SgaArchiveFile
     }
 
     /// <summary>
-    /// 
+    /// Extracts all the files in the specified sga archive to a directory on the file system.
     /// </summary>
-    /// <param name="existingStream"></param>
-    /// <param name="destinationDirectoryName"></param>
-    /// <param name="leaveOpen"></param>
-    /// <param name="overwrite"></param>
+    /// <param name="existingStream">Stream containing the SGA archive.</param>
+    /// <param name="destinationDirectoryName">
+    /// The path to the destination directory to which the archive will be exported.
+    /// If the directory is missing it creates it.
+    /// </param>
+    /// <param name="leaveOpen">
+    /// <see langword="true"/> to leave the <paramref name="existingStream"/> open after this function. <see langword="false"/> to close
+    /// the <paramref name="existingStream"/> when this method finishes.</param>
+    /// <param name="overwrite"><see langword="true"/> to overwrite files; <see langword="false"/> otherwise.</param>
+    /// <exception cref="ArgumentNullException">
+    ///  The <paramref name="existingStream"/> or <paramref name="destinationDirectoryName"/> parameter is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    ///  The <paramref name="destinationDirectoryName"/> parameter is empty string or invalid path./>.
+    /// </exception>
     public static void ExtractToDirectory(Stream existingStream, string destinationDirectoryName, bool leaveOpen = false, bool overwrite = false)
     {
         using SgaArchive archive = Open(existingStream, SgaMode.Read, leaveOpen);
