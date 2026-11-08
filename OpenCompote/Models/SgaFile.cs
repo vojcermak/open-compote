@@ -88,14 +88,17 @@ public class SgaFile: SgaEntry
     }
      
     /// <summary>
-    /// Gets or sets the last write time of the file in the archive.
+    /// Gets or sets the last write time of the file in the archive (UTC).
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This property could be <see langword="null"/> when opening SGA V2 archive without file metadata present.
+    /// The value is always represented in UTC (offset <c>+00:00</c>).
     /// </para>
     /// <para>
-    /// Modified is automatically set when you creates a new file and then every time changed file stream is disposed. 
+    /// This property will be <see langword="null"/> when opening an SGA V2 archive without file metadata present.
+    /// </para>
+    /// <para>
+    /// Modified is automatically set when you create a new file and every time the changed file stream is disposed.
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">This file was deleted or the parent archive has been disposed.</exception>
@@ -350,6 +353,6 @@ public class SgaFile: SgaEntry
 
         // if the Modified time exists set it to the exported file.
         if(Modified != null)
-            File.SetLastWriteTime(filePath, Modified.Value.DateTime);
+            File.SetLastWriteTime(filePath, Modified.Value.UtcDateTime);
     }
 }

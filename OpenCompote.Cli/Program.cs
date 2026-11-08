@@ -23,6 +23,13 @@ if(args.Length >= 2)
     outDest = args[1];
 
 
+// Console.WriteLine("Writing {0}", sgaPath);
+// using (SgaArchive archive = SgaArchiveFile.Create(sgaPath, SgaVersion.V2, true))
+// {
+//     if(outDest != null)
+//         archive.ImportDriveFromDirectory(outDest, StorageType.StreamCompress);
+// }
+
 Console.WriteLine("Reading {0}", sgaPath);
 using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
 {
@@ -46,7 +53,7 @@ using (SgaArchive archive = SgaArchiveFile.Open(sgaPath, SgaMode.Read))
 
             if (entry is SgaFile file)
             {
-                Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name} - Size: {file.Size} - Modified: {file.Modified} - CRC: {file.Crc:X8}");
+                Console.WriteLine(new string(' ', item.Item2 *2) + $"    File: {file.Name} - Size: {file.Size} - Modified: {file.Modified?.ToLocalTime()} - CRC: {file.Crc:X8}");
                 // if dump folder is specified export all files to there.
             }
             else if (entry is SgaFolder folder)
