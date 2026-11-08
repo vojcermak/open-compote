@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace OpenCompote.SGA.Tests.Models;
 
@@ -479,5 +480,92 @@ public class SgaFolderTests
         var drive = Assert.IsType<SgaDrive>(archive.GetDrive("Drive"));
         var testFolder = Assert.IsType<SgaFolder>(drive.Contents.Single());
         Assert.Throws(exceptionType, () => testFolder.GetEntry(path!));
+    }
+
+    [Fact]
+    public void Folder_ImportFromFile_WorksCorrectly()
+    {
+        string testDirectory = Path.Combine(Path.GetTempPath(), $"open-compote-{Guid.NewGuid():N}");
+        string testFilePath = Path.Combine(testDirectory, "TestFile.txt");
+        string contents = "This is a file contents.";
+
+        Directory.CreateDirectory(testDirectory);
+        using(StreamWriter writer = File.CreateText(testFilePath))
+        {
+            writer.Write(contents);
+        }
+
+        DateTimeOffset changeTime = File.GetLastWriteTimeUtc(testFilePath);
+
+        using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive {
+                Name = "Drive",
+                Alias = "alias",
+                Folders = [new TestFolder{Name = "TestFolder"}]
+            }
+        ], [
+            new TestDrive {
+                Name = "Drive",
+                Alias = "alias",
+                Folders = [new TestFolder{Name = "TestFolder", Files = [
+                    new TestFile{
+                        Name = "TestFile.txt",
+                        FileContent = contents,
+                        Modified = changeTime
+                    } 
+                ]}]
+            }
+        ]));
+
+        var drive = Assert.IsType<SgaDrive>(archive.Drives.Single());
+        var folder = Assert.IsType<SgaFolder>(drive.Contents.Single());
+
+        try
+        {
+            SgaFile newFile = folder.ImportFromFile(testFilePath, StorageType.Uncompress);
+            Assert.NotNull(newFile);
+            Assert.Equal("TestFile.txt",newFile.Name);
+        }
+        finally
+        {
+            if (Directory.Exists(testDirectory))
+                Directory.Delete(testDirectory, true);
+        }
+    }
+
+    [Theory]
+    [InlineData(null, StorageType.Uncompress, typeof(ArgumentNullException))] 
+    [InlineData("", StorageType.Uncompress, typeof(ArgumentException))]
+    [InlineData("./foo", StorageType.Uncompress, typeof(FileNotFoundException))]
+    [InlineData("./OpenCompote.dll", (StorageType)17, typeof(ArgumentOutOfRangeException))]
+    [InlineData("./OpenCompote.dll", StorageType.Uncompress, typeof(ArgumentException))] 
+    public void Folder_ImportFromFile_InvalidInputs(string? testPath, StorageType testType, Type exceptionType)
+    {
+        using var archive = MockParser.CreateArchive(SgaMode.Write, new("archive", [
+            new TestDrive {
+                Name = "Drive",
+                Alias = "alias",
+                Folders = [new TestFolder{Name = "TestFolder", Files = [
+                    new TestFile{
+                        Name = "OpenCompote.dll",
+                    } 
+                ]}]
+            }
+        ], [
+            new TestDrive {
+                Name = "Drive",
+                Alias = "alias",
+                Folders = [new TestFolder{Name = "TestFolder", Files = [
+                    new TestFile{
+                        Name = "OpenCompote.dll",
+                    } 
+                ]}]
+            }
+        ]));
+
+        var drive = Assert.IsType<SgaDrive>(archive.Drives.Single());
+        var folder = Assert.IsType<SgaFolder>(drive.Contents.Single());
+
+        Assert.Throws(exceptionType, ()=>folder.ImportFromFile(testPath!, testType));
     }
 }

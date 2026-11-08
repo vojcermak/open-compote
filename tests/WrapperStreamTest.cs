@@ -93,7 +93,7 @@ public class WrapperStreamTest
     {
         using var baseStream = new MemoryStream();
         bool called = false;
-        var wrapper = new WrapperStream(baseStream, () => called = true);
+        var wrapper = new WrapperStream(baseStream, (hasChanged) => called = true);
         
         wrapper.Dispose();
 
