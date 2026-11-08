@@ -233,7 +233,7 @@ public class SgaArchive: IDisposable
     // ------------------------ Extending functions ------------------------
 
     /// <summary>
-    /// Extracts All archive contents to a directory specified by <paramref name="destinationFolder"/>.
+    /// Extracts All archive <see cref="Drives"/> to a directory specified by <paramref name="destinationFolder"/>.
     /// </summary>
     /// <param name="destinationFolder">The path to the directory to which the archive will be exported.</param>
     /// <param name="overwrite">If the value is true, it overwrites existing files. Else, it throws an exception if a file with the same name already exists.</param>
@@ -248,7 +248,7 @@ public class SgaArchive: IDisposable
     /// 
     /// -OR-
     /// 
-    /// Other IOException occurs, for more potential exceptions see <see cref="Directory.CreateDirectory(string)"/> and <see cref="File.Open(string, FileMode)"/> methods.
+    /// Other IOException occurred, for more info about potential source of the exception see <see cref="Directory.CreateDirectory(string)"/> and <see cref="File.Open(string, FileMode)"/> methods.
     /// </exception>
     /// <exception cref="InvalidOperationException">Archive <see cref="SgaMode"/> value is invalid.</exception>
     public void ExtractToDirectory(string destinationFolder, bool overwrite = false)
@@ -256,19 +256,16 @@ public class SgaArchive: IDisposable
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(destinationFolder);
 
-        string folderPath = Path.Combine(destinationFolder, ArchiveName);
-        Directory.CreateDirectory(folderPath);
-
         foreach(var drive in Drives)
             drive.ExtractToDirectory(destinationFolder, overwrite);
     }
 
     /// <summary>
-    /// Imports the specified directory and its contents into this archive as a new drive.
+    /// Imports the specified directory and its contents into this archive as a new <see cref="SgaDrive"/>.
     /// Subdirectories are imported recursively as folders and files inside the new drive. 
-    /// Imported files will use <paramref name="defaultType"/> as their storage type.
+    /// Imported files will use <paramref name="defaultType"/> as their <see cref="SgaFile.StorageType"/>.
     /// </summary>
-    /// <param name="dirPath">The path to the directory to import.</param>
+    /// <param name="dirPath">The path to the directory that will be imported.</param>
     /// <param name="defaultType">The default storage type for imported files.</param>
     /// <returns>New <see cref="SgaDrive"/> containing the imported directory contents.</returns>
     /// <remarks>
@@ -279,7 +276,7 @@ public class SgaArchive: IDisposable
     /// <para>Subdirectories are imported recursively, and all imported files use <paramref name="defaultType"/>.</para>
     /// <para>Symbolic links and other <see cref="FileAttributes.ReparsePoint"/> are skipped. Special filesystem
     /// entries, such as named pipes, may fail to import or lock up while being read.</para>
-    /// <para>If an error occurs during import, entries already added to the archive are
+    /// <para>If an exception occurs during the import, entries already imported to the archive before the exception are
     /// not rolled back.</para>
     /// </remarks>
     /// <exception cref="ArgumentException"><paramref name="dirPath"/> is empty or whitespace, or the directory name is invalid
