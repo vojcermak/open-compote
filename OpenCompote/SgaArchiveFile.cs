@@ -163,30 +163,65 @@ public class SgaArchiveFile
     }
 
     /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
+    /// Creates a SGA archive that contains the files and directories from the specified directory.
     /// </summary>
-    /// <exclude />
-    internal static void CreateFromDirectory(string sourceDirectoryName,
+    /// <param name="sourceDirectoryName">The path to the directory to be archived.</param>
+    /// <param name="destinationArchiveFileName">The path of the archive to be created</param>
+    /// <param name="version">Version of the new SGA archive.</param>
+    /// <param name="defaultStorageType">Default storage type that should be used while importing files.</param>
+    /// <param name="overwrite">If true, it overwrites an existing file; otherwise, it throws an exception when the file already exists.</param>
+    public static void CreateFromDirectory(string sourceDirectoryName,
                                            string destinationArchiveFileName,
-                                           int version,
-                                           bool rootDirAsDrive = false,
-                                           int defaultCompressionLevel = 0,
-                                           int defaultEncryptionType = 0)
+                                           SgaVersion version,
+                                           StorageType defaultStorageType,
+                                           bool overwrite = false )
     {
-        throw new NotImplementedException();
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectoryName);
+
+        using SgaArchive newArchive = Create(destinationArchiveFileName, version, overwrite);
+
+        foreach(string directory in Directory.EnumerateDirectories(sourceDirectoryName))
+        {
+            FileAttributes attributes = File.GetAttributes(directory);
+            
+            // if entry is ReparsePoint(sim-link) skip it.
+            if(attributes.HasFlag(FileAttributes.ReparsePoint))
+                continue;
+
+            newArchive.ImportDriveFromDirectory(directory, defaultStorageType);                
+        }
     }
 
     /// <summary>
-    /// NOT IMPLEMENTED! DO NOT USE
+    /// Creates a SGA archive in the specified stream that contains the files and directories from the specified directory.
     /// </summary>
-    /// <exclude />
-    internal static void CreateFromDirectory(string sourceDirectoryName,
+    /// <param name="sourceDirectoryName">The path to the directory containing the drives to be archived.</param>
+    /// <param name="destination">Empty Stream for the archive.</param>
+    /// <param name="version">Version of the new SGA archive.</param>
+    /// <param name="defaultStorageType">Default storage type that should be used while importing files.</param>
+    /// <param name="leaveOpen">
+    /// <see langword="true"/> to leave the <paramref name="destination"/> open after this method finishes. <see langword="false"/> to close
+    /// the <paramref name="destination"/> when this method finishes.
+    /// </param>
+    public static void CreateFromDirectory(string sourceDirectoryName,
                                            Stream destination,
-                                           int version,
-                                           bool rootDirAsDrive = false,
-                                           int defaultCompressionLevel = 0,
-                                           int defaultEncryptionType = 0)
+                                           SgaVersion version,
+                                           StorageType defaultStorageType,
+                                           bool leaveOpen = false)
     {
-        throw new NotImplementedException();
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectoryName);
+
+        using SgaArchive newArchive = Create(destination, version, leaveOpen);
+
+        foreach(string directory in Directory.EnumerateDirectories(sourceDirectoryName))
+        {
+            FileAttributes attributes = File.GetAttributes(directory);
+            
+            // if entry is ReparsePoint(sim-link) skip it.
+            if(attributes.HasFlag(FileAttributes.ReparsePoint))
+                continue;
+
+            newArchive.ImportDriveFromDirectory(directory, defaultStorageType);                
+        }
     }
 }
