@@ -170,6 +170,21 @@ public class SgaArchiveFile
     /// <param name="version">Version of the new SGA archive.</param>
     /// <param name="defaultStorageType">Default storage type that should be used while importing files.</param>
     /// <param name="overwrite">If true, it overwrites an existing file; otherwise, it throws an exception when the file already exists.</param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="sourceDirectoryName"/> is an empty string or invalid path.
+    /// 
+    /// -OR-
+    /// 
+    /// <paramref name="destinationArchiveFileName"/> is an empty string or invalid path.
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="destinationArchiveFileName"/> is <see langword="null"/>.
+    /// 
+    /// -OR-
+    /// 
+    /// <paramref name="sourceDirectoryName"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="IOException">The directory or one of its entries could not be accessed or imported.</exception>
     public static void CreateFromDirectory(string sourceDirectoryName,
                                            string destinationArchiveFileName,
                                            SgaVersion version,
@@ -203,6 +218,15 @@ public class SgaArchiveFile
     /// <see langword="true"/> to leave the <paramref name="destination"/> open after this method finishes. <see langword="false"/> to close
     /// the <paramref name="destination"/> when this method finishes.
     /// </param>
+    /// <exception cref="ArgumentException"><paramref name="sourceDirectoryName"/> is an empty string or invalid path.</exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="sourceDirectoryName"/> is <see langword="null"/>.
+    /// 
+    /// -OR-
+    /// 
+    /// <paramref name="destination"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="IOException">The directory or one of its entries could not be accessed or imported.</exception>
     public static void CreateFromDirectory(string sourceDirectoryName,
                                            Stream destination,
                                            SgaVersion version,
