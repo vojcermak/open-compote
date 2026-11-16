@@ -10,12 +10,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added path-based entry lookup through `SgaArchive.GetEntry`, `SgaDrive.GetEntry`, and `SgaFolder.GetEntry` methods.
 - Added documentation and examples for entry paths, path lookup, and file/folder naming restrictions.
+- Added methods for importing and exporting entries directly using OS files/folders:
+    - `SgaFolder.ImportFromFile` - Imports a file into the folder as a new SGA file.
+    - `SgaFolder.ExtractToDirectory` - Extracts the folder and its contents into a subdirectory.
+    - `SgaFolder.ImportFromDirectory` - Imports a directory and its contents as a new subfolder.
+    - `SgaDrive.ImportFromFile` - Imports a file into the drive as a new SGA file.
+    - `SgaDrive.ExtractToDirectory` - Extracts the drive and its contents into a subdirectory.
+    - `SgaDrive.ImportFromDirectory` - Imports a directory and its contents as a new folder in the drive.
+    - `SgaArchive.ExtractToDirectory` - Extracts all drives and their contents into subdirectories.
+    - `SgaArchive.ImportDriveFromDirectory` - Imports a directory and its contents as a new drive.
+    - `SgaArchiveFile.ExtractToDirectory` - Extracts an SGA archive directly to a directory.
+    - `SgaArchiveFile.CreateFromDirectory` - Creates an SGA archive from the source directory's subdirectories, each imported as a drive.
 
 ### Changed
 - Drives now expose their root entries directly instead of using a separate root folder.
 - Drives and folder are now index by case-insensitive names instead number indexes, enforcing unique names and enabling direct lookup.
 - Enforced validation and trim for entry names tu enable cross-platform filesystem compatibility.
 - Reworked the testing framework to work with the new indexing and divided the model tests to separate folders.
+- Improved file metadata handling so `Modified` timestamps are preserved when files are exported.
+- Updated timestamp behavior to use UTC consistently for file modification metadata.
+- Refined stream disposal logic so modification timestamps are only updated when the file contents actually changed.
+
+### Fixed
+- Fixed file export so the exported file keeps the original last-write time when metadata is available.
+- Fixed read/write stream behavior to avoid marking files as modified when they were only opened without changes.
 
 ### Breaking changes
 - The ability to get objects from `SgaArchive.Drives` and `SgaFolder.Contents` properties by numbered indexes is removed.
