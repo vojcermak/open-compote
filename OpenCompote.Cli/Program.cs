@@ -10,6 +10,8 @@ using OpenCompote.SGA;
 - remove specific file/folder/drive
 */
 
+SgaArchiveFile.CreateFromDirectory("./source", "destination.sga", SgaVersion.V2, StorageType.StreamCompress);
+
 if (args.Length == 0)
 {
     Console.WriteLine("Usage: dotnet run -- <path-to-sga-file> [extract-folder]");

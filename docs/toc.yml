@@ -1,5 +1,5 @@
-- name: Examples
-  href: examples/
+- name: Documentation
+  href: docs/
 - name: Format Schema
   href: schema/
 - name: Api Reference
