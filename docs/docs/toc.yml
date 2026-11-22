@@ -1,0 +1,11 @@
+items:
+  - name: Quick start
+    href: quickstart.md
+  - name: Reading archives
+    href: reading.md
+  - name: Creating and editing archives
+    href: editing.md
+  - name: Importing and extracting directories
+    href: directory-workflows.md
+  - name: Names and paths
+    href: naming.md

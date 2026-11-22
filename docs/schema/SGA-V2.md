@@ -12,8 +12,8 @@
 | 172   | 175  | 4     | UInt-32           | TOC size     |
 | 176   | 179  | 4     | UInt-32           | Data offset  |
 
-1. Magic word - Used to identify a file as an SGA archive. Always contains an ASCII string with the value "ARCHIVE_".
-2. Version - Used to identify the exact version of sga archive. For SGA V2, it should always be 2. 
+1. Magic word - Used to identify a file as an SGA archive. Always contains an ASCII string with the value "_ARCHIVE".
+2. Version - Used to identify the exact version of the SGA archive. For SGA V2, it should always be 2.
 
 > Other SGA versions can divide this field into major and minor(platform) values, but I couldn`t verify this for SGA v2 archives. 
 

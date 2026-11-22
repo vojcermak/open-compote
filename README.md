@@ -24,43 +24,28 @@ You can download the latest version from the [NuGet](https://www.nuget.org/packa
 dotnet add package OpenCompote.SGA
 ```
 
-### Reading from SGA archive
+### Extracting SGA archive
 
-This example shows how to open an existing SGA archive and prints its content tree.
+This example shows how to extract all files and folders from an SGA archive.
 
 ```csharp
 using OpenCompote.SGA;
-using System.Text;
 
-// Open the archive
-using SgaArchive archive = SgaArchiveFile.Open("example.sga", SgaMode.Read);
-
-// prints entire folder structure
-foreach (SgaDrive drive in archive.Drives)
-{
-    Console.WriteLine($"Drive: {drive.Name} (alias: {drive.Alias})");
-
-    void PrintFolder(SgaFolder folder, int indent)
-    {
-        string prefix = new string(' ', indent * 2);
-        Console.WriteLine($"{prefix}Folder: {folder.Name}");
-
-        foreach (SgaEntry entry in folder.Contents)
-        {
-            if (entry is SgaFolder subfolder)
-            {
-                PrintFolder(subfolder, indent + 1);
-            }
-            else if (entry is SgaFile file)
-            {
-                Console.WriteLine($"{prefix}  File: {file.Name} (size: {file.Size})");
-            }
-        }
-    }
-
-    PrintFolder(drive.RootFolder, 0);
-}
+// Extracts the entire archive to the ./exported folder
+SgaArchiveFile.ExtractToDirectory("example.sga", "./exported");
 ```
+
+### Creating SGA archive
+This example shows how to create a new SGA archive from a folder.
+
+```csharp
+using OpenCompote.SGA;
+
+// Creates an archive from the ./source folder
+SgaArchiveFile.CreateFromDirectory("./source", "destination.sga", SgaVersion.V2, StorageType.StreamCompress);
+```
+
+If you need more granular manipulation of the archive, you can use the main API. For more information, see the [Quick Start Guide](https://vojcermak.github.io/open-compote/docs/quickstart.html).
 
 ## Quick Links
 
@@ -73,7 +58,7 @@ foreach (SgaDrive drive in archive.Drives)
 
 | Version | Games | Status | Documentation |
 |---------|-------|--------|---|
-| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of war | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Supported | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
+| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of War | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Supported | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
 | **V3**  | The Outfit                                       | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | |
 | **V4**  | Company of Heroes 1                              | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V4.md](https://vojcermak.github.io/open-compote/schema/SGA-V4.html) |
 | **V5**  | Warhammer 40,000: Dawn of War 2                  | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V5.md](https://vojcermak.github.io/open-compote/schema/SGA-V5.html) |
@@ -81,18 +66,6 @@ foreach (SgaDrive drive in archive.Drives)
 | **V7**  | Company of Heroes 2                              | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V7.md](https://vojcermak.github.io/open-compote/schema/SGA-V7.html) |
 | **V9**  | Warhammer 40,000: Dawn of War 3                  | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
 | **V10** | Age of Empires 4,<br> Company of Heroes 3        | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
-
-## Extension Methods
-
-The following features are currently not implemented but are planned for future releases.
-
-| Method | Purpose | Status |
-|--------|---------|--------|
-|`SgaArchiveFile.CreateFromDirectory(...)` | Create an SGA archive from <br>a filesystem directory | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
-| `SgaArchiveFile.ExtractToDirectory(...)` | Extract an archive to a directory | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
-| `GetEntry(...)` | Locate an entry inside the archive,<br> drive or folder | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
-| `SgaFolder.ExtractToDirectory(...)` | Extract a folder and its contents to disk | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned |
-| `SgaFile.ExtractToFile(...)` | Extract a single file to disk | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Implemented |
 
 ## Development
 

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-22
 
 ### Added
 - Added path-based entry lookup through `SgaArchive.GetEntry`, `SgaDrive.GetEntry`, and `SgaFolder.GetEntry` methods.
@@ -24,8 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Drives now expose their root entries directly instead of using a separate root folder.
-- Drives and folder are now index by case-insensitive names instead number indexes, enforcing unique names and enabling direct lookup.
-- Enforced validation and trim for entry names tu enable cross-platform filesystem compatibility.
+- Drives and folders are now indexed by case-insensitive names instead of numeric indexes, enforcing unique names and enabling direct lookup.
+- Enforced validation and trimming for entry names to enable cross-platform filesystem compatibility.
 - Reworked the testing framework to work with the new indexing and divided the model tests to separate folders.
 - Improved file metadata handling so `Modified` timestamps are preserved when files are exported.
 - Updated timestamp behavior to use UTC consistently for file modification metadata.
