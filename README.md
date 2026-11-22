@@ -26,26 +26,26 @@ dotnet add package OpenCompote.SGA
 
 ### Extracting SGA archive
 
-This example shows how to extract all files and folder from sga archive.
+This example shows how to extract all files and folders from an SGA archive.
 
 ```csharp
 using OpenCompote.SGA;
 
-// Exports entire archive to the ./exported folder
+// Extracts the entire archive to the ./exported folder
 SgaArchiveFile.ExtractToDirectory("example.sga", "./exported");
 ```
 
 ### Creating SGA archive
-This example show how to create new sga archive from a folder.
+This example shows how to create a new SGA archive from a folder.
 
 ```csharp
 using OpenCompote.SGA;
 
-// Exports entire archive to the ./exported folder
+// Creates an archive from the ./source folder
 SgaArchiveFile.CreateFromDirectory("./source", "destination.sga", SgaVersion.V2, StorageType.StreamCompress);
 ```
 
-If you need more granular manipulation of the archive you can use the main api. For more information see the [Quick start Guide](https://vojcermak.github.io/open-compote/docs/quickstart.html).
+If you need more granular manipulation of the archive, you can use the main API. For more information, see the [Quick Start Guide](https://vojcermak.github.io/open-compote/docs/quickstart.html).
 
 ## Quick Links
 
@@ -58,7 +58,7 @@ If you need more granular manipulation of the archive you can use the main api. 
 
 | Version | Games | Status | Documentation |
 |---------|-------|--------|---|
-| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of war | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Supported | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
+| **V2**  | Impossible Creatures,<br> Warhammer 40,000: Dawn of War | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/check-circle.svg) Supported | [SGA-V2.md](https://vojcermak.github.io/open-compote/schema/SGA-V2.html) |
 | **V3**  | The Outfit                                       | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | |
 | **V4**  | Company of Heroes 1                              | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V4.md](https://vojcermak.github.io/open-compote/schema/SGA-V4.html) |
 | **V5**  | Warhammer 40,000: Dawn of War 2                  | ![](https://raw.githubusercontent.com/vojcermak/open-compote/refs/heads/main/docs/images/close-circle.svg) Planned | [SGA-V5.md](https://vojcermak.github.io/open-compote/schema/SGA-V5.html) |

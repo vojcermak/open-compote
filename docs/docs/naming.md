@@ -4,7 +4,7 @@ Every file and folder in an archive has a path. You can access the path of a spe
 
 The fully qualified path has two parts:
 
-- **Drive name** is the name of the SgaDrive in which is the entry located in upper case followed by `:`.
+- **Drive name** is the name of the `SgaDrive` containing the entry, converted to upper case and followed by `:`.
 - **Entry path**, which lists the entry's containing folders and its name, starting from the drive's root.
 
 For example this path:
@@ -12,17 +12,17 @@ For example this path:
 ```text
 DATA:\sound\vehicles\british\uk_aec_mkiii_armoured_car\uk_aec_mkiii_engine_braking.bsc
 ```
-is a path to a file named `uk_aec_mkiii_engine_braking.bsc` inside of the `DATA` drive.
+is a path to a file named `uk_aec_mkiii_engine_braking.bsc` inside the `DATA` drive.
 
-Relic in official archiving tools using `/` as separators, but open compote support both `/` and `\` as valid separators for simplicity.
+Relic's official archiving tools use `/` as the separator, but OpenCompote supports both `/` and `\` for simplicity.
 
 ## Path queries
 
-You can find specific entry by its absolute or relative path using the `GetEntry` functions. Archive level queries use absolute path, drive and folder level queries use paths relative to that drive or folder. The method returns the matching `SgaFile` or `SgaFolder` as an `SgaEntry`, or `null` if the drive or entry does not exist. All matching is case-insensitive with leading and trailing whitespaces trimmed.
+You can find a specific entry by its absolute or relative path using the `GetEntry` methods. Archive-level queries use absolute paths; drive- and folder-level queries use paths relative to that drive or folder. The method returns the matching `SgaFile` or `SgaFolder` as an `SgaEntry`, or `null` if the drive or entry does not exist. All matching is case-insensitive, and leading and trailing whitespace is trimmed.
 
 ### Archive level
 
-`GetEntry` on an `SgaArchive` is used to get specific sga entry by its absolute path. The drive name before the colon selects the drive. The rest of the path is resolved from that drive's root. For the drive part only the name must be used, but it does not need to be in upper case.
+`GetEntry` on an `SgaArchive` gets a specific SGA entry by its absolute path. The drive name before the colon selects the drive. The rest of the path is resolved from that drive's root. Only the drive name is used for the drive part. For use in the `GetEntry` method It does not need to be in upper case.
 
 ```csharp
 SgaEntry? entry = archive.GetEntry(@"DATA:\sound\vehicles\british\uk_aec_mkiii_armoured_car\uk_aec_mkiii_engine_braking.bsc");
@@ -36,7 +36,7 @@ SgaEntry? sameEntry = archive.GetEntry(entry!.Path);
 ```csharp
 SgaEntry? entry = dataDrive.GetEntry(@"sound\vehicles\british\uk_aec_mkiii_armoured_car\uk_aec_mkiii_engine_braking.bsc");
 ```
-> Relative paths are only relative to the select drive and folder and supports getting child entries only. `.` and `..` are not navigation components, so they cannot be used to refer to the current or a parent folder.
+> Relative paths are resolved from the selected drive or folder and support child entries only. `.` and `..` are not navigation components, so they cannot refer to the current or parent folder.
 
 ### Folder level
 
@@ -47,12 +47,12 @@ SgaEntry? entry = vehiclesFolder.GetEntry(@"british\uk_aec_mkiii_armoured_car\uk
 ``` 
 
 ## File/Folder naming restrictions
-Open compote enforces this set of rules for sga folder and file names to allow easy export of files and folders on both windows and linux. The rules are:
+OpenCompote enforces these rules for SGA folder and file names to allow easy export on both Windows and Linux:
 
 1. Names are case-insensitive. `file.txt` and `File.txt` cannot coexist in the same folder. Same restriction applies to folder names as well.
 
 2. Following characters are not allowed in the name:
-    - `U+0000–U+001F` - ASCII characters which number representation is between 0 - 31 
+    - `U+0000–U+001F` - ASCII control characters with numeric values between 0 - 31
     - `<` (less than)
     - `>` (greater than)
     - `:` (colon)
@@ -74,7 +74,7 @@ Open compote enforces this set of rules for sga folder and file names to allow e
     
     Leading and trailing whitespace(spaces, tabs, newlines,...) are trimmed during the entry creation.
 
-> These rules are enforced only when creating/changing sga Files or Folders through the public API. If an existing SGA archive contains files or folder with names which does not follow these rules it can open them, but exporting them could fail.
+> These rules are enforced only when creating or changing SGA files or folders through the public API. Existing SGA archives containing names that do not follow these rules can still be opened, but exporting them may fail.
 
 ## Drive name and Alias restrictions
-Drive names have the same restrictions as the file/folder names. The alias does not have this restriction. But on top of the character restrictions there is also a length restriction. Both Drive Name and Alias must be max 64 characters long. Both the Name and Alias setters and `SgaArchive.AddDrive` function does truncate the provided string to 64 characters when is longer.
+Drive names have the same restrictions as file and folder names, while aliases do not have those character restrictions. Both drive names and aliases must be at most 64 characters long. The name and alias setters and `SgaArchive.AddDrive` truncate values longer than 64 characters.

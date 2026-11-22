@@ -26,7 +26,7 @@ using SgaArchive archive = SgaArchiveFile.Open("example.sga", SgaMode.Read);
 
 Console.WriteLine($"SGA version: {archive.Version}");
 
-// Gets the settings.txt file inside of a config file inside of a Data drive.
+// Gets settings.txt inside the config folder in the DATA drive.
 if (archive.GetEntry(@"DATA:\config\settings.txt") is not SgaFile file)
     throw new FileNotFoundException("File not found in the archive.");
 
@@ -35,11 +35,11 @@ using var reader = new StreamReader(fileStream, Encoding.UTF8);
 Console.WriteLine(reader.ReadToEnd());
 ```
 
-`GetEntry` takes an absolute path of a specified archive entry and returns `null` if it cannot find the entry. This sample assumes the archived file is text(UTF-8). For binary data, read from `file.Open()` as a stream instead. See [Reading archives](reading.md) for browsing entries, paths, and more reading examples.
+`GetEntry` takes the absolute path of an archive entry and returns `null` if it cannot find the entry. This sample assumes that the archived file is UTF-8 text. For binary data, read from `file.Open()` as a stream instead. See [Reading archives](reading.md) for browsing entries, paths, and more reading examples.
 
 ## Extract an archive
 
-You can quickly dump entire archive and its contents to a directory using the `SgaArchiveFile.ExtractToDirectory` extension method:
+You can quickly extract an entire archive and its contents to a directory using `SgaArchiveFile.ExtractToDirectory` extension method:
 
 ```csharp
 using OpenCompote.SGA;

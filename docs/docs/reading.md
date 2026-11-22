@@ -18,12 +18,11 @@ Console.WriteLine($"Version: {archive.Version}");
 Console.WriteLine($"Drives: {archive.Drives.Count}");
 ```
 
-`SgaArchive` is build around `IDisposable`, so you can use `using` statement to close the archive and its underlying file when finished. Do not use archive entries after the archive has been disposed.
-Usage of the archive or its entries after the archive has been disposed results in `ObjectDisposedException`.
+`SgaArchive` implements `IDisposable`, so you can use a `using` statement to close the archive and its underlying file when finished. Do not use the archive or its entries after it has been disposed. Using the archive or its entries after the archive has been disposed throws `ObjectDisposedException`.
 
 ## Understand the archive structure
 
-An archive contains drives. A drive contains files and folders directly.  Folders can contain more folders and files. `Drives` and `Contents` are enumerable collections, so iterate them rather than accessing them by numeric index.
+An archive contains drives. A drive contains files and folders directly. Folders can contain more folders and files. `Drives` and `Contents` are enumerable collections, so iterate over them rather than accessing entries by numeric index.
 
 ```csharp
 using System;
@@ -61,7 +60,7 @@ foreach (SgaDrive drive in archive.Drives)
 
 ## Find an entry by path
 
-To get an entry from the archive by its path you can use the `GetEntry` method. This method is present either on the [archive object](./naming.md#archive-level) it self which uses the absolute paths or on [drives](./naming.md#drive-level) and [folder](./naming.md#folder-level) where relative path to from the current object is used instead. The result is an `SgaEntry` which is generalization of both `SgaDrive` and `SgaFolder`. The method returns `null` when no entry was found.
+To get an entry from the archive by path, use the `GetEntry` method. It is available on the [archive object](./naming.md#archive-level), which uses absolute paths, and on [drives](./naming.md#drive-level) and [folders](./naming.md#folder-level), which use paths relative to the current object. The result is an `SgaEntry`, which is the base type for `SgaFile` and `SgaFolder`. The method returns `null` when no entry is found.
 
 ```csharp
 using System;
@@ -77,13 +76,13 @@ if (archive.GetEntry(@"DATA:\config\settings.txt") is SgaFile file)
 
 See [Names and paths](naming.md) for more detailed documentation about path rules.
 
-The `SgaArchive.GetEntry` method can only find files and folder if you want to get the entire `SgaDrive` by its name you can use the `SgaArchive.GetDrive` method.
+The `SgaArchive.GetEntry` method finds files and folders. To find an `SgaDrive` by name or alias, use `SgaArchive.GetDrive` method.
 
 ## Read a file
 
-If you want to access the contents of a file inside the archive you can call the `SgaFile.Open()` method. This method returns a stream containing the uncompressed file contents. 
+If you want to access the contents of a file inside the archive, call `SgaFile.Open()` method. This method returns a stream containing the uncompressed file contents. 
 
-Here is an example how to get a file by its path inside of the Sga archive. Open it and write its contents into the console as a text.
+Here is an example that gets a file by its path inside the SGA archive, opens it, and writes its contents to the console as text.
 
 ```csharp
 using System;

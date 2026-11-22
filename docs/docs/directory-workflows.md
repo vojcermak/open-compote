@@ -1,10 +1,10 @@
 # Importing and extracting directories
 
-If you want to quickly import or extract entire files folders or drives you can use build in convenience functions.
+If you want to quickly import or extract entire files, folders, or drives, you can use the built-in convenience methods.
 
 ## Extract an archive
 
-If you want to extract entire archive to a specified folder you can use `SgaArchiveFile.ExtractToDirectory` method:
+To extract an entire archive to a specified folder, use `SgaArchiveFile.ExtractToDirectory`:
 
 ```csharp
 using OpenCompote.SGA;
@@ -27,7 +27,7 @@ The archive's drive names are used as directory names. You can also open an arch
 
 ## Create an archive from a directory tree
 
-If you want to quickly package some directory to an archive you can use the `SgaArchiveFile.CreateFromDirectory` method. `SgaArchiveFile.CreateFromDirectory` treats each immediate subdirectory of the source directory as a sga drive. The subdirectory name becomes the drive's name and alias. Its contents are imported recursively. Files placed directly in the source directory are not included.
+To quickly package a directory as an archive, use `SgaArchiveFile.CreateFromDirectory`. This method treats each immediate subdirectory of the source directory as an SGA drive. The subdirectory name becomes the drive's name and alias. Its contents are imported recursively. Files placed directly in the source directory are not included.
 
 For example, with this source layout:
 

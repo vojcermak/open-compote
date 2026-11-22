@@ -6,11 +6,11 @@ This guide shows how to create a new archive and how to replace a file in an exi
 
 ## Create an archive
 
-You can create an archive with `SgaArchiveFile.Create` method. Using this method will create an empty archive without any drives or other contents. At the archive level, you can set `SgaArchive.ArchiveName` or add SGA drives. An SGA drive is a top-level collection of folders and files. They work similarly to Windows drives.
+You can create an archive with the `SgaArchiveFile.Create` method. This method creates an empty archive without any drives or other contents. At the archive level, you can set `SgaArchive.ArchiveName` or add SGA drives. An SGA drive is a top-level collection of folders and files and works similarly to drives in Windows.
 
 You can create a drive using the `SgaArchive.AddDrive()` method, which takes the drive alias first and its name as the second argument. Its entries are accessed directly through the `SgaDrive.Contents` attribute.
 
-To add other folders and files into the drive use the `AddFolder` and `AddFile` methods. These methods can be called on either a drive or a folder to create entries at that level.
+To add other folders and files to the drive, use the `AddFolder` and `AddFile` methods. These methods can be called on either a drive or a folder to create entries at that level.
 
 ```csharp
 using System.IO;
@@ -74,21 +74,21 @@ Dispose the file stream to finish the update. File metadata such as `SgaFile.Siz
 - `Size` gets the uncompressed size of the file in bytes.
 - `CompressedSize` gets the stored size in bytes.
 - `Modified` gets or sets the file's last-write time as a `DateTimeOffset`. Existing SGA V2 files may have no modification metadata, in which case it can be `null`. A newly created or changed file is updated when its stream is disposed.
-- `Crc` gets the CRC-32 checksum value of the uncompressed file contents. It can be `null` when the archive format or metadata has no value to expose. Opening a file does not perform file level CRC validation automatically.
+- `Crc` gets the CRC-32 checksum value of the uncompressed file contents. It can be `null` when the archive format or metadata has no value to expose. Opening a file does not automatically validate the file-level CRC.
 
 The `Size`, `CompressedSize`, `Modified`, and `Crc` values for edited files are automatically updated when the writable sga file stream is disposed. Reading properties again after disposing the stream shows the updated values.
 
-For existing entries, changing `StorageType` in create/write mode converts the file between uncompressed and ZLib-compressed storage. Changing the `StorageType` while the file contents is open for editing result in `IOException`.
+For existing entries, changing `StorageType` in create/write mode converts the file between uncompressed and ZLib-compressed storage. Changing `StorageType` while the file contents are open for editing results in `IOException`.
 
 ## Choose a storage type
 
-When adding a new sga file you can chose if the file is compressed using the `StorageType` property. `StorageType` supports these options:
+When adding a new SGA file, you can choose whether the file is compressed using the `StorageType` property. `StorageType` supports these options:
 
-- `Uncompress` - stores the file without compression.
-- `StreamCompress` - stores the file using ZLib compression.
-- `BufferCompress` - stores the file using ZLib compression.
+- [Uncompress](xref:OpenCompote.SGA.StorageType.Uncompress) - stores the file without compression.
+- [StreamCompress](xref:OpenCompote.SGA.StorageType.StreamCompress) - stores the file using ZLib compression.
+- [BufferCompress](xref:OpenCompote.SGA.StorageType.BufferCompress) - stores the file using ZLib compression.
 
-As you can see both `StreamCompress` and `BufferCompress` values stores the file contents in the same compression. These options are mapped to the options used by the sga file format. On the sga parser/writer level there is no difference between these options. But the games are probably treating these files differently.
+As you can see both `StreamCompress` and `BufferCompress` store the file contents using ZLib compression. These options correspond to storage types used by the SGA format. The parser and writer treat these options identically, but games may treat the files differently.
 
 To rename an entry, set its `Name` property:
 
@@ -101,7 +101,7 @@ Names are validated and case-insensitive within a drive or folder. See [Names an
 
 ## Delete entries
 
-You can also delete existing entries. This is done using `Delete()` method on a file, folder or drive while the archive is in create or write mode. Deleting a folder or drive also deletes all of its files and subfolders.
+You can also delete existing entries by calling `Delete()` on a file, folder, or drive while the archive is in create or write mode. Deleting a folder or drive also deletes all of its files and subfolders.
 
 ```csharp
 // deleting file

@@ -5,7 +5,7 @@ This page contains documentation for the open-compote libraries and schema docum
 # SGA Archive
 Relic game archive is a binary file format. It is used for storing compressed folder structures similar to ZIP or RAR formats. SGA format is developed by Relic Entertainment for their Essence game engine. Can be identified by the .sga file extension.
 
-SGA folder structure is similar to the Windows file system. The structure is divided into drives, folders and files. Where a drive functions as a root object of the folder structure, similarly to Windows drives.(`C:\`, `D:\`, ...) But unlike Windows, SGA drives do not contain files directly. Each Drive needs to have one root folder. Each folder can contain files and other subfolders.
+SGA folder structure is similar to the Windows file system. The structure is divided into drives, folders, and files. A drive functions as the root object of the folder structure, similarly to Windows drives (`C:\`, `D:\`, ...). SGA drives can contain files directly and can also contain folders. Each folder can contain files and other subfolders.
 
 List of Essence engine games and associated .sga versions:
 
@@ -30,7 +30,7 @@ List of Essence engine games and associated .sga versions:
 SGA archive is divided into three main parts: Archive header, Table of contents and Data block. Position, size and exact fields of all parts are different between versions.
 
 ### SGA Archive header
-It`s always at the beginning of the file. It always starts with an ASCII string "ARCHVIE_" followed by the version field and other global information about the archive, like its size or checksum. 
+It is always at the beginning of the file. It starts with the ASCII string "_ARCHIVE", followed by the version field and other global information about the archive, such as its size or checksum.
 
 ### Table of contents (TOC)
 The table of contents always contains metadata about files and folders in the archive, like their names, structure and sizes. It is usually positioned directly after the archive header, but in some versions(v5.0) of SGA format can also be positioned at the end of the file.
