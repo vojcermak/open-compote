@@ -1,70 +1,20 @@
 # Quick start
 
-## Installation
+This page gets you started with the most common task: opening an SGA archive and reading a file. For more complete examples, see the guides linked at the end.
 
-You can download the latest version from the [NuGet](https://www.nuget.org/packages/OpenCompote.SGA) repo.
+## Install
+
+Install the package from [NuGet](https://www.nuget.org/packages/OpenCompote.SGA):
 
 ```bash
 dotnet add package OpenCompote.SGA
 ```
 
-## Reading an SGA archive
+> **Supported versions:** SGA V2 is currently implemented. Other values in `SgaVersion` are not yet supported for reading or writing.
 
-> For background on the file format, see the [schema documentation](../schema/index.md).
+## Open an archive and read a file
 
-### Open and inspect an archive
-
-`SgaArchiveFile.Open` detects the archive version. Use `SgaMode.Read` when you only need to inspect or extract the archive.
-
-```csharp
-using OpenCompote.SGA;
-
-using SgaArchive archive = SgaArchiveFile.Open("example.sga", SgaMode.Read);
-
-Console.WriteLine($"Archive name: {archive.ArchiveName}");
-Console.WriteLine($"Version: {archive.Version}");
-Console.WriteLine($"Drive count: {archive.Drives.Count}");
-```
-
-### Browse drives, folders, and files
-
-The entries at the root of a drive are available through `SgaDrive.Contents`. Recursively inspect folders to list the full archive structure:
-
-```csharp
-using System;
-using System.Collections.Generic;
-using OpenCompote.SGA;
-
-void PrintEntries(IEnumerable<SgaEntry> entries, int indent)
-{
-    string prefix = new string(' ', indent * 2);
-
-    foreach (SgaEntry entry in entries)
-    {
-        if (entry is SgaFolder folder)
-        {
-            Console.WriteLine($"{prefix}Folder: {folder.Name}");
-            PrintEntries(folder.Contents, indent + 1);
-        }
-        else if (entry is SgaFile file)
-        {
-            Console.WriteLine($"{prefix}File: {file.Name} (size: {file.Size})");
-        }
-    }
-}
-
-using SgaArchive archive = SgaArchiveFile.Open("example.sga", SgaMode.Read);
-
-foreach (SgaDrive drive in archive.Drives)
-{
-    Console.WriteLine($"Drive: {drive.Name} (alias: {drive.Alias})");
-    PrintEntries(drive.Contents, 1);
-}
-```
-
-### Find and read a file
-
-Use `GetDrive` to select a drive by its name or alias, then `GetEntry` with a path relative to that drive. `GetEntry` returns `null` when the path does not exist. This example reads a UTF-8 text file; use the stream directly for binary files.
+Open an archive in `SgaMode.Read` when you only need to inspect or read its contents. The archive detects its format version when it opens.
 
 ```csharp
 using System;
@@ -74,10 +24,10 @@ using OpenCompote.SGA;
 
 using SgaArchive archive = SgaArchiveFile.Open("example.sga", SgaMode.Read);
 
-SgaDrive drive = archive.GetDrive("DATA")
-    ?? throw new InvalidOperationException("Drive not found.");
+Console.WriteLine($"SGA version: {archive.Version}");
 
-if (drive.GetEntry(@"config\settings.txt") is not SgaFile file)
+// Gets the settings.txt file inside of a config file inside of a Data drive.
+if (archive.GetEntry(@"DATA:\config\settings.txt") is not SgaFile file)
     throw new FileNotFoundException("File not found in the archive.");
 
 using Stream fileStream = file.Open();
@@ -85,9 +35,11 @@ using var reader = new StreamReader(fileStream, Encoding.UTF8);
 Console.WriteLine(reader.ReadToEnd());
 ```
 
-### Extract an entire archive
+`GetEntry` takes an absolute path of a specified archive entry and returns `null` if it cannot find the entry. This sample assumes the archived file is text(UTF-8). For binary data, read from `file.Open()` as a stream instead. See [Reading archives](reading.md) for browsing entries, paths, and more reading examples.
 
-To extract every drive and its contents, use the convenience method:
+## Extract an archive
+
+You can quickly dump entire archive and its contents to a directory using the `SgaArchiveFile.ExtractToDirectory` extension method:
 
 ```csharp
 using OpenCompote.SGA;
@@ -95,73 +47,14 @@ using OpenCompote.SGA;
 SgaArchiveFile.ExtractToDirectory("example.sga", "./exported");
 ```
 
-By default, extraction does not overwrite existing files. Pass `overwrite: true` to replace them.
+Extraction does not overwrite existing files by default. Pass `overwrite: true` to replace them. See [Importing and extracting](directory-workflows.md) for directory imports and additional extraction details.
 
-## Updating an existing archive
+## Next steps
 
-Open an archive in `SgaMode.Write` to modify it. Changes are written when the archive is disposed. The file stream is writable; call `SetLength(0)` before writing when replacing the whole file so that shorter content does not leave old bytes at the end.
+- [Reading archives](reading.md) — browse drives and folders, find entries by path, and read file streams.
+- [Creating and editing archives](editing.md) — create an archive, add entries, or update an existing file.
+- [Importing and extracting](directory-workflows.md) — create archives from directories and extract their contents.
+- [Names and paths](naming.md) — path formats, lookup behavior, and naming restrictions.
+- [SGA format schemas](../schema/index.md) — learn about the archive format itself.
 
-```csharp
-using System;
-using System.IO;
-using System.Text;
-using OpenCompote.SGA;
-
-using SgaArchive archive = SgaArchiveFile.Open("example.sga", SgaMode.Write);
-
-SgaDrive drive = archive.GetDrive("DATA")
-    ?? throw new InvalidOperationException("Drive not found.");
-
-if (drive.GetEntry(@"config\settings.txt") is not SgaFile file)
-    throw new FileNotFoundException("File not found in the archive.");
-
-byte[] updatedContent = Encoding.UTF8.GetBytes("Updated content");
-using (Stream writeStream = file.Open())
-{
-    writeStream.SetLength(0);
-    writeStream.Write(updatedContent);
-}
-```
-
-## Creating an SGA archive
-
-Create a new archive, add a drive and file, then write the file contents through its stream:
-
-```csharp
-using System.IO;
-using System.Text;
-using OpenCompote.SGA;
-
-using SgaArchive archive = SgaArchiveFile.Create(
-    "new-archive.sga",
-    SgaVersion.V2,
-    overwrite: true);
-
-SgaDrive drive = archive.AddDrive("GAME", "GameDrive");
-SgaFile file = drive.AddFile("hello.txt", StorageType.Uncompress);
-
-byte[] content = Encoding.UTF8.GetBytes("Hello from OpenCompote!");
-using (Stream writeStream = file.Open())
-{
-    writeStream.Write(content);
-}
-```
-
-The archive is finalized when it is disposed.
-
-## Creating and extracting from directories
-
-`CreateFromDirectory` creates one drive for each immediate subdirectory of the source directory. Files placed directly in the source directory are not imported by this method.
-
-```csharp
-using OpenCompote.SGA;
-
-SgaArchiveFile.CreateFromDirectory(
-    "./source",
-    "destination.sga",
-    SgaVersion.V2,
-    StorageType.StreamCompress,
-    overwrite: true);
-```
-
-For more control, create an archive and import a single directory as a drive with `SgaArchive.ImportDriveFromDirectory`.
+For all public types and members, see the [API reference](../api/OpenCompote.SGA.yml).
